@@ -1,0 +1,43 @@
+# .htaccess - My Advocate URL Routing & Preservation
+RewriteEngine On
+RewriteBase /myadvocate/
+
+# Prevent directory listing
+Options -Indexes
+
+# Explicitly skip/pass-through external application folders (/opex and /ais)
+RewriteRule ^(opex|ais)(/.*)?$ - [L]
+
+# If requested file exists, serve directly
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Clean URL to PHP file mapping
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^([a-zA-Z0-9_-]+)/?$ $1.php [QSA,L]
+
+# Profile routing with public URL or slug (e.g., /profile/kumargaurav or /@kumargaurav)
+RewriteRule ^profile/([a-zA-Z0-9_.-]+)/?$ profile.php?url=$1 [QSA,L]
+RewriteRule ^@([a-zA-Z0-9_.-]+)/?$ profile.php?url=$1 [QSA,L]
+
+# Acts routing (e.g. /acts/bns or /acts/45)
+RewriteRule ^acts/([a-zA-Z0-9_-]+)/?$ act-details.php?id=$1 [QSA,L]
+
+# Legal & Info pages aliases
+RewriteRule ^privacy/?$ privacy-policy.php [QSA,L]
+RewriteRule ^terms-and-conditions/?$ terms.php [QSA,L]
+RewriteRule ^refund-policy/?$ refund-policy.php [QSA,L]
+RewriteRule ^mission-and-vision/?$ mission-vision.php [QSA,L]
+RewriteRule ^mission/?$ mission-vision.php [QSA,L]
+RewriteRule ^vision/?$ mission-vision.php [QSA,L]
+
+# Fallback for search and notices
+RewriteRule ^advocates/?$ advocate-search-result.php [QSA,L]
+RewriteRule ^bare-acts/?$ acts.php [QSA,L]
+RewriteRule ^search/?$ advocate-search-result.php [QSA,L]
+RewriteRule ^search-by-year/?$ advocate-search-result-by-year.php [QSA,L]
+RewriteRule ^search-by-mobile/?$ advocate-search-result-by-mobile.php [QSA,L]
+
+# Custom 404 Error Document
+ErrorDocument 404 /myadvocate/404.php

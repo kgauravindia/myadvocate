@@ -1,0 +1,43 @@
+{
+  "background_color": "#ffffff",
+  "description": "My Advocate - India's Premier Legal Information & Advocate Directory Platform",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "My Advocate - Legal Platform",
+  "orientation": "portrait-primary",
+  "scope": "./",
+  "short_name": "My Advocate",
+  "start_url": "index.html",
+  "theme_color": "#C90016",
+  "categories": [
+    "business",
+    "legal",
+    "productivity",
+    "education"
+  ],
+  "screenshots": [],
+  "icons": [
+    {
+      "src": "img/icon/android-launchericon-72-72.png",
+      "sizes": "72x72",
+      "type": "image/png"
+    },
+    {
+      "src": "img/icon/android-launchericon-96-96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "img/icon/android-launchericon-192-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "img/icon/android-launchericon-512-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [],
+  "lang": "en"
+}

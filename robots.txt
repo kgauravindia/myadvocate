@@ -1,0 +1,8 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /api/
+Disallow: /opex/
+Disallow: /ais/
+Disallow: /config/
+
+Sitemap: https://myadv.in/sitemap.xml

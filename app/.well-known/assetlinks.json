@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.offerplant.myadvindia",
+        "sha256_cert_fingerprints": ["DA:CF:87:19:77:86:9D:3A:84:1C:43:59:88:18:3D:29:20:0E:97:F2:92:F6:D3:34:52:BB:69:4C:E1:3C:23:61"]
+      }
+    }]

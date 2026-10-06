@@ -1,0 +1,52 @@
+# Sensitive Credentials & Database Config
+config/db.php
+.env
+.env.*
+*.key
+*.pem
+*.cert
+*.crt
+
+# Database Dumps & Backups
+*.sql
+*.sql.gz
+*.sql.zip
+*.sqlite
+*.sqlite3
+*.db
+*.bak
+*.backup
+
+# XML Sitemaps & Feeds
+sitemap*.xml
+*.xml
+!assets/
+!app/fonts/*.svg
+
+# Logs & Temporary Files
+*.log
+error_log
+logs/
+temp/
+tmp/
+*.tmp
+*.cache
+
+# OS & File Explorer Files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# IDE & Editor Files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Local Server Settings
+*.laragon.local
+.laragon/

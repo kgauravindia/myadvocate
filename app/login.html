@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="content-type" content="text/html;charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, maximum-scale=1, user-scalable=no">
+	<meta name="theme-color" content="#C90016">
+	<title>Portal Login - My Advocate</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+	<link rel="stylesheet" href="css/bootstrap.min.css">
+	<link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+<div id='apparea'>
+	<div id='loader'></div>
+
+	<!-- App Header -->
+	<nav class="navbar fixed-top navbar-expand-lg navbar-light text-light" id='apphead'>
+		<div id='apptitle'>
+			<a href="index.html" style="text-decoration:none; display:flex; align-items:center; gap:10px;">
+				<img src='img/logo-circle.png' alt="My Advocate" style="height: 38px; width: 38px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255, 255, 255, 0.85); box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+				<div style="display: flex; flex-direction: column; line-height: 1.1;">
+					<span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: #ffffff; letter-spacing: -0.02em;">MY ADVOCATE</span>
+					<span style="font-size: 0.6rem; font-weight: 700; color: #FEF08A; letter-spacing: 0.06em; text-transform: uppercase;">Legal Portal &bull; India</span>
+				</div>
+			</a>
+		</div>
+		<div id='appmenu'>
+			<a href='https://t.me/myadvocateai' target="_blank"><img src='img/telegram.png' height='22px'></a>
+			<a href='https://instagram.com/myadvocateai' target="_blank"><img src='img/instagram.png' height='22px'></a>
+		</div>
+	</nav>
+
+	<!-- App Body -->
+	<div class="container-fluid" id='appbody'>
+		
+		<div class="app-hero-card text-center mb-3">
+			<div class="app-hero-tag"><i class="fas fa-shield-halved"></i> Member & Advocate Portal</div>
+			<h4 class="app-hero-title">Sign In to My Advocate</h4>
+			<p class="app-hero-lead mb-0">Access Examination, Notifications, Dashboard, & Profiles</p>
+		</div>
+
+		<!-- Registration Area -->
+		<div id='register_area' style='display:none'>
+			<div class="card p-3 mb-3">
+				<h5 style="font-family: var(--font-heading); font-weight: 700; color: var(--brand-dark); margin-bottom: 12px;">Create Your Account</h5>
+				<form id='insert_frm' method='post'>
+					<select id="user_type" name="user_type" class='form-control mb-2' required onchange="toggleAdvocateFields()">
+						<option value="">Select User Type *</option>
+						<option value="advocate">Advocate</option>
+						<option value="member">General Member / Citizen</option>
+					</select>
+					<div id="advocate_fields" style="display: none;">
+						<select name="bc_id" class="form-control mb-2" id="bc_id">
+							<option value="">Bar Council *</option>
+						</select>
+						<input type="text" name="e_no" class="form-control mb-2" id="e_no" placeholder="Enrollment Number *">
+						<input type="number" name="e_year" class="form-control mb-2" id="e_year" max="2026" min="1950" placeholder="Year of Enrollment *">
+					</div>
+					<input type='text' placeholder='Full Name *' class='form-control mb-2' required name='name'>
+					<input type='tel' placeholder='Mobile Number (10 digits) *' class='form-control mb-2' required name='mobile' pattern="[0-9]{10}" maxlength='10' minlength='10' oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);">
+					<input type='email' placeholder='Email Address' class='form-control mb-2' name='email'>
+					<input type='tel' placeholder='Area Pincode *' class='form-control mb-2' name='pincode' maxlength='6' minlength='6' required>
+					<p style="font-size: 0.78rem; color: var(--brand-gray); margin: 8px 0;">By registering you agree to our <b id='terms' style="color:var(--brand-red); cursor:pointer;">Terms</b> and <b id='privacy' style="color:var(--brand-red); cursor:pointer;">Privacy Policy</b>.</p>
+					<button class='btn btn-danger btn-block mb-3' id='signup_btn'><i class="fas fa-user-plus me-1"></i> Register Account</button>
+				</form>
+				<button class='btn btn-outline-secondary btn-block btn-sm' id='login'>Already registered? <b style="color: var(--brand-red);">Sign In</b></button>
+			</div>
+		</div>
+
+		<!-- Login Area -->
+		<div id='login_area'>
+			<div class="card p-3 mb-3">
+				<h5 style="font-family: var(--font-heading); font-weight: 700; color: var(--brand-dark); margin-bottom: 12px;">Secure Sign In</h5>
+				<form id='login_frm' method='post'>
+					<input type='tel' placeholder='Mobile Number *' class='form-control mb-2' required name='user_name' pattern="[0-9]{10}" maxlength='10' minlength='10' oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);">
+					<input type='Password' placeholder='Password *' class='form-control mb-2' name='user_pass' maxlength='25' required>
+					<p style="font-size: 0.78rem; color: var(--brand-gray); margin: 8px 0;">By logging in you agree to our <b id='terms' style="color:var(--brand-red); cursor:pointer;">Terms</b> and <b id='privacy' style="color:var(--brand-red); cursor:pointer;">Privacy Policy</b>.</p>
+					<button class='btn btn-danger btn-block mb-3' id='login_btn'><i class="fas fa-lock me-1"></i> Secure Login</button>
+				</form>
+				<div class="d-flex justify-content-between gap-2 mt-2">
+					<button class='btn btn-outline-secondary btn-sm flex-fill' id='recover'>Forgot Password?</button>
+					<button class='btn btn-outline-danger btn-sm flex-fill font-weight-bold' id='signup'>Sign Up</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Recover Password Area -->
+		<div id='recover_area' style='display:none'>
+			<div class="card p-3 mb-3">
+				<h5 style="font-family: var(--font-heading); font-weight: 700; color: var(--brand-dark); margin-bottom: 12px;">Recover Password</h5>
+				<form id='recover_frm' method='post'>
+					<input type='tel' placeholder='Registered Mobile Number *' class='form-control mb-2' name='mobile' pattern="[0-9]{10}" maxlength='10' minlength='10' required oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);">
+					<button class='btn btn-danger btn-block mb-3' id='recover_btn'><i class="fas fa-key me-1"></i> Send Password</button>
+				</form>
+				<div class="d-flex justify-content-between gap-2 mt-2">
+					<button class='btn btn-outline-secondary btn-sm flex-fill' id='login1'>Back to <b style="color: var(--brand-red);">Login</b></button>
+					<button class='btn btn-outline-danger btn-sm flex-fill' id='signup1'>New User? <b>Sign Up</b></button>
+				</div>
+			</div>
+		</div>
+
+	</div>
+
+	<!-- Fixed Bottom Navigation -->
+	<nav class="navbar fixed-bottom navbar-expand-lg navbar-light" id='appfoot'>
+		<a href='index.html' class='app-nav-item' id='home'>
+			<img src='img/home.png' height='22px' alt="Home">
+			<span>Home</span>
+		</a>
+		<div class='app-nav-item' id='qprev' onclick='shot()'>
+			<img src='img/share.png' height='22px' alt="Share">
+			<span>Share</span>
+		</div>
+		<a href="login.html" class='app-nav-item active'>
+			<img src='img/lock.png' height='22px' alt="Login">
+			<span>Portal</span>
+		</a>
+	</nav>
+</div>
+
+<script src="js/jquery.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/popper.min.js"></script>
+<script src="js/jquery.validate.min.js"></script>
+<script src="js/app.js"></script>  
+<script>
+	$("#signup,#signup1").on('click',function(){
+		$("#register_area").css("display","block");
+		$("#login_area").css("display","none");
+		$("#recover_area").css("display","none");
+	});
+	
+	function toggleAdvocateFields() {
+		var userType = $("#user_type").val();
+		if (userType === 'advocate') {
+			$("#advocate_fields").css("display", "block");
+			$("#bc_id").attr("required", "required");
+			$("#e_no").attr("required", "required");
+			$("#e_year").attr("required", "required");
+			
+			if ($("#bc_id option").length <= 1) {
+				$.ajax({
+					type: 'POST',
+					url: base_url + 'task=bc_list',
+					success: function(data) {
+						$("#bc_id").html('<option value="">Bar Council *</option>' + data);
+					}
+				});
+			}
+		} else {
+			$("#advocate_fields").css("display", "none");
+			$("#bc_id").removeAttr("required").val('');
+			$("#e_no").removeAttr("required").val('');
+			$("#e_year").removeAttr("required").val('');
+		}
+	}
+	$("#recover").on('click',function(){
+		$("#register_area").css("display","none");
+		$("#login_area").css("display","none");
+		$("#recover_area").css("display","block");
+	});
+	
+	$("#login,#login1").on('click',function(){
+		$("#register_area").css("display","none");
+		$("#recover_area").css("display","none");
+		$("#login_area").css("display","block");
+	});
+	if (localStorage.getItem('myadv_id') != null) {
+		window.location = 'main.html';
+	}
+</script>
+</body>
+</html>
