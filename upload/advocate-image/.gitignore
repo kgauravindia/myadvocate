@@ -1,0 +1,6 @@
+# Ignore all uploaded files
+*
+
+# Keep gitignore and index placeholder
+!.gitignore
+!index.html

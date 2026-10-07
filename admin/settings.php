@@ -246,7 +246,7 @@ $olawApiUrl = getAdminConfig('olaw_api_url', OLAW_API_URL);
                     </div>
                     <div>
                         <span style="color: var(--text-muted);">Database:</span>
-                        <strong>MySQL (u305984835_myadv)</strong>
+                        <strong>MySQL (<?= defined('DB_NAME') ? DB_NAME : 'u305984835_myadvocate' ?>)</strong>
                     </div>
                     <div>
                         <span style="color: var(--text-muted);">Server Environment:</span>

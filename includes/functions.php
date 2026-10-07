@@ -52,6 +52,16 @@ function getBarAssociations(string $stateCode = '', string $districtCode = ''): 
     }
 }
 
+function getBarCouncils(): array {
+    $db = getDB();
+    try {
+        $stmt = $db->query("SELECT id, name, code, state_code FROM bc WHERE status = 'ACTIVE' ORDER BY name ASC");
+        return $stmt->fetchAll();
+    } catch (Exception $e) {
+        return [];
+    }
+}
+
 function getCourtsList(): array {
     return [
         'CC' => 'Civil & District Court',
@@ -253,11 +263,176 @@ function generateAdvocateSlug(array $adv): string {
 
 function getAdvocateUrl(array $adv): string {
     if (!empty($adv['public_url'])) {
-        return 'profile.php?link=public=' . urlencode(trim($adv['public_url']));
+        $handle = ltrim(trim($adv['public_url']), '@');
+        return '@' . $handle;
     }
     $slug = generateAdvocateSlug($adv);
     $b64 = base64_encode('id=' . ($adv['id'] ?? 0) . '&name=' . ($adv['name'] ?? ''));
     return 'profile.php?link=' . urlencode($slug) . '&link=' . urlencode($b64);
+}
+
+function calculateAdvocateIndex(array $adv): array {
+    $score = 0;
+    $breakdown = [];
+
+    // 1. Advocate Name (10%)
+    $hasName = !empty(trim($adv['name'] ?? ''));
+    $score += $hasName ? 10 : 0;
+    $breakdown[] = [
+        'key' => 'name',
+        'title' => 'Advocate Name & Identity',
+        'weight' => 10,
+        'completed' => $hasName,
+        'icon' => 'fa-user-check',
+        'tip' => 'Verified legal advocate name.'
+    ];
+
+    // 2. Bar Enrollment Number & Year (20%)
+    $hasEnr = !empty(trim($adv['e_no'] ?? '')) && !empty(trim($adv['e_year'] ?? ''));
+    $score += $hasEnr ? 20 : 0;
+    $breakdown[] = [
+        'key' => 'enrollment',
+        'title' => 'Bar Council Enrollment & Year',
+        'weight' => 20,
+        'completed' => $hasEnr,
+        'icon' => 'fa-id-card',
+        'tip' => 'State Bar Council enrollment registration number and year.'
+    ];
+
+    // 3. State Bar Council & District (10%)
+    $hasStateDist = !empty(trim($adv['state_code'] ?? '')) && !empty(trim($adv['district_code'] ?? ''));
+    $score += $hasStateDist ? 10 : 0;
+    $breakdown[] = [
+        'key' => 'location',
+        'title' => 'State Bar Council & District',
+        'weight' => 10,
+        'completed' => $hasStateDist,
+        'icon' => 'fa-location-dot',
+        'tip' => 'Registered State Bar Council jurisdiction and district.'
+    ];
+
+    // 4. Practice Specializations & Court (20%)
+    $hasPractice = !empty(trim($adv['practice_area'] ?? '')) && trim($adv['practice_area']) !== 'Array';
+    $score += $hasPractice ? 20 : 0;
+    $breakdown[] = [
+        'key' => 'practice',
+        'title' => 'Practice Areas & Court Jurisdiction',
+        'weight' => 20,
+        'completed' => $hasPractice,
+        'icon' => 'fa-scale-balanced',
+        'tip' => 'Selected practice disciplines and primary court of appearance.'
+    ];
+
+    // 5. Contact Information (10%)
+    $hasContact = !empty(trim($adv['mobile'] ?? '')) || !empty(trim($adv['email'] ?? ''));
+    $score += $hasContact ? 10 : 0;
+    $breakdown[] = [
+        'key' => 'contact',
+        'title' => 'Verified Contact Details',
+        'weight' => 10,
+        'completed' => $hasContact,
+        'icon' => 'fa-phone',
+        'tip' => 'Direct contact phone number and communication email.'
+    ];
+
+    // 6. Profile Photograph (15%)
+    $hasPhoto = !empty(getAdvocatePhotoUrl($adv['photo'] ?? ''));
+    $score += $hasPhoto ? 15 : 0;
+    $breakdown[] = [
+        'key' => 'photo',
+        'title' => 'Profile Photograph',
+        'weight' => 15,
+        'completed' => $hasPhoto,
+        'icon' => 'fa-camera',
+        'tip' => 'High-resolution official advocate photograph.'
+    ];
+
+    // 7. ID Proof / Bar Council Certificate (15%)
+    $hasIdProof = !empty(getAdvocateIdProofUrl($adv['id_proof'] ?? ''));
+    $score += $hasIdProof ? 15 : 0;
+    $breakdown[] = [
+        'key' => 'id_proof',
+        'title' => 'Bar Council ID / Certificate',
+        'weight' => 15,
+        'completed' => $hasIdProof,
+        'icon' => 'fa-certificate',
+        'tip' => 'Uploaded Bar Association ID or AIBE certificate proof.'
+    ];
+
+    $percent = min(100, max(0, $score));
+
+    if ($percent >= 90) {
+        $label = 'Excellent Profile';
+        $color = '#16a34a'; // Green
+        $grade = 'A+';
+        $badgeClass = 'adv-index-a-plus';
+    } elseif ($percent >= 70) {
+        $label = 'Strong Profile';
+        $color = '#ca8a04'; // Gold
+        $grade = 'A';
+        $badgeClass = 'adv-index-a';
+    } elseif ($percent >= 50) {
+        $label = 'Good Profile';
+        $color = '#d97706'; // Amber
+        $grade = 'B';
+        $badgeClass = 'adv-index-b';
+    } else {
+        $label = 'Basic Profile';
+        $color = '#dc2626'; // Red
+        $grade = 'C';
+        $badgeClass = 'adv-index-c';
+    }
+
+    $completedCount = count(array_filter($breakdown, fn($b) => $b['completed']));
+
+    return [
+        'percent' => $percent,
+        'label' => $label,
+        'color' => $color,
+        'grade' => $grade,
+        'badge_class' => $badgeClass,
+        'breakdown' => $breakdown,
+        'completed_count' => $completedCount,
+        'total_count' => count($breakdown)
+    ];
+}
+
+/**
+ * Render advocate index percentage badge HTML
+ */
+function renderAdvocateIndexBadge(array $advIndex, string $format = 'badge'): string {
+    $pct = (int)($advIndex['percent'] ?? 0);
+    $grade = sanitize($advIndex['grade'] ?? 'B');
+    $badgeClass = sanitize($advIndex['badge_class'] ?? 'adv-index-b');
+    $label = sanitize($advIndex['label'] ?? 'Profile Index');
+
+    if ($format === 'compact') {
+        return '<span class="adv-index-badge ' . $badgeClass . '" title="Advocate Index: ' . $pct . '% (' . $label . ')"><i class="fas fa-bolt"></i> ' . $pct . '%</span>';
+    }
+
+    if ($format === 'pill') {
+        return '<span class="adv-index-pill ' . $badgeClass . '"><i class="fas fa-bolt"></i> <strong>' . $pct . '%</strong> Advocate Index <span class="adv-index-grade-tag">' . $grade . '</span></span>';
+    }
+
+    return '<span class="adv-index-badge ' . $badgeClass . '" title="Advocate Index: ' . $pct . '% (' . $label . ')"><i class="fas fa-bolt"></i> <strong>' . $pct . '%</strong> Index</span>';
+}
+
+function getPracticeAreaIcon(string $practice): string {
+    $p = strtolower(trim($practice));
+    if (strpos($p, 'crim') !== false) return 'fa-gavel';
+    if (strpos($p, 'civil') !== false) return 'fa-landmark';
+    if (strpos($p, 'prop') !== false || strpos($p, 'real') !== false || strpos($p, 'estate') !== false || strpos($p, 'land') !== false) return 'fa-house-chimney';
+    if (strpos($p, 'corp') !== false || strpos($p, 'comp') !== false || strpos($p, 'busin') !== false || strpos($p, 'contract') !== false) return 'fa-building-columns';
+    if (strpos($p, 'fam') !== false || strpos($p, 'matrimon') !== false || strpos($p, 'divorce') !== false || strpos($p, 'child') !== false) return 'fa-people-roof';
+    if (strpos($p, 'tax') !== false || strpos($p, 'gst') !== false || strpos($p, 'custom') !== false || strpos($p, 'revenue') !== false) return 'fa-file-invoice-dollar';
+    if (strpos($p, 'const') !== false || strpos($p, 'writ') !== false || strpos($p, 'pil') !== false) return 'fa-book-atlas';
+    if (strpos($p, 'consumer') !== false) return 'fa-shield-halved';
+    if (strpos($p, 'cyber') !== false || strpos($p, 'it') !== false || strpos($p, 'intellectual') !== false || strpos($p, 'ipr') !== false || strpos($p, 'patent') !== false) return 'fa-laptop-code';
+    if (strpos($p, 'bank') !== false || strpos($p, 'finance') !== false || strpos($p, 'drf') !== false || strpos($p, 'cheque') !== false || strpos($p, '138') !== false) return 'fa-vault';
+    if (strpos($p, 'labour') !== false || strpos($p, 'employ') !== false || strpos($p, 'service') !== false) return 'fa-user-tie';
+    if (strpos($p, 'arbit') !== false || strpos($p, 'mediat') !== false || strpos($p, 'dispute') !== false) return 'fa-handshake';
+    if (strpos($p, 'motor') !== false || strpos($p, 'mact') !== false || strpos($p, 'accid') !== false) return 'fa-car-burst';
+    return 'fa-scale-balanced';
 }
 
 function parsePracticeAreas(?string $raw): array {
@@ -432,5 +607,447 @@ function formatEnrollmentNumber(?string $eNo): string {
     return 'Available';
 }
 
+function getAdvocatePhotoUrl(?string $photo): string {
+    $p = trim((string)$photo);
+    if (empty($p) || $p === '0' || strtolower($p) === 'null') {
+        return '';
+    }
+    if (preg_match('/^https?:\/\//i', $p)) {
+        return $p;
+    }
+    if (strpos($p, 'upload/advocate-image/') === 0 || strpos($p, 'upload/') === 0) {
+        return $p;
+    }
+    if (file_exists(ROOT_PATH . '/upload/advocate-image/' . $p)) {
+        return 'upload/advocate-image/' . $p;
+    }
+    if (file_exists(ROOT_PATH . '/upload/' . $p)) {
+        return 'upload/' . $p;
+    }
+    return 'upload/advocate-image/' . $p;
+}
 
+function getAdvocateIdProofUrl(?string $idProof): string {
+    $ip = trim((string)$idProof);
+    if (empty($ip) || $ip === '0' || strtolower($ip) === 'null') {
+        return '';
+    }
+    if (preg_match('/^https?:\/\//i', $ip)) {
+        return $ip;
+    }
+    if (strpos($ip, 'upload/id-proof/') === 0 || strpos($ip, 'upload/') === 0) {
+        return $ip;
+    }
+    if (file_exists(ROOT_PATH . '/upload/id-proof/' . $ip)) {
+        return 'upload/id-proof/' . $ip;
+    }
+    if (file_exists(ROOT_PATH . '/upload/' . $ip)) {
+        return 'upload/' . $ip;
+    }
+    return 'upload/id-proof/' . $ip;
+}
+
+function uploadAdvocatePhoto(array $file, int $advocateId): array {
+    if (empty($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        $errMap = [
+            UPLOAD_ERR_INI_SIZE => 'File exceeds server size limit.',
+            UPLOAD_ERR_FORM_SIZE => 'File exceeds form size limit.',
+            UPLOAD_ERR_PARTIAL => 'File upload was incomplete.',
+            UPLOAD_ERR_NO_FILE => 'No photo file selected.',
+        ];
+        return ['success' => false, 'error' => $errMap[$file['error'] ?? 0] ?? 'Photo upload failed.'];
+    }
+
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    $allowed = ['jpg', 'jpeg', 'png'];
+    if (!in_array($ext, $allowed)) {
+        return ['success' => false, 'error' => 'Invalid photo format. Please upload JPG or PNG.'];
+    }
+
+    if ($file['size'] > 50 * 1024) {
+        return ['success' => false, 'error' => 'Photo size exceeds maximum limit of 50 KB.'];
+    }
+
+    $targetDir = ROOT_PATH . '/upload/advocate-image/';
+    if (!is_dir($targetDir)) {
+        @mkdir($targetDir, 0777, true);
+    }
+
+    $filename = 'photo_' . $advocateId . '_' . time() . '_' . bin2hex(random_bytes(3)) . '.' . $ext;
+    $targetPath = $targetDir . $filename;
+
+    if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+        return ['success' => false, 'error' => 'Failed to save photo file on server.'];
+    }
+
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("UPDATE advocate SET photo = ?, updated_at = NOW() WHERE id = ?");
+        $stmt->execute([$filename, $advocateId]);
+    } catch (Exception $e) {
+        return ['success' => false, 'error' => 'Photo saved, but database update failed: ' . $e->getMessage()];
+    }
+
+    return ['success' => true, 'filename' => $filename, 'url' => getAdvocatePhotoUrl($filename)];
+}
+
+function uploadAdvocateIdProof(array $file, int $advocateId): array {
+    if (empty($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        $errMap = [
+            UPLOAD_ERR_INI_SIZE => 'File exceeds server size limit.',
+            UPLOAD_ERR_FORM_SIZE => 'File exceeds form size limit.',
+            UPLOAD_ERR_PARTIAL => 'File upload was incomplete.',
+            UPLOAD_ERR_NO_FILE => 'No ID proof document selected.',
+        ];
+        return ['success' => false, 'error' => $errMap[$file['error'] ?? 0] ?? 'ID proof upload failed.'];
+    }
+
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    $allowed = ['jpg', 'jpeg', 'png', 'pdf'];
+    if (!in_array($ext, $allowed)) {
+        return ['success' => false, 'error' => 'Invalid document format. Please upload JPG, PNG, or PDF.'];
+    }
+
+    if ($file['size'] > 100 * 1024) {
+        return ['success' => false, 'error' => 'ID proof document exceeds maximum limit of 100 KB.'];
+    }
+
+    $targetDir = ROOT_PATH . '/upload/id-proof/';
+    if (!is_dir($targetDir)) {
+        @mkdir($targetDir, 0777, true);
+    }
+
+    $filename = 'id_proof_' . $advocateId . '_' . time() . '_' . bin2hex(random_bytes(3)) . '.' . $ext;
+    $targetPath = $targetDir . $filename;
+
+    if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+        return ['success' => false, 'error' => 'Failed to save ID proof document on server.'];
+    }
+
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("UPDATE advocate SET id_proof = ?, updated_at = NOW() WHERE id = ?");
+        $stmt->execute([$filename, $advocateId]);
+    } catch (Exception $e) {
+        return ['success' => false, 'error' => 'Document saved, but database update failed: ' . $e->getMessage()];
+    }
+
+    return ['success' => true, 'filename' => $filename, 'url' => getAdvocateIdProofUrl($filename)];
+}
+
+function getChangeRequestDocUrl(?string $filename): ?string {
+    if (empty($filename)) {
+        return null;
+    }
+    $clean = trim($filename);
+    if (empty($clean)) {
+        return null;
+    }
+    if (preg_match('/^https?:\/\//i', $clean)) {
+        return $clean;
+    }
+    return APP_URL . '/upload/change-requests/' . rawurlencode($clean);
+}
+
+function uploadChangeRequestDoc(array $file, int $advocateId): array {
+    if (empty($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        $errMap = [
+            UPLOAD_ERR_INI_SIZE => 'File exceeds server size limit.',
+            UPLOAD_ERR_FORM_SIZE => 'File exceeds form size limit.',
+            UPLOAD_ERR_PARTIAL => 'File upload was incomplete.',
+            UPLOAD_ERR_NO_FILE => 'No document file selected.',
+        ];
+        return ['success' => false, 'error' => $errMap[$file['error'] ?? 0] ?? 'Document upload failed.'];
+    }
+
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    $allowed = ['jpg', 'jpeg', 'png', 'pdf'];
+    if (!in_array($ext, $allowed)) {
+        return ['success' => false, 'error' => 'Invalid document format. Please upload JPG, PNG, or PDF.'];
+    }
+
+    if ($file['size'] > 500 * 1024) {
+        return ['success' => false, 'error' => 'Document exceeds maximum size limit of 500 KB.'];
+    }
+
+    $targetDir = ROOT_PATH . '/upload/change-requests/';
+    if (!is_dir($targetDir)) {
+        @mkdir($targetDir, 0777, true);
+    }
+
+    $filename = 'req_' . $advocateId . '_' . time() . '_' . bin2hex(random_bytes(3)) . '.' . $ext;
+    $targetPath = $targetDir . $filename;
+
+    if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+        return ['success' => false, 'error' => 'Failed to save document on server.'];
+    }
+
+    return ['success' => true, 'filename' => $filename, 'url' => getChangeRequestDocUrl($filename)];
+}
+
+/**
+ * Retrieve active configuration values from advocate_config table
+ */
+function getAdvocateConfigs(?string $key = null): array {
+    static $cache = [];
+    $cacheKey = $key ?? '__ALL__';
+    if (isset($cache[$cacheKey])) {
+        return $cache[$cacheKey];
+    }
+
+    try {
+        $db = getDB();
+        if ($key !== null) {
+            $stmt = $db->prepare("SELECT * FROM advocate_config WHERE config_key = ? AND status = 'ACTIVE' ORDER BY display_order ASC, config_value ASC");
+            $stmt->execute([$key]);
+        } else {
+            $stmt = $db->query("SELECT * FROM advocate_config WHERE status = 'ACTIVE' ORDER BY config_key ASC, display_order ASC, config_value ASC");
+        }
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $cache[$cacheKey] = $results;
+        return $results;
+    } catch (Exception $e) {
+        return [];
+    }
+}
+
+function getAdvocatePracticeAreas(): array {
+    $rows = getAdvocateConfigs('practice_area');
+    $areas = [];
+    foreach ($rows as $r) {
+        $val = trim($r['config_value']);
+        if (!empty($val) && !in_array($val, $areas)) {
+            $areas[] = $val;
+        }
+    }
+    if (empty($areas)) {
+        $areas = ['Civil Law', 'Criminal Defense', 'Corporate Law', 'Family & Matrimonial', 'Property & Real Estate', 'Tax Law', 'Constitutional Law', 'Cyber Law', 'Consumer Protection', 'Labour & Service', 'Banking & Debt Recovery', 'Arbitration & Mediation'];
+    }
+    return $areas;
+}
+
+function getAdvocateCourtTypes(): array {
+    $rows = getAdvocateConfigs('court_type');
+    $courts = [];
+    foreach ($rows as $r) {
+        $val = trim($r['config_value']);
+        if (str_contains($val, '|')) {
+            [$code, $name] = explode('|', $val, 2);
+            $courts[] = ['code' => trim($code), 'name' => trim($name)];
+        } else {
+            $courts[] = ['code' => $val, 'name' => $val];
+        }
+    }
+    if (empty($courts)) {
+        $courts = [
+            ['code' => 'CC', 'name' => 'District / Civil Court'],
+            ['code' => 'HC', 'name' => 'High Court'],
+            ['code' => 'SC', 'name' => 'Supreme Court of India'],
+            ['code' => 'EC', 'name' => 'Executive Court'],
+            ['code' => 'OC', 'name' => 'Other Court']
+        ];
+    }
+    return $courts;
+}
+
+function getAdvocateEducationLevels(): array {
+    $rows = getAdvocateConfigs('education_level');
+    $levels = [];
+    foreach ($rows as $r) {
+        $val = trim($r['config_value']);
+        if (str_contains($val, '|')) {
+            [$code, $name] = explode('|', $val, 2);
+            $levels[] = ['code' => trim($code), 'name' => trim($name)];
+        } else {
+            $levels[] = ['code' => $val, 'name' => $val];
+        }
+    }
+    return $levels;
+}
+
+/**
+ * Detect client platform (web / app)
+ */
+function detectClientPlatform(): string {
+    if (!empty($_GET['source']) && strtolower($_GET['source']) === 'app') return 'app';
+    if (!empty($_GET['platform']) && strtolower($_GET['platform']) === 'app') return 'app';
+    if (!empty($_SESSION['client_platform']) && $_SESSION['client_platform'] === 'app') return 'app';
+    
+    $userAgent = strtolower($_SERVER['HTTP_USER_AGENT'] ?? '');
+    $requestedWith = strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '');
+    
+    if (str_contains($requestedWith, 'app') || str_contains($requestedWith, 'myadvocate')) {
+        return 'app';
+    }
+    if (str_contains($userAgent, 'wv') || str_contains($userAgent, 'flutter') || str_contains($userAgent, 'reactnative') || str_contains($userAgent, 'cordova') || str_contains($userAgent, 'myadvocateapp')) {
+        return 'app';
+    }
+    
+    return 'web';
+}
+
+/**
+ * Record advocate seen event in advocate_data table (1 row per advocate)
+ */
+function recordAdvocateSeen(int $advocateId, ?string $platform = null): void {
+    if ($advocateId <= 0) return;
+    $platform = $platform ?: detectClientPlatform();
+    
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("INSERT INTO advocate_data 
+            (advocate_id, last_seen_from, seen_count, last_seen_at, created_at) 
+            VALUES (?, ?, 1, NOW(), NOW())
+            ON DUPLICATE KEY UPDATE 
+                last_seen_from = VALUES(last_seen_from),
+                seen_count = seen_count + 1,
+                last_seen_at = NOW()");
+        $stmt->execute([$advocateId, $platform]);
+    } catch (Exception $e) {}
+}
+
+/**
+ * Record advocate profile update details in advocate_data table
+ */
+function recordAdvocateProfileUpdate(int $advocateId, array|string $changes, string $updatedBy = 'advocate'): void {
+    if ($advocateId <= 0) return;
+    
+    $summary = '';
+    $fieldsJson = '';
+    
+    if (is_array($changes)) {
+        $cleanChanges = [];
+        $fieldNames = [];
+        foreach ($changes as $k => $v) {
+            $fieldNames[] = is_numeric($k) ? $v : $k;
+            $cleanChanges[$k] = $v;
+        }
+        $summary = "Updated " . implode(', ', array_unique($fieldNames));
+        $fieldsJson = json_encode($cleanChanges, JSON_UNESCAPED_UNICODE);
+    } else {
+        $summary = (string)$changes;
+        $fieldsJson = json_encode(['summary' => $summary], JSON_UNESCAPED_UNICODE);
+    }
+    
+    $logEntry = [
+        'timestamp' => date('Y-m-d H:i:s'),
+        'updated_by' => $updatedBy,
+        'summary' => $summary,
+        'platform' => detectClientPlatform()
+    ];
+    
+    try {
+        $db = getDB();
+        
+        // Fetch existing history
+        $existingHistory = [];
+        $chk = $db->prepare("SELECT update_history FROM advocate_data WHERE advocate_id = ? LIMIT 1");
+        $chk->execute([$advocateId]);
+        $row = $chk->fetch();
+        if ($row && !empty($row['update_history'])) {
+            $decoded = json_decode($row['update_history'], true);
+            if (is_array($decoded)) {
+                $existingHistory = $decoded;
+            }
+        }
+        
+        // Prepend new entry and keep last 25 logs
+        array_unshift($existingHistory, $logEntry);
+        $existingHistory = array_slice($existingHistory, 0, 25);
+        $historyJson = json_encode($existingHistory, JSON_UNESCAPED_UNICODE);
+        
+        $stmt = $db->prepare("INSERT INTO advocate_data 
+            (advocate_id, last_seen_from, seen_count, last_seen_at, last_updated_at, last_update_fields, last_update_summary, update_history, created_at) 
+            VALUES (?, ?, 1, NOW(), NOW(), ?, ?, ?, NOW())
+            ON DUPLICATE KEY UPDATE 
+                last_updated_at = NOW(),
+                last_update_fields = VALUES(last_update_fields),
+                last_update_summary = VALUES(last_update_summary),
+                update_history = VALUES(update_history)");
+        $stmt->execute([
+            $advocateId,
+            detectClientPlatform(),
+            $fieldsJson,
+            $summary,
+            $historyJson
+        ]);
+    } catch (Exception $e) {}
+}
+
+/**
+ * Get advocate metadata and tracking from advocate_data table
+ */
+function getAdvocateData(int $advocateId): ?array {
+    if ($advocateId <= 0) return null;
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("SELECT * FROM advocate_data WHERE advocate_id = ? LIMIT 1");
+        $stmt->execute([$advocateId]);
+        $res = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $res ?: null;
+    } catch (Exception $e) {
+        return null;
+    }
+}
+
+/**
+ * Record when a logged-in member views an advocate's profile
+ */
+function recordMemberAdvocateView(int $memberId, int $advocateId, ?string $advocateName = null, ?string $memberName = null): void {
+    if ($memberId <= 0 || $advocateId <= 0) return;
+    
+    try {
+        $db = getDB();
+        
+        // Fetch names if not passed
+        if (empty($advocateName)) {
+            $aStmt = $db->prepare("SELECT name FROM advocate WHERE id = ? LIMIT 1");
+            $aStmt->execute([$advocateId]);
+            $advocateName = $aStmt->fetchColumn() ?: 'Advocate';
+        }
+        if (empty($memberName)) {
+            if (!empty($_SESSION['member_name'])) {
+                $memberName = $_SESSION['member_name'];
+            } else {
+                $mStmt = $db->prepare("SELECT name FROM member WHERE id = ? LIMIT 1");
+                $mStmt->execute([$memberId]);
+                $memberName = $mStmt->fetchColumn() ?: 'Member';
+            }
+        }
+        
+        $stmt = $db->prepare("INSERT INTO member_advocate_views 
+            (member_id, advocate_id, advocate_name, member_name, view_count, last_viewed_at, created_at) 
+            VALUES (?, ?, ?, ?, 1, NOW(), NOW())
+            ON DUPLICATE KEY UPDATE 
+                advocate_name = VALUES(advocate_name),
+                member_name = VALUES(member_name),
+                view_count = view_count + 1,
+                last_viewed_at = NOW()");
+        $stmt->execute([$memberId, $advocateId, $advocateName, $memberName]);
+    } catch (Exception $e) {}
+}
+
+/**
+ * Get advocate profile views for a member
+ */
+function getMemberAdvocateViews(int $memberId, int $limit = 30): array {
+    if ($memberId <= 0) return [];
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("SELECT v.*, a.photo, a.court, a.practicing_courts, a.practice_area, a.e_no, a.e_year, a.public_url, a.plan_type, a.type, a.state_code, a.district_code, s.name as state_name, d.name as district_name 
+            FROM member_advocate_views v
+            LEFT JOIN advocate a ON v.advocate_id = a.id
+            LEFT JOIN state s ON a.state_code = s.code
+            LEFT JOIN district d ON a.district_code = d.code
+            WHERE v.member_id = ? 
+            ORDER BY v.last_viewed_at DESC 
+            LIMIT ?");
+        $stmt->bindValue(1, $memberId, PDO::PARAM_INT);
+        $stmt->bindValue(2, $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    } catch (Exception $e) {
+        return [];
+    }
+}
 

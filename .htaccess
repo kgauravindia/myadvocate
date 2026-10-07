@@ -13,13 +13,13 @@ RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 
+# Profile routing with handle or public URL (e.g. /@kumargaurav or /profile/kumargaurav)
+RewriteRule ^@([a-zA-Z0-9_.-]+)/?$ profile.php?url=$1 [QSA,L]
+RewriteRule ^profile/([a-zA-Z0-9_.-]+)/?$ profile.php?url=$1 [QSA,L]
+
 # Clean URL to PHP file mapping
 RewriteCond %{REQUEST_FILENAME}.php -f
 RewriteRule ^([a-zA-Z0-9_-]+)/?$ $1.php [QSA,L]
-
-# Profile routing with public URL or slug (e.g., /profile/kumargaurav or /@kumargaurav)
-RewriteRule ^profile/([a-zA-Z0-9_.-]+)/?$ profile.php?url=$1 [QSA,L]
-RewriteRule ^@([a-zA-Z0-9_.-]+)/?$ profile.php?url=$1 [QSA,L]
 
 # Acts routing (e.g. /acts/bns or /acts/45)
 RewriteRule ^acts/([a-zA-Z0-9_-]+)/?$ act-details.php?id=$1 [QSA,L]

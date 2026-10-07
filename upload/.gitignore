@@ -1,0 +1,6 @@
+# Ignore files at root of upload
+/*.*
+
+# Keep gitignore and index placeholder
+!.gitignore
+!index.html

@@ -73,14 +73,15 @@ try {
         $stmt->execute([(int)$id]);
         $advocate = $stmt->fetch();
     } elseif (!empty($publicUrl)) {
+        $cleanPublicUrl = ltrim(trim($publicUrl), '@');
         $stmt = $db->prepare("SELECT a.*, s.name as state_name, d.name as district_name, bc.name as bar_council_name, ba.name as association_name 
                               FROM advocate a 
                               LEFT JOIN state s ON a.state_code = s.code 
                               LEFT JOIN district d ON a.district_code = d.code 
                               LEFT JOIN bc ON a.bc_id = bc.id 
                               LEFT JOIN ba ON a.ba_code = ba.code 
-                              WHERE a.public_url = ? LIMIT 1");
-        $stmt->execute([$publicUrl]);
+                              WHERE a.public_url = ? OR a.public_url = ? OR a.public_url = ? LIMIT 1");
+        $stmt->execute([$publicUrl, $cleanPublicUrl, '@' . $cleanPublicUrl]);
         $advocate = $stmt->fetch();
 
         // If not matched directly on public_url, try parsing the slug components
@@ -149,12 +150,9 @@ try {
 }
 
 if ($advocate && !empty($advocate['public_url'])) {
-    $hasPublicParam = false;
-    if (!empty($_SERVER['QUERY_STRING']) && (stripos($_SERVER['QUERY_STRING'], 'public=') !== false || stripos($_SERVER['QUERY_STRING'], 'link=public=') !== false)) {
-        $hasPublicParam = true;
-    }
-    if (!$hasPublicParam && !empty($_GET['id'])) {
-        header("Location: profile.php?link=public=" . urlencode(trim($advocate['public_url'])), true, 301);
+    $cleanHandle = ltrim(trim($advocate['public_url']), '@');
+    if (!empty($_GET['id']) && empty($_GET['url'])) {
+        header("Location: @" . urlencode($cleanHandle), true, 301);
         exit;
     }
 }
@@ -177,11 +175,20 @@ if (!$advocate) {
     exit;
 }
 
+// Track advocate profile view in advocate_data table
+recordAdvocateSeen((int)$advocate['id']);
+
+// If logged in as member, record in member_advocate_views table
+if (!empty($_SESSION['member_id'])) {
+    recordMemberAdvocateView((int)$_SESSION['member_id'], (int)$advocate['id'], $advocate['name'] ?? 'Advocate');
+}
+
 // Check if currently logged in user is viewing their own profile
 $isOwnProfile = (!empty($_SESSION['advocate_id']) && !empty($advocate['id']) && (int)$_SESSION['advocate_id'] === (int)$advocate['id']);
 
 // Prepare profile display variables
 $badge = getVerificationBadge($advocate);
+$advIndex = calculateAdvocateIndex($advocate);
 $stateName = $advocate['state_name'] ?: getStateName($advocate['state_code'] ?? '');
 $districtName = $advocate['district_name'] ?: getDistrictName($advocate['district_code'] ?? '');
 $courtName = getCourtName($advocate['court'] ?? '');
@@ -193,8 +200,7 @@ $maskedMobile = maskContactInfo($advocate['mobile'] ?? '', $advocate['mobile_vis
 $maskedEmail = maskContactInfo($advocate['email'] ?? '', $advocate['email_visibility'] ?? 'REGISTERED', $isOwnProfile);
 $maskedAddress = maskContactInfo($advocate['address'] ?? '', $advocate['address_visibility'] ?? 'PRIVATE', $isOwnProfile);
 
-// Education & Experience & Enrollment logic
-$educationDegree = getEducationDegree($advocate['education'] ?? '');
+// Experience & Enrollment logic
 $experienceStr = formatPracticeExperience($advocate['e_year'] ?? '');
 $enrollmentStatus = formatEnrollmentNumber($advocate['e_no'] ?? '');
 
@@ -202,13 +208,19 @@ $canonicalUrl = APP_URL . '/' . getAdvocateUrl($advocate);
 $pageTitle = ($advocate['name'] ?: 'Advocate Profile') . " - Advocate Directory";
 $pageDescription = "Official digital profile for Advocate " . ($advocate['name'] ?? '') . ", practicing at " . $courtName . ", " . $districtName . ", " . $stateName . ".";
 
-// Fetch Related Advocates (from same district or state)
+// Fetch Related Advocates (from same district or state) with Profile Completeness Priority
 $relatedAdvocates = [];
 try {
-    $rStmt = $db->prepare("SELECT id, name, photo, practice_area, public_url, plan_type, type, state_code, district_code 
+    $rStmt = $db->prepare("SELECT id, name, photo, practice_area, public_url, plan_type, type, state_code, district_code, e_no, e_year, court, mobile, email, about, id_proof 
                            FROM advocate 
                            WHERE status = 'ACTIVE' AND id != ? AND (district_code = ? OR state_code = ?) 
-                           ORDER BY (district_code = ?) DESC, id DESC LIMIT 3");
+                           ORDER BY (district_code = ?) DESC,
+                           (
+                               (CASE WHEN photo IS NOT NULL AND photo != '' AND photo != '0' THEN 20 ELSE 0 END) +
+                               (CASE WHEN id_proof IS NOT NULL AND id_proof != '' AND id_proof != '0' THEN 20 ELSE 0 END) +
+                               (CASE WHEN public_url IS NOT NULL AND public_url != '' THEN 15 ELSE 0 END) +
+                               (CASE WHEN practice_area IS NOT NULL AND practice_area != '' AND practice_area != 'Array' THEN 15 ELSE 0 END)
+                           ) DESC, id DESC LIMIT 3");
     $rStmt->execute([(int)$advocate['id'], $advocate['district_code'] ?? '', $advocate['state_code'] ?? '', $advocate['district_code'] ?? '']);
     $relatedAdvocates = $rStmt->fetchAll();
 } catch (Exception $e) {
@@ -247,8 +259,11 @@ require_once INCLUDES_PATH . '/header.php';
     <div class="profile-header-card">
         <div class="profile-header-grid">
             <div class="profile-large-avatar">
-                <?php if (!empty($advocate['photo'])): ?>
-                    <img src="<?= sanitize($advocate['photo']) ?>" alt="<?= sanitize($advocate['name']) ?>" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">
+                <?php 
+                $advPhotoUrl = getAdvocatePhotoUrl($advocate['photo'] ?? '');
+                if (!empty($advPhotoUrl)): 
+                ?>
+                    <img src="<?= sanitize($advPhotoUrl) ?>" alt="<?= sanitize($advocate['name']) ?>" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">
                 <?php else: ?>
                     <?= strtoupper(substr(trim($advocate['name'] ?: 'A'), 0, 1)) ?>
                 <?php endif; ?>
@@ -259,24 +274,15 @@ require_once INCLUDES_PATH . '/header.php';
                     <span class="badge-verification <?= $badge['badge_class'] ?>">
                         <i class="fas <?= $badge['icon'] ?>"></i> <?= $badge['label'] ?>
                     </span>
-                    <span style="font-size: 0.75rem; color: var(--text-muted); margin-left: 0.5rem;">
-                        (<?= $badge['desc'] ?>)
-                    </span>
                 </div>
                 <h1><?= sanitize($advocate['name'] ?: 'Advocate') ?></h1>
                 
-                <div class="profile-subhead">
+                <div class="profile-subhead" style="margin-bottom: 0;">
                     <span><i class="fas fa-id-card" style="color: var(--brand-red);"></i> Enrollment: <strong><?= sanitize($enrollmentStatus) ?></strong></span>
                     <span>&bull;</span>
                     <span><i class="fas fa-location-dot" style="color: var(--brand-accent);"></i> <?= sanitize($districtName ?: 'District') ?><?= $stateName ? ', ' . sanitize($stateName) : '' ?></span>
                     <span>&bull;</span>
                     <span><i class="fas fa-gavel"></i> <?= sanitize($courtName) ?></span>
-                </div>
-
-                <div class="practice-tags" style="margin-bottom: 0;">
-                    <?php foreach ($practices as $p): ?>
-                        <span class="practice-pill"><i class="fas fa-scale-balanced" style="font-size: 0.7rem; color: var(--brand-red);"></i> <?= sanitize($p) ?></span>
-                    <?php endforeach; ?>
                 </div>
             </div>
 
@@ -330,13 +336,21 @@ require_once INCLUDES_PATH . '/header.php';
                         <div class="stat-label">Primary Court Jurisdiction</div>
                         <div style="font-weight: 600;"><?= sanitize($courtName) ?></div>
                     </div>
+                    <?php if (!empty($advocate['practicing_courts'])): ?>
+                    <div>
+                        <div class="stat-label">Practicing Courts</div>
+                        <div style="font-weight: 600;"><?= sanitize($advocate['practicing_courts']) ?></div>
+                    </div>
+                    <?php endif; ?>
+                    <?php if (!empty($advocate['sitting_address'])): ?>
+                    <div>
+                        <div class="stat-label">Sitting Place / Chamber</div>
+                        <div style="font-weight: 600;"><?= sanitize($advocate['sitting_address']) ?></div>
+                    </div>
+                    <?php endif; ?>
                     <div>
                         <div class="stat-label">Languages Known</div>
                         <div style="font-weight: 600;"><?= sanitize($advocate['languages'] ?? 'Hindi, English') ?></div>
-                    </div>
-                    <div>
-                        <div class="stat-label">Education / Degree</div>
-                        <div style="font-weight: 600;"><?= sanitize($educationDegree) ?></div>
                     </div>
                 </div>
             </div>
@@ -349,15 +363,31 @@ require_once INCLUDES_PATH . '/header.php';
                 </p>
             </div>
 
-            <!-- Areas of Practice Card -->
+            <!-- Areas of Practice / Specialization Card -->
             <div class="stat-box">
-                <h2 style="font-size: 1.25rem; margin-bottom: 1rem; color: var(--primary);"><i class="fas fa-scale-balanced" style="color: var(--brand-red);"></i> Areas of Specialization</h2>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem;">
-                    <?php foreach ($practices as $practice): ?>
-                        <div style="background: var(--bg-alt); padding: 0.75rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.5rem;">
-                            <i class="fas fa-check-circle" style="color: #059669;"></i>
-                            <span style="font-weight: 600; font-size: 0.875rem;"><?= sanitize($practice) ?></span>
-                        </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <h2 style="font-size: 1.25rem; margin: 0; color: var(--primary); display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-scale-balanced" style="color: var(--brand-red);"></i> Areas of Specialization
+                    </h2>
+                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--brand-red); background: var(--brand-red-light); border: 1px solid var(--brand-red-border); padding: 0.2rem 0.6rem; border-radius: var(--radius-full);">
+                        <?= count($practices) ?> <?= count($practices) === 1 ? 'Practice Field' : 'Practice Fields' ?>
+                    </span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.85rem;">
+                    <?php foreach ($practices as $practice): 
+                        $pIcon = getPracticeAreaIcon($practice);
+                        $searchLink = "advocate-search-result?" . (!empty($advocate['state_code']) ? 'state=' . urlencode($advocate['state_code']) . '&' : '') . "practice_area=" . urlencode($practice);
+                    ?>
+                        <a href="<?= $searchLink ?>" style="background: #ffffff; padding: 0.85rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; text-decoration: none; color: var(--text-main); box-shadow: var(--shadow-sm); transition: var(--transition);" onmouseover="this.style.borderColor='var(--brand-gold)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.borderColor='var(--border-color)'; this.style.transform='none';">
+                            <div style="display: flex; align-items: center; gap: 0.65rem;">
+                                <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--brand-red-light); color: var(--brand-red); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0;">
+                                    <i class="fas <?= $pIcon ?>"></i>
+                                </div>
+                                <span style="font-weight: 700; font-size: 0.9rem;"><?= sanitize($practice) ?></span>
+                            </div>
+                            <i class="fas fa-chevron-right" style="font-size: 0.7rem; color: var(--text-muted);"></i>
+                        </a>
                     <?php endforeach; ?>
                 </div>
             </div>
@@ -365,6 +395,7 @@ require_once INCLUDES_PATH . '/header.php';
 
         <!-- Right Column: Contact & Directory Information -->
         <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            
             <!-- Contact & Privacy Card -->
             <div class="stat-box" style="border-top: 4px solid var(--brand-red);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -454,8 +485,11 @@ require_once INCLUDES_PATH . '/header.php';
                     <div class="advocate-card">
                         <div class="card-top">
                             <div class="advocate-avatar" style="background: linear-gradient(135deg, #fee2e2 0%, #fef3c7 100%); color: var(--brand-red);">
-                                <?php if (!empty($rel['photo'])): ?>
-                                    <img src="<?= sanitize($rel['photo']) ?>" alt="<?= sanitize($rel['name']) ?>" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;">
+                                <?php 
+                                $relPhotoUrl = getAdvocatePhotoUrl($rel['photo'] ?? '');
+                                if (!empty($relPhotoUrl)): 
+                                ?>
+                                    <img src="<?= sanitize($relPhotoUrl) ?>" alt="<?= sanitize($rel['name']) ?>" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;">
                                 <?php else: ?>
                                     <?= strtoupper(substr(trim($rel['name'] ?: 'A'), 0, 1)) ?>
                                 <?php endif; ?>

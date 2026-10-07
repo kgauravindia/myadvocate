@@ -109,8 +109,16 @@ try {
 
 $totalPages = max(1, ceil($totalResults / $perPage));
 
-// Execute Paginated Fetch
-$sql .= " ORDER BY premium_member DESC, (CASE WHEN public_url IS NOT NULL THEN 1 ELSE 0 END) DESC, id DESC LIMIT $perPage OFFSET $offset";
+// Execute Paginated Fetch with Profile Completeness Ranking Preference
+$sql .= " ORDER BY (
+    (CASE WHEN premium_member = 1 OR plan_type = 'verified' OR plan_type = 'VERIFIED' THEN 30 ELSE 0 END) +
+    (CASE WHEN photo IS NOT NULL AND photo != '' AND photo != '0' THEN 20 ELSE 0 END) +
+    (CASE WHEN id_proof IS NOT NULL AND id_proof != '' AND id_proof != '0' THEN 20 ELSE 0 END) +
+    (CASE WHEN public_url IS NOT NULL AND public_url != '' THEN 15 ELSE 0 END) +
+    (CASE WHEN practice_area IS NOT NULL AND practice_area != '' AND practice_area != 'Array' THEN 15 ELSE 0 END) +
+    (CASE WHEN mobile IS NOT NULL AND mobile != '' THEN 5 ELSE 0 END) +
+    (CASE WHEN e_no IS NOT NULL AND e_no != '' AND e_year IS NOT NULL AND e_year != '' THEN 5 ELSE 0 END)
+) DESC, id DESC LIMIT $perPage OFFSET $offset";
 try {
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
@@ -308,9 +316,12 @@ require_once INCLUDES_PATH . '/header.php';
                         <div class="advocate-card">
                             <div>
                                 <div class="card-top">
-                                    <div class="advocate-avatar" style="<?= !empty($adv['photo']) ? 'padding: 0;' : '' ?>">
-                                        <?php if (!empty($adv['photo'])): ?>
-                                            <img src="<?= sanitize($adv['photo']) ?>" alt="<?= sanitize($adv['name']) ?>" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;">
+                                    <?php 
+                                    $cardPhotoUrl = getAdvocatePhotoUrl($adv['photo'] ?? '');
+                                    ?>
+                                    <div class="advocate-avatar" style="<?= !empty($cardPhotoUrl) ? 'padding: 0;' : '' ?>">
+                                        <?php if (!empty($cardPhotoUrl)): ?>
+                                            <img src="<?= sanitize($cardPhotoUrl) ?>" alt="<?= sanitize($adv['name']) ?>" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;">
                                         <?php else: ?>
                                             <?= strtoupper(substr(trim($adv['name'] ?: 'A'), 0, 1)) ?>
                                         <?php endif; ?>

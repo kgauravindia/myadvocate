@@ -2432,5 +2432,162 @@ a:hover {
     border-top-color: #1e293b;
 }
 
+/* ==========================================================================
+   Advocate Index (%) Badges, Meter & Breakdown System
+   ========================================================================== */
+.adv-index-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.22rem 0.65rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    border: 1px solid transparent;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+.adv-index-badge i {
+    font-size: 0.7rem;
+}
+.adv-index-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: var(--radius-full);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.2;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+.adv-index-grade-tag {
+    display: inline-block;
+    padding: 0.1rem 0.4rem;
+    font-size: 0.7rem;
+    font-weight: 800;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.12);
+    letter-spacing: 0.02em;
+}
+.adv-index-a-plus {
+    background: #ecfdf5;
+    color: #047857;
+    border-color: #a7f3d0;
+}
+.adv-index-a {
+    background: #fefce8;
+    color: #a16207;
+    border-color: #fde047;
+}
+.adv-index-b {
+    background: #fffbeb;
+    color: #b45309;
+    border-color: #fcd34d;
+}
+.adv-index-c {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-color: #fca5a5;
+}
+
+/* Advocate Index Gauge & Dashboard Card */
+.adv-index-meter-box {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+}
+.adv-index-meter-bar-bg {
+    width: 100%;
+    height: 10px;
+    background: #e5e7eb;
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin: 0.75rem 0;
+    position: relative;
+}
+.adv-index-meter-bar-fill {
+    height: 100%;
+    border-radius: var(--radius-full);
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.adv-index-checklist {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+.adv-index-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 0.85rem;
+    background: var(--bg-alt);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    font-size: 0.8125rem;
+}
+.adv-index-item.completed {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #166534;
+}
+.adv-index-item.pending {
+    background: #fffbeb;
+    border-color: #fef08a;
+    color: #92400e;
+}
+
+/* Dark mode overrides for Advocate Index */
+[data-theme="dark"] .adv-index-a-plus {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border-color: rgba(16, 185, 129, 0.3);
+}
+[data-theme="dark"] .adv-index-a {
+    background: rgba(234, 179, 8, 0.15);
+    color: #facc15;
+    border-color: rgba(234, 179, 8, 0.3);
+}
+[data-theme="dark"] .adv-index-b {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border-color: rgba(245, 158, 11, 0.3);
+}
+[data-theme="dark"] .adv-index-c {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+[data-theme="dark"] .adv-index-meter-box {
+    background: #111827;
+    border-color: #1e293b;
+}
+[data-theme="dark"] .adv-index-meter-bar-bg {
+    background: #1e293b;
+}
+[data-theme="dark"] .adv-index-item {
+    background: #1e293b;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+[data-theme="dark"] .adv-index-item.completed {
+    background: rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.25);
+    color: #6ee7b7;
+}
+[data-theme="dark"] .adv-index-item.pending {
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.25);
+    color: #fde047;
+}
+
+
 
 

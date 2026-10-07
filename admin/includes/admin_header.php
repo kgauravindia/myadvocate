@@ -13,9 +13,11 @@ $adminRole = $_SESSION['admin_role'] ?? 'ADMIN';
 
 // Quick counter for pending grievances
 $pendingContactsCount = 0;
+$pendingChangeRequestsCount = 0;
 try {
     $db = getDB();
     $pendingContactsCount = (int)$db->query("SELECT COUNT(*) FROM contact WHERE status = 'PENDING' OR status = 'NEW' OR status IS NULL OR status = ''")->fetchColumn();
+    $pendingChangeRequestsCount = (int)$db->query("SELECT COUNT(*) FROM advocate_change_requests WHERE status = 'PENDING'")->fetchColumn();
 } catch (Exception $e) {}
 ?>
 <!DOCTYPE html>
@@ -365,6 +367,19 @@ try {
                 <li>
                     <a href="advocate_reports.php" class="admin-nav-link <?= $currentAdminPage === 'advocate_reports' ? 'active' : '' ?>">
                         <span class="admin-nav-link-content"><i class="fas fa-chart-line"></i> Advocate Reports</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="change_requests.php" class="admin-nav-link <?= $currentAdminPage === 'change_requests' ? 'active' : '' ?>">
+                        <span class="admin-nav-link-content"><i class="fas fa-clipboard-check"></i> Change Requests</span>
+                        <?php if ($pendingChangeRequestsCount > 0): ?>
+                            <span class="admin-badge-count"><?= $pendingChangeRequestsCount ?></span>
+                        <?php endif; ?>
+                    </a>
+                </li>
+                <li>
+                    <a href="advocate_config.php" class="admin-nav-link <?= $currentAdminPage === 'advocate_config' ? 'active' : '' ?>">
+                        <span class="admin-nav-link-content"><i class="fas fa-sliders"></i> Advocate Config</span>
                     </a>
                 </li>
             </ul>

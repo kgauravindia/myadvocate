@@ -32,6 +32,24 @@ tmp/
 *.tmp
 *.cache
 
+# Uploads & Media Files
+upload/logo/*
+!upload/logo/.gitignore
+!upload/logo/index.html
+upload/advocate-image/*
+!upload/advocate-image/.gitignore
+!upload/advocate-image/index.html
+upload/id-proof/*
+!upload/id-proof/.gitignore
+!upload/id-proof/index.html
+upload/change-requests/*
+!upload/change-requests/.gitignore
+!upload/change-requests/index.html
+upload/*.*
+!upload/.gitignore
+!upload/index.html
+
+
 # OS & File Explorer Files
 .DS_Store
 Thumbs.db

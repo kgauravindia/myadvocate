@@ -119,6 +119,7 @@ try {
                     <th>Enrollment No.</th>
                     <th>State / District</th>
                     <th>Status Badge</th>
+                    <th>Advocate Index</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -126,6 +127,7 @@ try {
                 <?php if (!empty($advocates)): ?>
                     <?php foreach ($advocates as $adv): 
                         $badge = getVerificationBadge($adv);
+                        $advIndex = calculateAdvocateIndex($adv);
                     ?>
                         <tr>
                             <td>#<?= $adv['id'] ?></td>
@@ -148,6 +150,9 @@ try {
                                 <span class="badge-verification <?= $badge['badge_class'] ?>" style="font-size: 0.75rem;">
                                     <?= $badge['label'] ?>
                                 </span>
+                            </td>
+                            <td>
+                                <?= renderAdvocateIndexBadge($advIndex, 'compact') ?>
                             </td>
                             <td>
                                 <div style="display: flex; gap: 0.35rem; align-items: center;">

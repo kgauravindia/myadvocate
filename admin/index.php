@@ -26,6 +26,7 @@ try {
     $totalBarAssns = (int)$db->query("SELECT COUNT(*) FROM ba WHERE status = 'ACTIVE'")->fetchColumn();
     $totalHighCourts = (int)$db->query("SELECT COUNT(*) FROM hc WHERE status = 'ACTIVE'")->fetchColumn();
     $pendingGrievances = (int)$db->query("SELECT COUNT(*) FROM contact WHERE status = 'PENDING' OR status = 'NEW' OR status IS NULL OR status = ''")->fetchColumn();
+    $pendingChangeRequests = (int)$db->query("SELECT COUNT(*) FROM advocate_change_requests WHERE status = 'PENDING'")->fetchColumn();
 } catch (Exception $e) {}
 
 // Recent advocates
@@ -79,6 +80,12 @@ try {
         <div class="stat-label"><i class="fas fa-headset" style="color: #ef4444;"></i> Open Grievances</div>
         <div class="stat-value" style="font-size: 1.85rem; color: #ef4444; font-family: var(--font-heading);"><?= number_format($pendingGrievances) ?></div>
         <small style="color: var(--text-muted);">Requires admin attention</small>
+    </div>
+
+    <div class="stat-box" style="border-left: 4px solid var(--brand-red);">
+        <div class="stat-label"><i class="fas fa-clipboard-check" style="color: var(--brand-red);"></i> Change Requests</div>
+        <div class="stat-value" style="font-size: 1.85rem; color: var(--brand-red); font-family: var(--font-heading);"><?= number_format($pendingChangeRequests) ?></div>
+        <small style="color: var(--text-muted);"><a href="change_requests.php?status=PENDING" style="color: var(--brand-red); text-decoration: none; font-weight: 600;">Pending review &rarr;</a></small>
     </div>
 </div>
 
@@ -144,6 +151,13 @@ try {
                 <div>
                     <div style="font-weight: 700; font-size: 0.8rem; line-height: 1.1;">High Courts</div>
                     <small style="font-size: 0.7rem; color: var(--text-muted);">26 State High Courts</small>
+                </div>
+            </a>
+            <a href="change_requests.php" class="btn btn-outline btn-sm" style="display: flex; align-items: center; justify-content: flex-start; gap: 0.5rem; text-align: left; padding: 0.6rem 0.75rem;">
+                <i class="fas fa-clipboard-check text-danger"></i>
+                <div>
+                    <div style="font-weight: 700; font-size: 0.8rem; line-height: 1.1;">Change Requests</div>
+                    <small style="font-size: 0.7rem; color: var(--text-muted);"><?= $pendingChangeRequests ?> Pending Verification</small>
                 </div>
             </a>
             <a href="questions.php" class="btn btn-outline btn-sm" style="display: flex; align-items: center; justify-content: flex-start; gap: 0.5rem; text-align: left; padding: 0.6rem 0.75rem;">

@@ -35,7 +35,7 @@ if (!empty($_SESSION['advocate_id'])) {
 if ($headerAdvocate) {
     $headerName = $headerAdvocate['name'] ?? $_SESSION['advocate_name'] ?? 'Advocate';
     $headerInitial = strtoupper(substr(trim($headerName), 0, 1) ?: 'A');
-    $headerPhoto = $headerAdvocate['photo'] ?? '';
+    $headerPhoto = getAdvocatePhotoUrl($headerAdvocate['photo'] ?? '');
     $headerEnr = !empty($headerAdvocate['e_no']) ? $headerAdvocate['e_no'] . (!empty($headerAdvocate['e_year']) ? '/' . $headerAdvocate['e_year'] : '') : 'Advocate Member';
     $headerEmail = $headerAdvocate['email'] ?? '';
 } elseif ($headerMember) {

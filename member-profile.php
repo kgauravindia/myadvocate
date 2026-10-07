@@ -90,6 +90,8 @@ $selectedState = $member['state_code'] ?? '';
 $selectedDistrict = $member['district_code'] ?? '';
 $districts = !empty($selectedState) ? getDistrictsByState($selectedState) : [];
 
+$viewedAdvocates = getMemberAdvocateViews($memberId, 50);
+
 $pageTitle = "My Account - " . sanitize($member['name'] ?: 'User Profile');
 require_once INCLUDES_PATH . '/header.php';
 ?>
@@ -142,7 +144,7 @@ require_once INCLUDES_PATH . '/header.php';
     <?php endif; ?>
 
     <!-- User Quick Action Shortcuts -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2.5rem;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
         <a href="advocate-search-result" class="stat-box" style="text-decoration: none; display: flex; align-items: center; gap: 1rem; transition: var(--transition);">
             <div class="action-icon icon-red"><i class="fas fa-user-tie"></i></div>
             <div>
@@ -171,6 +173,98 @@ require_once INCLUDES_PATH . '/header.php';
                 <div style="font-size: 0.75rem; color: var(--text-muted);">Court Fee & Limitation</div>
             </div>
         </a>
+    </div>
+
+    <!-- =========================================================
+         SECTION: ADVOCATE PROFILE VIEWS (Recently Viewed Advocates)
+         ========================================================= -->
+    <div class="stat-box" style="margin-bottom: 2rem; border-top: 4px solid var(--brand-red); padding: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+            <div>
+                <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--primary); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-eye" style="color: var(--brand-red);"></i> Advocate Profile Views
+                </h3>
+                <p style="font-size: 0.8125rem; color: var(--text-muted); margin: 0.2rem 0 0;">
+                    Advocates whose public profiles you have recently viewed and explored.
+                </p>
+            </div>
+            <div>
+                <span class="badge" style="background: var(--brand-red); color: #fff; font-size: 0.78rem; font-weight: 700; padding: 0.25rem 0.65rem; border-radius: 9999px;">
+                    <?= count($viewedAdvocates) ?> <?= count($viewedAdvocates) === 1 ? 'Advocate' : 'Advocates' ?> Viewed
+                </span>
+            </div>
+        </div>
+
+        <?php if (!empty($viewedAdvocates)): ?>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+                <?php foreach ($viewedAdvocates as $vAdv): 
+                    $advName = $vAdv['advocate_name'] ?: 'Advocate';
+                    $advPhoto = getAdvocatePhotoUrl($vAdv['photo'] ?? '');
+                    $profileUrl = !empty($vAdv['public_url']) ? APP_URL . '/@' . ltrim($vAdv['public_url'], '@') : APP_URL . '/profile.php?id=' . $vAdv['advocate_id'];
+                    $locationStr = implode(', ', array_filter([$vAdv['district_name'] ?? '', $vAdv['state_name'] ?? '']));
+                    $courtStr = $vAdv['practicing_courts'] ?: ($vAdv['court'] ?? '');
+                ?>
+                    <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.15rem; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.03);" onmouseover="this.style.borderColor='var(--brand-red)'; this.style.boxShadow='var(--shadow-sm)';" onmouseout="this.style.borderColor='var(--border-color)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.03)';">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 0.85rem; margin-bottom: 0.75rem;">
+                                <div style="width: 50px; height: 50px; border-radius: 50%; overflow: hidden; background: #fffdf0; border: 2px solid var(--brand-gold); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800; color: var(--brand-red); flex-shrink: 0;">
+                                    <?php if ($advPhoto): ?>
+                                        <img src="<?= sanitize($advPhoto) ?>" alt="<?= sanitize($advName) ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                                    <?php else: ?>
+                                        <?= strtoupper(substr(trim($advName ?: 'A'), 0, 1)) ?>
+                                    <?php endif; ?>
+                                </div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <h4 style="font-size: 0.95rem; font-weight: 800; color: var(--primary); margin: 0 0 0.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        <a href="<?= sanitize($profileUrl) ?>" style="color: var(--primary); text-decoration: none;">
+                                            Adv. <?= sanitize($advName) ?>
+                                        </a>
+                                    </h4>
+                                    <?php if (!empty($vAdv['e_no'])): ?>
+                                        <div style="font-size: 0.73rem; color: var(--text-muted);">
+                                            <i class="fas fa-id-card me-1"></i> Enr: <strong><?= sanitize($vAdv['e_no']) ?><?= !empty($vAdv['e_year']) ? '/' . sanitize($vAdv['e_year']) : '' ?></strong>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+
+                            <?php if ($courtStr || $locationStr): ?>
+                                <div style="font-size: 0.78rem; color: #475569; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.35rem;">
+                                    <i class="fas fa-location-dot" style="color: var(--brand-red); font-size: 0.75rem;"></i>
+                                    <span><?= sanitize($courtStr ?: $locationStr) ?><?= ($courtStr && $locationStr) ? ' &bull; ' . sanitize($locationStr) : '' ?></span>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if (!empty($vAdv['practice_area'])): ?>
+                                <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 0.75rem; line-height: 1.3;">
+                                    <i class="fas fa-scale-balanced me-1 text-warning"></i> <?= sanitize(mb_strimwidth($vAdv['practice_area'], 0, 60, '...')) ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+
+                        <div style="border-top: 1px dashed #e2e8f0; padding-top: 0.75rem; margin-top: 0.5rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                            <span style="font-size: 0.72rem; color: var(--text-muted);">
+                                <i class="fas fa-clock me-1"></i> <?= date('d M, h:i A', strtotime($vAdv['last_viewed_at'])) ?>
+                                <?php if ($vAdv['view_count'] > 1): ?>
+                                    <span style="background: #f1f5f9; padding: 0.1rem 0.35rem; border-radius: 4px; font-weight: 600; margin-left: 0.2rem;"><?= $vAdv['view_count'] ?> views</span>
+                                <?php endif; ?>
+                            </span>
+                            <a href="<?= sanitize($profileUrl) ?>" class="btn btn-outline-primary btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.65rem; font-weight: 700;">
+                                View Profile <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php else: ?>
+            <div style="text-align: center; padding: 2rem 1rem; color: var(--text-muted); background: #f8fafc; border-radius: var(--radius-md);">
+                <i class="fas fa-user-slash" style="font-size: 2.25rem; color: #cbd5e1; margin-bottom: 0.5rem; display: block;"></i>
+                <p style="margin: 0 0 1rem; font-size: 0.875rem;">You have not viewed any advocate profiles yet.</p>
+                <a href="advocate-search-result" class="btn btn-primary btn-sm">
+                    <i class="fas fa-magnifying-glass me-1"></i> Explore Advocate Directory
+                </a>
+            </div>
+        <?php endif; ?>
     </div>
 
     <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; align-items: start;">
