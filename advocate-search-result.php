@@ -24,8 +24,8 @@ $perPage = 18;
 $offset = ($page - 1) * $perPage;
 
 // Build Dynamic SQL Query
-$sql = "SELECT id, name, photo, mobile, mobile_visibility, email, email_visibility, state_code, district_code, e_no, e_year, court, ba_code, practice_area, public_url, plan_type, type, premium_member FROM advocate WHERE status = 'ACTIVE'";
-$countSql = "SELECT COUNT(*) FROM advocate WHERE status = 'ACTIVE'";
+$sql = "SELECT * FROM advocate WHERE (status = 'ACTIVE' OR status = '' OR status IS NULL OR status = '1')";
+$countSql = "SELECT COUNT(*) FROM advocate WHERE (status = 'ACTIVE' OR status = '' OR status IS NULL OR status = '1')";
 $params = [];
 
 if (!empty($mobileQuery)) {
@@ -104,27 +104,33 @@ try {
     $countStmt->execute($params);
     $totalResults = (int)$countStmt->fetchColumn();
 } catch (Exception $e) {
-    $totalResults = 0;
+    try {
+        $countSqlFallback = str_replace("WHERE (status = 'ACTIVE' OR status = '' OR status IS NULL OR status = '1')", "WHERE 1=1", $countSql);
+        $countStmt = $db->prepare($countSqlFallback);
+        $countStmt->execute($params);
+        $totalResults = (int)$countStmt->fetchColumn();
+    } catch (Exception $e2) {
+        $totalResults = 0;
+    }
 }
 
 $totalPages = max(1, ceil($totalResults / $perPage));
 
-// Execute Paginated Fetch with Profile Completeness Ranking Preference
-$sql .= " ORDER BY (
-    (CASE WHEN premium_member = 1 OR plan_type = 'verified' OR plan_type = 'VERIFIED' THEN 30 ELSE 0 END) +
-    (CASE WHEN photo IS NOT NULL AND photo != '' AND photo != '0' THEN 20 ELSE 0 END) +
-    (CASE WHEN id_proof IS NOT NULL AND id_proof != '' AND id_proof != '0' THEN 20 ELSE 0 END) +
-    (CASE WHEN public_url IS NOT NULL AND public_url != '' THEN 15 ELSE 0 END) +
-    (CASE WHEN practice_area IS NOT NULL AND practice_area != '' AND practice_area != 'Array' THEN 15 ELSE 0 END) +
-    (CASE WHEN mobile IS NOT NULL AND mobile != '' THEN 5 ELSE 0 END) +
-    (CASE WHEN e_no IS NOT NULL AND e_no != '' AND e_year IS NOT NULL AND e_year != '' THEN 5 ELSE 0 END)
-) DESC, id DESC LIMIT $perPage OFFSET $offset";
+// Execute Paginated Fetch with Safe Ordering
+$sql .= " ORDER BY id DESC LIMIT $perPage OFFSET $offset";
 try {
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
     $advocates = $stmt->fetchAll();
 } catch (Exception $e) {
-    $advocates = [];
+    try {
+        $sqlFallback = str_replace("WHERE (status = 'ACTIVE' OR status = '' OR status IS NULL OR status = '1')", "WHERE 1=1", $sql);
+        $stmt = $db->prepare($sqlFallback);
+        $stmt->execute($params);
+        $advocates = $stmt->fetchAll();
+    } catch (Exception $e2) {
+        $advocates = [];
+    }
 }
 
 // Load districts for selected state
