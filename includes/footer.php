@@ -85,17 +85,21 @@
         </div>
     </div>
 
-    <!-- Simple Bottom Copyright Bar (Single Line) -->
+    <!-- Simple Bottom Copyright Bar (Left & Right Single Line) -->
     <div class="footer-bottom">
-        <div class="container" style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 0.65rem; font-size: 0.8125rem; text-align: center; line-height: 1.6;">
-            <span>&copy; <?= date('Y') ?> <strong><?= APP_NAME ?></strong> (myadv.in). All rights reserved.</span>
-            <a href="privacy-policy" style="color: inherit; text-decoration: none;">Privacy</a>
-            <span style="opacity: 0.35;">|</span>
-            <a href="terms" style="color: inherit; text-decoration: none;">Terms</a>
-            <span style="opacity: 0.35;">|</span>
-            <a href="disclaimer" style="color: inherit; text-decoration: none;">Disclaimer</a>
-            <span style="opacity: 0.35;">|</span>
-            <a href="contact" style="color: inherit; text-decoration: none;">Helpdesk</a>
+        <div class="container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; font-size: 0.8125rem;">
+            <div style="white-space: nowrap;">
+                &copy; <?= date('Y') ?> <strong><?= APP_NAME ?></strong> (myadv.in). All rights reserved.
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: nowrap; white-space: nowrap;">
+                <a href="privacy-policy" style="color: inherit; text-decoration: none;">Privacy</a>
+                <span style="opacity: 0.35;">|</span>
+                <a href="terms" style="color: inherit; text-decoration: none;">Terms</a>
+                <span style="opacity: 0.35;">|</span>
+                <a href="disclaimer" style="color: inherit; text-decoration: none;">Disclaimer</a>
+                <span style="opacity: 0.35;">|</span>
+                <a href="contact" style="color: inherit; text-decoration: none;">Helpdesk</a>
+            </div>
         </div>
     </div>
 </footer>
