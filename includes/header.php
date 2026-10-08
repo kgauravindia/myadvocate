@@ -579,6 +579,13 @@ if ($headerAdvocate) {
                                     </a>
                                 </div>
                             </div>
+                        </div>
+                    <?php else: ?>
+                        <div class="header-login-wrapper">
+                            <a href="login" class="btn btn-primary btn-sm header-login-btn">
+                                <i class="fas fa-right-to-bracket"></i> Login
+                            </a>
+                        </div>
                     <?php endif; ?>
 
                     <!-- Night / Light Mode Toggle Button -->

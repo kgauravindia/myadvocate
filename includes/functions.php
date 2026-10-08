@@ -1138,7 +1138,7 @@ function findUserByIdentifier(string $identifier, ?PDO $db = null): ?array {
     try {
         $sql = "SELECT id, name, mobile, email, e_no, status, plan_type, 'advocate' as user_type 
             FROM advocate 
-            WHERE status != 'BLOCK' AND (
+            WHERE (status != 'BLOCK' OR status IS NULL) AND (
                 mobile = ? 
                 OR email = ? 
                 OR e_no = ? 
@@ -1153,7 +1153,7 @@ function findUserByIdentifier(string $identifier, ?PDO $db = null): ?array {
             $params[] = '+91' . $last10;
             $params[] = '91' . $last10;
         }
-        $sql .= ") ORDER BY (mobile_status = 'VERIFIED') DESC, id DESC LIMIT 1";
+        $sql .= ") ORDER BY id DESC LIMIT 1";
 
         $stmtAdv = $db->prepare($sql);
         $stmtAdv->execute($params);
@@ -1171,7 +1171,7 @@ function findUserByIdentifier(string $identifier, ?PDO $db = null): ?array {
     try {
         $sql = "SELECT id, name, mobile, email, status, 'member' as user_type 
             FROM member 
-            WHERE status != 'BLOCK' AND (
+            WHERE (status != 'BLOCK' OR status IS NULL) AND (
                 mobile = ? 
                 OR email = ? 
                 OR TRIM(mobile) = ? 
@@ -1184,7 +1184,7 @@ function findUserByIdentifier(string $identifier, ?PDO $db = null): ?array {
             $params[] = '+91' . $last10;
             $params[] = '91' . $last10;
         }
-        $sql .= ") ORDER BY (mobile_status = 'VERIFIED') DESC, id DESC LIMIT 1";
+        $sql .= ") ORDER BY id DESC LIMIT 1";
 
         $stmtMem = $db->prepare($sql);
         $stmtMem->execute($params);
