@@ -91,10 +91,13 @@
             <div>
                 &copy; <?= date('Y') ?> <strong><?= APP_NAME ?></strong> (myadv.in). All rights reserved.
             </div>
-            <div style="display: flex; gap: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.85rem; flex-wrap: nowrap; white-space: nowrap;">
                 <a href="privacy-policy" style="color: inherit; text-decoration: none;">Privacy</a>
+                <span style="opacity: 0.35;">|</span>
                 <a href="terms" style="color: inherit; text-decoration: none;">Terms</a>
+                <span style="opacity: 0.35;">|</span>
                 <a href="disclaimer" style="color: inherit; text-decoration: none;">Disclaimer</a>
+                <span style="opacity: 0.35;">|</span>
                 <a href="contact" style="color: inherit; text-decoration: none;">Helpdesk</a>
             </div>
         </div>
