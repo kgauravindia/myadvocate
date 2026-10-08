@@ -400,6 +400,27 @@ if ($headerAdvocate) {
                                 </li>
                             </ul>
                         </li>
+
+                        <!-- Mobile Drawer Footer Actions (Login at the very end) -->
+                        <li class="nav-menu-footer">
+                            <?php if (!empty($_SESSION['advocate_id']) || !empty($_SESSION['member_id'])): ?>
+                                <a href="<?= !empty($_SESSION['advocate_id']) ? 'dashboard' : 'member-profile' ?>" class="btn btn-primary" style="width: 100%; justify-content: center; margin-bottom: 0.5rem;">
+                                    <i class="fas fa-gauge"></i> My Dashboard
+                                </a>
+                                <a href="logout.php" class="btn btn-outline" style="width: 100%; justify-content: center; color: var(--brand-red); border-color: var(--brand-red);">
+                                    <i class="fas fa-right-from-bracket"></i> Sign Out / Logout
+                                </a>
+                            <?php else: ?>
+                                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                    <a href="login" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                                        <i class="fas fa-right-to-bracket"></i> Login / Sign In
+                                    </a>
+                                    <a href="register" class="btn btn-outline-primary" style="width: 100%; justify-content: center;">
+                                        <i class="fas fa-user-plus"></i> New Advocate Registration
+                                    </a>
+                                </div>
+                            <?php endif; ?>
+                        </li>
                     </ul>
                 </nav>
 

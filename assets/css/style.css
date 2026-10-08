@@ -187,7 +187,8 @@ a:hover {
     padding: 0;
 }
 
-.nav-menu-header {
+.nav-menu-header,
+.nav-menu-footer {
     display: none;
 }
 
@@ -1666,7 +1667,7 @@ a:hover {
         opacity: 1;
         visibility: visible;
         transform: none;
-        display: block;
+        display: none;
         min-width: auto;
         border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
     }
@@ -1676,6 +1677,18 @@ a:hover {
         left: 0 !important;
         transform: none !important;
         padding: 0.35rem 0.25rem;
+        display: none;
+    }
+    .nav-caret {
+        transition: transform 0.25s ease;
+    }
+    .nav-menu-footer {
+        display: block !important;
+        margin-top: auto;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+        width: 100%;
+        flex-shrink: 0;
     }
     .dropdown-mega-grid {
         grid-template-columns: 1fr;

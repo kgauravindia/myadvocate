@@ -38,8 +38,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (navMenu) {
-        navMenu.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', () => {
+        navMenu.querySelectorAll('.nav-item > a').forEach(parentLink => {
+            parentLink.addEventListener('click', (e) => {
+                if (window.innerWidth < 992) {
+                    const dropdown = parentLink.nextElementSibling;
+                    if (dropdown && (dropdown.classList.contains('nav-dropdown') || dropdown.classList.contains('dropdown-mega'))) {
+                        e.preventDefault();
+                        const isOpen = dropdown.style.display === 'block';
+                        // Close other open dropdowns
+                        navMenu.querySelectorAll('.nav-dropdown, .dropdown-mega').forEach(d => {
+                            d.style.display = 'none';
+                        });
+                        dropdown.style.display = isOpen ? 'none' : 'block';
+                        const caret = parentLink.querySelector('.nav-caret');
+                        if (caret) {
+                            caret.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+                        }
+                    } else {
+                        closeMobileMenu();
+                    }
+                }
+            });
+        });
+
+        navMenu.querySelectorAll('.dropdown-link, .nav-menu-footer a').forEach(childLink => {
+            childLink.addEventListener('click', () => {
                 if (window.innerWidth < 992) {
                     closeMobileMenu();
                 }
