@@ -9,7 +9,7 @@ define('APP_NAME', 'My Advocate');
 define('APP_TAGLINE', 'Find Advocates • Explore Law • Access Legal Resources');
 define('APP_DOMAIN', 'myadv.in');
 define('APP_URL', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
-define('APP_VERSION', '2.2.3');
+define('APP_VERSION', '2.2.4');
 
 // External API Integration (olaw.in)
 define('OLAW_API_KEY', 'OLAW_D776A66967200383A932');
