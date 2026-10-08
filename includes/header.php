@@ -243,17 +243,17 @@ if ($headerAdvocate) {
                             </ul>
                         </li>
 
-                        <!-- 3. ADVOCATE INDEX MULTI-TAB (3-Column Mega Menu) -->
+                        <!-- 3. SEARCH MULTI-TAB (3-Column Mega Menu) -->
                         <li class="nav-item">
                             <a href="advocate-search-result" class="nav-link <?= in_array($currentPage, ['advocate-search-result', 'advocate-search-result-by-year', 'advocate-search-result-by-mobile', 'case-status-of-bihar', 'case-status-of-jharkhand', 'case-status-of-uttar-pradesh', 'college', 'law-college', 'courts', 'bar-associations']) ? 'active' : '' ?>">
-                                <i class="fas fa-address-book"></i> Advocate Index <i class="fas fa-chevron-down nav-caret"></i>
+                                <i class="fas fa-magnifying-glass"></i> Search <i class="fas fa-chevron-down nav-caret"></i>
                             </a>
                             <div class="nav-dropdown dropdown-mega">
                                 <div class="dropdown-mega-grid">
-                                    <!-- Column 1: Advocate Directory -->
+                                    <!-- Column 1: Advocate -->
                                     <div class="mega-column">
                                         <div class="mega-column-header">
-                                            <i class="fas fa-user-tie"></i> Advocate Directory
+                                            <i class="fas fa-user-tie"></i> Advocate
                                         </div>
                                         <a href="advocate-search-result" class="dropdown-link">
                                             <i class="fas fa-signature"></i>
@@ -399,28 +399,6 @@ if ($headerAdvocate) {
                                     </a>
                                 </li>
                             </ul>
-                        </li>
-
-                        <!-- Mobile Drawer Footer (Login / Register / Profile) -->
-                        <li class="nav-menu-footer">
-                            <?php if (!empty($_SESSION['advocate_id'])): ?>
-                                <a href="dashboard" class="btn btn-primary btn-block" style="width: 100%; justify-content: center;">
-                                    <i class="fas fa-gauge"></i> Advocate Dashboard
-                                </a>
-                            <?php elseif (!empty($_SESSION['member_id'])): ?>
-                                <a href="member-profile" class="btn btn-primary btn-block" style="width: 100%; justify-content: center;">
-                                    <i class="fas fa-user-circle"></i> Member Account
-                                </a>
-                            <?php else: ?>
-                                <div style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%;">
-                                    <a href="login" class="btn btn-primary" style="width: 100%; justify-content: center;">
-                                        <i class="fas fa-right-to-bracket"></i> Login / Sign In
-                                    </a>
-                                    <a href="register" class="btn btn-outline" style="width: 100%; justify-content: center;">
-                                        <i class="fas fa-user-plus"></i> Advocate Registration
-                                    </a>
-                                </div>
-                            <?php endif; ?>
                         </li>
                     </ul>
                 </nav>
