@@ -45,14 +45,14 @@
 			<h4 class="app-hero-title">Find Advocates. Explore Law.</h4>
 			<p class="app-hero-lead">India's premier digital legal platform connecting citizens, advocates, and students with verified directories and Bare Acts.</p>
 			
-			<!-- Quick Search Advocate Trigger -->
-			<div class="app-search-box" id="search_advocate_hero" onclick="$('#search_advocate').trigger('click');">
+			<!-- Quick Search Advocate Interactive Form -->
+			<form action="../advocate-search-result" method="get" class="app-search-box" id="search_advocate_hero" onsubmit="return handleHeroSearch(event)">
 				<i class="fas fa-magnifying-glass ms-2" style="color: var(--brand-red); font-size: 0.95rem; margin-left: 8px;"></i>
-				<input type="text" class="app-search-input" placeholder="Search Advocate, Enrollment, Court..." readonly>
-				<button type="button" class="app-search-btn">
+				<input type="text" name="name" id="hero_search_query" class="app-search-input" placeholder="Search Advocate, Enrollment, Court..." autocomplete="off">
+				<button type="submit" class="app-search-btn">
 					<i class="fas fa-search"></i> Find
 				</button>
-			</div>
+			</form>
 		</div>
 
 		<!-- Interactive Feature Slider -->
@@ -246,10 +246,10 @@
 			<img src='img/home.png' height='22px' alt="Home">
 			<span>Home</span>
 		</div>
-		<div class='app-nav-item' id='search_advocate_foot' onclick="$('#search_advocate').trigger('click');">
+		<a href="../advocate-search-result" class='app-nav-item' id='search_advocate_foot'>
 			<img src='img/search.png' height='22px' alt="Search">
 			<span>Search</span>
-		</div>
+		</a>
 		<div class='app-nav-item' id='acts_nav' onclick="$('#acts_list').trigger('click');">
 			<img src='img/book.png' height='22px' alt="Bare Acts">
 			<span>Acts</span>
@@ -270,6 +270,19 @@
 <script src="js/bootstrap.min.js"></script>
 <script src="js/popper.min.js"></script>
 <script src="js/app.js"></script>
+
+<script>
+	function handleHeroSearch(e) {
+		if (e) e.preventDefault();
+		var q = $.trim($('#hero_search_query').val());
+		if (q.length > 0) {
+			window.location.href = '../advocate-search-result?name=' + encodeURIComponent(q);
+		} else {
+			window.location.href = '../advocate-search-result';
+		}
+		return false;
+	}
+</script>
 
 <script type="application/javascript" src="https://sdki.truepush.com/sdk/v2.0.4/app.js" async></script>
 <script>
