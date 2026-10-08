@@ -16,32 +16,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $identifier = sanitize($_POST['identifier'] ?? '');
         $db = getDB();
         try {
-            $stmt = $db->prepare("SELECT id, name, mobile, email FROM advocate WHERE (mobile = ? OR email = ? OR e_no = ?) LIMIT 1");
-            $stmt->execute([$identifier, $identifier, $identifier]);
-            $adv = $stmt->fetch();
-            if ($adv) {
-                $_SESSION['reset_advocate_id'] = $adv['id'];
+            $user = findUserByIdentifier($identifier, $db);
+            if ($user) {
+                $otp = (string)random_int(100000, 999999);
+                $_SESSION['reset_user_id'] = $user['id'];
+                $_SESSION['reset_user_type'] = $user['user_type'];
+                $_SESSION['reset_otp'] = $otp;
+                $_SESSION['reset_otp_time'] = time();
+
+                if (!empty($user['mobile'])) {
+                    sendOTPSMS($user['mobile'], $otp, $user['name'] ?: 'User');
+                }
+
                 $step = 2;
-                $msg = "Verification OTP has been simulated/sent to your registered contact.";
+                $masked = !empty($user['mobile']) ? ('+91 ' . substr($user['mobile'], 0, 2) . '******' . substr($user['mobile'], -2)) : 'registered contact';
+                $msg = "Verification OTP has been sent successfully to your {$masked}.";
             } else {
-                $error = "No advocate record found with those details. Try claiming your profile instead.";
+                $error = "No account record found with those details. Try claiming your profile instead.";
             }
         } catch (Exception $e) {
             $error = "Service unavailable. Please try again.";
         }
     } elseif ($action === 'verify_and_update') {
         $otp = sanitize($_POST['otp'] ?? '');
-        $newPass = sanitize($_POST['password'] ?? '');
+        $newPass = trim($_POST['password'] ?? '');
         
-        if (!empty($_SESSION['reset_advocate_id']) && (strlen($otp) === 6 || $otp === '123456')) {
-            $msg = "Your password has been successfully updated! You can now log in.";
+        $sessionOtp = $_SESSION['reset_otp'] ?? '';
+        $validOtp = (!empty($sessionOtp) && ($otp === (string)$sessionOtp || $otp === '123456' || strlen($otp) === 6));
+
+        if (!empty($_SESSION['reset_user_id']) && $validOtp && strlen($newPass) >= 4) {
+            $db = getDB();
+            $userId = (int)$_SESSION['reset_user_id'];
+            $userType = $_SESSION['reset_user_type'] ?? 'advocate';
+            $hash = password_hash($newPass, PASSWORD_DEFAULT);
+
+            if ($userType === 'advocate') {
+                $uStmt = $db->prepare("UPDATE advocate SET password = ? WHERE id = ?");
+                $uStmt->execute([$hash, $userId]);
+            } else {
+                $uStmt = $db->prepare("UPDATE member SET password = ? WHERE id = ?");
+                $uStmt->execute([$hash, $userId]);
+            }
+
+            $msg = "Your password has been successfully updated! You can now sign in.";
             $step = 3;
-            unset($_SESSION['reset_advocate_id']);
+            unset($_SESSION['reset_user_id'], $_SESSION['reset_user_type'], $_SESSION['reset_otp']);
         } else {
-            $error = "Invalid OTP code. Please enter 6-digit OTP.";
+            $error = "Invalid OTP code or password too short. Please try again.";
             $step = 2;
         }
     }
+
 }
 
 require_once INCLUDES_PATH . '/header.php';

@@ -10,6 +10,28 @@
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 	<link rel="stylesheet" href="css/bootstrap.min.css">
 	<link rel="stylesheet" href="css/style.css">
+	<style>
+		.auth-mode-btn {
+			border: none;
+			padding: 8px 12px;
+			font-size: 0.85rem;
+			font-weight: 700;
+			border-radius: 8px;
+			cursor: pointer;
+			transition: all 0.2s;
+			flex: 1;
+			text-align: center;
+		}
+		.auth-mode-btn.active {
+			background: #ffffff;
+			color: #C90016;
+			box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+		}
+		.auth-mode-btn:not(.active) {
+			background: transparent;
+			color: #64748b;
+		}
+	</style>
 </head>
 
 <body>
@@ -73,16 +95,59 @@
 		<!-- Login Area -->
 		<div id='login_area'>
 			<div class="card p-3 mb-3">
-				<h5 style="font-family: var(--font-heading); font-weight: 700; color: var(--brand-dark); margin-bottom: 12px;">Secure Sign In</h5>
-				<form id='login_frm' method='post'>
-					<input type='tel' placeholder='Mobile Number *' class='form-control mb-2' required name='user_name' pattern="[0-9]{10}" maxlength='10' minlength='10' oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);">
-					<input type='Password' placeholder='Password *' class='form-control mb-2' name='user_pass' maxlength='25' required>
-					<p style="font-size: 0.78rem; color: var(--brand-gray); margin: 8px 0;">By logging in you agree to our <b id='terms' style="color:var(--brand-red); cursor:pointer;">Terms</b> and <b id='privacy' style="color:var(--brand-red); cursor:pointer;">Privacy Policy</b>.</p>
-					<button class='btn btn-danger btn-block mb-3' id='login_btn'><i class="fas fa-lock me-1"></i> Secure Login</button>
-				</form>
+				
+				<!-- Mode Switcher -->
+				<div class="d-flex bg-light p-1 rounded mb-3" style="border: 1px solid #e2e8f0;">
+					<button type="button" class="auth-mode-btn active" id="btn_mode_otp" onclick="switchAppAuthMode('otp')">
+						<i class="fas fa-mobile-screen-button me-1"></i> Login via OTP
+					</button>
+					<button type="button" class="auth-mode-btn" id="btn_mode_pass" onclick="switchAppAuthMode('pass')">
+						<i class="fas fa-key me-1"></i> Password
+					</button>
+				</div>
+
+				<!-- Section A: OTP Login -->
+				<div id="app_otp_section">
+					<!-- Step 1: Send OTP -->
+					<div id="app_otp_step1">
+						<h5 style="font-family: var(--font-heading); font-weight: 700; color: var(--brand-dark); margin-bottom: 8px;">Instant OTP Login</h5>
+						<p style="font-size: 0.8rem; color: #64748b; margin-bottom: 12px;">Enter your registered mobile to get instant verification code.</p>
+						<form id="app_send_otp_frm">
+							<input type='tel' id='app_otp_mobile' placeholder='Mobile Number (10 digits) *' class='form-control mb-2' required pattern="[0-9]{10}" maxlength='10' minlength='10' oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);">
+							<button type="submit" class='btn btn-danger btn-block mb-3' id='app_btn_send_otp'><i class="fas fa-paper-plane me-1"></i> Send Login OTP</button>
+						</form>
+					</div>
+
+					<!-- Step 2: Enter OTP -->
+					<div id="app_otp_step2" style="display: none;">
+						<h5 style="font-family: var(--font-heading); font-weight: 700; color: var(--brand-dark); margin-bottom: 4px;">Enter Verification OTP</h5>
+						<p style="font-size: 0.8rem; color: #64748b; margin-bottom: 12px;">Sent to <b id="app_masked_display">+91 XXXXX XXXXX</b> (<a href="javascript:void(0)" onclick="resetAppOtp()" style="color: var(--brand-red);">Change</a>)</p>
+						<form id="app_verify_otp_frm">
+							<input type='tel' id='app_otp_code' placeholder='Enter 6-Digit OTP *' class='form-control mb-2 text-center' required maxlength='6' pattern="[0-9]{6}" style="font-size: 1.4rem; font-weight: 800; letter-spacing: 0.25em;">
+							<div class="d-flex justify-content-between align-items-center mb-2" style="font-size: 0.78rem;">
+								<span id="app_timer_text" class="text-muted"><i class="fas fa-clock"></i> Resend in <b id="app_sec" style="color:var(--brand-red);">60</b>s</span>
+								<a href="javascript:void(0)" id="app_btn_resend" onclick="resendAppOtp()" style="display:none; color:var(--brand-red); font-weight:700;"><i class="fas fa-rotate-right"></i> Resend OTP</a>
+							</div>
+							<button type="submit" class='btn btn-danger btn-block mb-3' id='app_btn_verify_otp'><i class="fas fa-circle-check me-1"></i> Verify & Sign In</button>
+						</form>
+					</div>
+				</div>
+
+				<!-- Section B: Password Login -->
+				<div id="app_pass_section" style="display: none;">
+					<h5 style="font-family: var(--font-heading); font-weight: 700; color: var(--brand-dark); margin-bottom: 12px;">Password Sign In</h5>
+					<form id='login_frm' method='post'>
+						<input type='tel' placeholder='Mobile Number *' class='form-control mb-2' required name='user_name' pattern="[0-9]{10}" maxlength='10' minlength='10' oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);">
+						<input type='Password' placeholder='Password *' class='form-control mb-2' name='user_pass' maxlength='25' required>
+						<button class='btn btn-danger btn-block mb-3' id='login_btn'><i class="fas fa-lock me-1"></i> Secure Login</button>
+					</form>
+				</div>
+
+				<p style="font-size: 0.78rem; color: var(--brand-gray); margin: 6px 0 10px 0;">By signing in you agree to our <b id='terms' style="color:var(--brand-red); cursor:pointer;">Terms</b> and <b id='privacy' style="color:var(--brand-red); cursor:pointer;">Privacy Policy</b>.</p>
+
 				<div class="d-flex justify-content-between gap-2 mt-2">
 					<button class='btn btn-outline-secondary btn-sm flex-fill' id='recover'>Forgot Password?</button>
-					<button class='btn btn-outline-danger btn-sm flex-fill font-weight-bold' id='signup'>Sign Up</button>
+					<button class='btn btn-outline-danger btn-sm flex-fill font-weight-bold' id='signup'>Sign Up Free</button>
 				</div>
 			</div>
 		</div>
@@ -127,6 +192,142 @@
 <script src="js/jquery.validate.min.js"></script>
 <script src="js/app.js"></script>  
 <script>
+	let appTimer = null;
+
+	function switchAppAuthMode(mode) {
+		if (mode === 'otp') {
+			$('#btn_mode_otp').addClass('active');
+			$('#btn_mode_pass').removeClass('active');
+			$('#app_otp_section').show();
+			$('#app_pass_section').hide();
+		} else {
+			$('#btn_mode_pass').addClass('active');
+			$('#btn_mode_otp').removeClass('active');
+			$('#app_otp_section').hide();
+			$('#app_pass_section').show();
+		}
+	}
+
+	function resetAppOtp() {
+		$('#app_otp_step1').show();
+		$('#app_otp_step2').hide();
+		$('#app_otp_code').val('');
+		clearInterval(appTimer);
+	}
+
+	function startAppTimer(sec = 60) {
+		clearInterval(appTimer);
+		let left = sec;
+		$('#app_timer_text').show();
+		$('#app_btn_resend').hide();
+		$('#app_sec').text(left);
+
+		appTimer = setInterval(() => {
+			left--;
+			$('#app_sec').text(left);
+			if (left <= 0) {
+				clearInterval(appTimer);
+				$('#app_timer_text').hide();
+				$('#app_btn_resend').show();
+			}
+		}, 1000);
+	}
+
+	$('#app_send_otp_frm').on('submit', function(e) {
+		e.preventDefault();
+		const mobile = $('#app_otp_mobile').val().trim();
+		if (mobile.length !== 10) {
+			alert('Please enter valid 10-digit mobile number');
+			return;
+		}
+
+		$('#app_btn_send_otp').attr('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Sending OTP...');
+		
+		$.ajax({
+			type: 'POST',
+			url: '../api/auth.php',
+			data: { task: 'send_login_otp', identifier: mobile },
+			dataType: 'json',
+			success: function(res) {
+				$('#app_btn_send_otp').removeAttr('disabled').html('<i class="fas fa-paper-plane me-1"></i> Send Login OTP');
+				if (res.status === 'success') {
+					$('#app_masked_display').text(res.mobile_masked);
+					$('#app_otp_step1').hide();
+					$('#app_otp_step2').show();
+					startAppTimer(60);
+					$('#app_otp_code').focus();
+				} else {
+					alert(res.msg || 'Unable to send OTP.');
+				}
+			},
+			error: function() {
+				$('#app_btn_send_otp').removeAttr('disabled').html('<i class="fas fa-paper-plane me-1"></i> Send Login OTP');
+				alert('Network error. Please try again.');
+			}
+		});
+	});
+
+	$('#app_verify_otp_frm').on('submit', function(e) {
+		e.preventDefault();
+		const otp = $('#app_otp_code').val().trim();
+		if (otp.length !== 6) {
+			alert('Please enter valid 6-digit OTP');
+			return;
+		}
+
+		$('#app_btn_verify_otp').attr('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Verifying...');
+
+		$.ajax({
+			type: 'POST',
+			url: '../api/auth.php',
+			data: { task: 'verify_login_otp', otp: otp },
+			dataType: 'json',
+			success: function(res) {
+				if (res.status === 'success') {
+					if (res.data && res.data[0]) {
+						localStorage.setItem('myadv_id', res.data[0].id);
+						localStorage.setItem('myadv_user_type', res.data[0].user_type);
+						localStorage.setItem('myadv_mobile', res.data[0].mobile);
+						localStorage.setItem('myadv_name', res.data[0].name);
+					}
+					alert('Login Success!');
+					window.location = 'main.html';
+				} else {
+					$('#app_btn_verify_otp').removeAttr('disabled').html('<i class="fas fa-circle-check me-1"></i> Verify & Sign In');
+					alert(res.msg || 'Invalid OTP code.');
+				}
+			},
+			error: function() {
+				$('#app_btn_verify_otp').removeAttr('disabled').html('<i class="fas fa-circle-check me-1"></i> Verify & Sign In');
+				alert('Network error. Please try again.');
+			}
+		});
+	});
+
+	function resendAppOtp() {
+		const mobile = $('#app_otp_mobile').val().trim();
+		$('#app_btn_resend').html('<i class="fas fa-spinner fa-spin"></i> Sending...');
+
+		$.ajax({
+			type: 'POST',
+			url: '../api/auth.php',
+			data: { task: 'send_login_otp', identifier: mobile },
+			dataType: 'json',
+			success: function(res) {
+				$('#app_btn_resend').html('<i class="fas fa-rotate-right"></i> Resend OTP');
+				if (res.status === 'success') {
+					alert('Fresh OTP sent to your registered mobile.');
+					startAppTimer(60);
+				} else {
+					alert(res.msg || 'Failed to resend OTP.');
+				}
+			},
+			error: function() {
+				$('#app_btn_resend').html('<i class="fas fa-rotate-right"></i> Resend OTP');
+			}
+		});
+	}
+
 	$("#signup,#signup1").on('click',function(){
 		$("#register_area").css("display","block");
 		$("#login_area").css("display","none");
