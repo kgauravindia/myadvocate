@@ -1304,24 +1304,8 @@ $("#apparea").on("click","#search_advocate_btn_mobile", function(){
 });
 //============ PINCODE ============== //
 $("#apparea").on("click","#pincode_list", function(){
-
-	$.ajax({
-		type:'POST',
-		url:base_url+'task=search_pincode_code',
-		beforeSend:function(){
-			$("#loader").show();
-		},
-		success:function(data)
-		{
-			$("#apphead").html("<img src='img/back.png' align='left' height='25px' onclick='location.reload()'> <div style='float:right'> <img src='img/pincode.png' height='25px' > Search Pincode </div>");
-			$("#appbody").html("<input type='tel' id='search_pincode_code' maxlength='6' class='form-control' placeholder='Pincode' > <button class='btn btn-danger btn-block mt-2' id='search_pincode_code_result' > Search Post Office</button>");
-				
-		},
-		complete:function()
-		{
-			$("#loader").hide();
-		}
-	});
+	$("#apphead").html("<img src='img/back.png' align='left' height='25px' onclick='location.reload()'> <div style='float:right'> <img src='img/pincode.png' height='25px' > Search Pincode </div>");
+	$("#appbody").html("<div class='card p-3 mb-3'><h6 class='font-weight-bold text-dark mb-2'><i class='fas fa-location-dot text-danger mr-1'></i> Search Indian PIN Code</h6><input type='tel' id='search_pincode_code' maxlength='6' class='form-control mb-2' placeholder='Enter 6-Digit PIN Code (e.g. 110001)'><button class='btn btn-danger btn-block' id='search_pincode_code_result'><i class='fas fa-magnifying-glass mr-1'></i> Search Post Offices</button><small class='text-muted d-block mt-2'>Instant national post office and district directory powered by OLAW API.</small></div>");
 });
 
 $("#apparea").on("click","#search_pincode_code_result", function(){
@@ -1520,23 +1504,8 @@ function fallbackHsnSearch(query, searchType) {
 
 // ==== IFSC ==== //
 $("#apparea").on("click","#ifsc", function(){
-
-	$.ajax({
-		type:'POST',
-		url:base_url+'task=ifsc',
-		beforeSend:function(){
-			$("#loader").show();
-		},
-		success:function(data)
-		{
-			$("#apphead").html("<img src='img/back.png' align='left' height='25px' onclick='location.reload()'> <div style='float:right'> <img src='img/ifsc.png' height='25px' > Search IFSC </div>");
-			$("#appbody").html("<center><b> IFSC by Code </b></center><input type='text' id='ifsc_text' maxlength='11' class='form-control' placeholder='11 Digit IFSC' > <button class='btn btn-danger btn-block mt-2' id='ifsc_text_result' > IFSC by Code</button><center> <b>Search by Branch </b> </center><input type='text' id='ifsc_branch' maxlength='20' class='form-control' placeholder='Name' > <button class='btn btn-danger btn-block mt-2' id='ifsc_branch_result' > IFSC by Name</button> Indian Financial System Code (IFSC) is 11 digit code issued by RBI for all Banks");
-		},
-		complete:function()
-		{
-			$("#loader").hide();
-		}
-	});
+	$("#apphead").html("<img src='img/back.png' align='left' height='25px' onclick='location.reload()'> <div style='float:right'> <img src='img/ifsc.png' height='25px' > Search IFSC </div>");
+	$("#appbody").html("<div class='card p-3 mb-3'><h6 class='font-weight-bold text-dark mb-2'><i class='fas fa-building-columns text-danger mr-1'></i> Search Bank IFSC</h6><input type='text' id='ifsc_text' maxlength='11' class='form-control mb-2 text-uppercase' placeholder='Enter 11-Digit IFSC (e.g. SBIN0000001)'><button class='btn btn-danger btn-block' id='ifsc_text_result'><i class='fas fa-magnifying-glass mr-1'></i> Lookup IFSC Details</button><small class='text-muted d-block mt-2'>Instant verified RBI database powered by OLAW API.</small></div>");
 });
 
 $("#apparea").on("click","#ifsc_text_result", function(){
