@@ -243,17 +243,17 @@ if ($headerAdvocate) {
                             </ul>
                         </li>
 
-                        <!-- 3. SEARCH MULTI-TAB (3-Column Mega Menu as in myadvindia) -->
+                        <!-- 3. ADVOCATE INDEX MULTI-TAB (3-Column Mega Menu) -->
                         <li class="nav-item">
                             <a href="advocate-search-result" class="nav-link <?= in_array($currentPage, ['advocate-search-result', 'advocate-search-result-by-year', 'advocate-search-result-by-mobile', 'case-status-of-bihar', 'case-status-of-jharkhand', 'case-status-of-uttar-pradesh', 'college', 'law-college', 'courts', 'bar-associations']) ? 'active' : '' ?>">
-                                <i class="fas fa-magnifying-glass"></i> Search <i class="fas fa-chevron-down nav-caret"></i>
+                                <i class="fas fa-address-book"></i> Advocate Index <i class="fas fa-chevron-down nav-caret"></i>
                             </a>
                             <div class="nav-dropdown dropdown-mega">
                                 <div class="dropdown-mega-grid">
-                                    <!-- Column 1: Advocate -->
+                                    <!-- Column 1: Advocate Directory -->
                                     <div class="mega-column">
                                         <div class="mega-column-header">
-                                            <i class="fas fa-user-tie"></i> Advocate
+                                            <i class="fas fa-user-tie"></i> Advocate Directory
                                         </div>
                                         <a href="advocate-search-result" class="dropdown-link">
                                             <i class="fas fa-signature"></i>
@@ -281,7 +281,7 @@ if ($headerAdvocate) {
                                     <!-- Column 2: Case Status -->
                                     <div class="mega-column">
                                         <div class="mega-column-header">
-                                            <i class="fas fa-gavel"></i> Case Status
+                                            <i class="fas fa-gavel"></i> Case Status Online
                                         </div>
                                         <a href="case-status-of-bihar" class="dropdown-link">
                                             <i class="fas fa-landmark"></i>
@@ -309,7 +309,7 @@ if ($headerAdvocate) {
                                     <!-- Column 3: University & Institutions -->
                                     <div class="mega-column">
                                         <div class="mega-column-header">
-                                            <i class="fas fa-building-columns"></i> Institutions
+                                            <i class="fas fa-building-columns"></i> Institutions & Courts
                                         </div>
                                         <a href="college" class="dropdown-link">
                                             <i class="fas fa-graduation-cap"></i>
