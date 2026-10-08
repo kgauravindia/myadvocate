@@ -59,7 +59,36 @@ if ($headerAdvocate) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= isset($pageTitle) ? sanitize($pageTitle) . ' | ' . APP_NAME : APP_NAME . ' - ' . APP_TAGLINE ?></title>
     <meta name="description" content="<?= isset($pageDescription) ? sanitize($pageDescription) : 'Search India\'s digital advocate directory, Bare Acts, AIBE exam prep, Court info, Law Colleges, and Legal Tools on My Advocate.' ?>">
+    <meta name="keywords" content="<?= isset($pageKeywords) ? sanitize($pageKeywords) : 'advocate search, bare acts download, high court case status, law colleges india, legal resources, all india bar examination, aibe prep, vakil search' ?>">
+    <meta name="author" content="OfferPlant">
     <link rel="canonical" href="<?= (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]" ?>">
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4BTK0TMSTG"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag("js", new Date());
+      gtag("config", "G-4BTK0TMSTG");
+    </script>
+
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1272970612043134" crossorigin="anonymous"></script>
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="<?= (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]" ?>">
+    <meta property="og:title" content="<?= isset($pageTitle) ? sanitize($pageTitle) . ' | ' . APP_NAME : APP_NAME . ' - ' . APP_TAGLINE ?>">
+    <meta property="og:description" content="<?= isset($pageDescription) ? sanitize($pageDescription) : 'Search India\'s digital advocate directory, Bare Acts, AIBE exam prep, Court info, Law Colleges, and Legal Tools on My Advocate.' ?>">
+    <meta property="og:image" content="<?= APP_URL ?>/assets/images/logo-dark.png">
+    <meta property="og:site_name" content="My Advocate">
+
+    <!-- Twitter Cards -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="<?= (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]" ?>">
+    <meta property="twitter:title" content="<?= isset($pageTitle) ? sanitize($pageTitle) . ' | ' . APP_NAME : APP_NAME . ' - ' . APP_TAGLINE ?>">
+    <meta property="twitter:description" content="<?= isset($pageDescription) ? sanitize($pageDescription) : 'Search India\'s digital advocate directory, Bare Acts, AIBE exam prep, Court info, Law Colleges, and Legal Tools on My Advocate.' ?>">
+    <meta property="twitter:image" content="<?= APP_URL ?>/assets/images/logo-dark.png">
 
     <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
