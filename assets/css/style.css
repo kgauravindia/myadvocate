@@ -440,6 +440,11 @@ a:hover {
 
 /* Mobile Navigation Drawer (max-width: 991px) */
 @media (max-width: 991px) {
+    .header-login-wrapper,
+    .header-login-btn {
+        display: none !important;
+    }
+
     .mobile-toggle {
         display: inline-flex;
     }

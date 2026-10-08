@@ -400,6 +400,23 @@ if ($headerAdvocate) {
                                 </li>
                             </ul>
                         </li>
+
+                        <!-- Mobile Drawer Footer (Login for mobile menu) -->
+                        <li class="nav-menu-footer">
+                            <?php if (!empty($_SESSION['advocate_id'])): ?>
+                                <a href="dashboard" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                                    <i class="fas fa-gauge"></i> Advocate Dashboard
+                                </a>
+                            <?php elseif (!empty($_SESSION['member_id'])): ?>
+                                <a href="member-profile" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                                    <i class="fas fa-user-circle"></i> Member Account
+                                </a>
+                            <?php else: ?>
+                                <a href="login" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                                    <i class="fas fa-right-to-bracket"></i> Login / Sign In
+                                </a>
+                            <?php endif; ?>
+                        </li>
                     </ul>
                 </nav>
 
@@ -562,13 +579,6 @@ if ($headerAdvocate) {
                                     </a>
                                 </div>
                             </div>
-                        </div>
-                    <?php else: ?>
-                        <div class="d-flex align-items-center gap-2">
-                            <a href="login" class="btn btn-primary btn-sm">
-                                <i class="fas fa-right-to-bracket"></i> Login
-                            </a>
-                        </div>
                     <?php endif; ?>
 
                     <!-- Night / Light Mode Toggle Button -->
