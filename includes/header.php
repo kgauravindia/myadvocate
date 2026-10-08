@@ -161,58 +161,119 @@ if ($headerAdvocate) {
                             </button>
                         </li>
 
-                        <!-- 1. HOME -->
+                        <!-- 1. HOME TAB -->
                         <li class="nav-item">
                             <a href="./" class="nav-link <?= in_array($currentPage, ['index', '']) ? 'active' : '' ?>">
-                                <i class="fas fa-home"></i> <span>Home</span>
+                                <i class="fas fa-home"></i> Home
                             </a>
                         </li>
 
-                        <!-- 2. FIND ADVOCATES -->
+                        <!-- 2. SERVICES TAB (Dropdown) -->
                         <li class="nav-item">
-                            <a href="advocate-search-result" class="nav-link <?= in_array($currentPage, ['advocates', 'advocate-search-result', 'advocate-search-result-by-year', 'advocate-search-result-by-mobile']) ? 'active' : '' ?>">
-                                <i class="fas fa-search"></i> <span>Find Advocates</span>
+                            <a href="services" class="nav-link <?= in_array($currentPage, ['services', 'pricing', 'faq', 'video', 'public-service-commission', 'state-bar-council']) ? 'active' : '' ?>">
+                                <i class="fas fa-briefcase"></i> Services <i class="fas fa-chevron-down nav-caret"></i>
                             </a>
+                            <ul class="nav-dropdown dropdown-wide">
+                                <li>
+                                    <a href="about" class="dropdown-link">
+                                        <i class="fas fa-circle-info"></i>
+                                        <div>
+                                            <div class="dropdown-link-title">About Us</div>
+                                            <span class="dropdown-link-desc">Our mission & digital legal platform</span>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="services" class="dropdown-link">
+                                        <i class="fas fa-star text-warning"></i>
+                                        <div>
+                                            <div class="dropdown-link-title">Top Services</div>
+                                            <span class="dropdown-link-desc">Advocate profile enhancement & visibility</span>
+                                        </div>
+                                    </a>
+                                </li>
+                                <?php if (!empty($_SESSION['advocate_id'])): ?>
+                                <li>
+                                    <a href="pricing" class="dropdown-link">
+                                        <i class="fas fa-tags text-warning"></i>
+                                        <div>
+                                            <div class="dropdown-link-title">Pricing & Plans</div>
+                                            <span class="dropdown-link-desc">Advocate memberships & verification</span>
+                                        </div>
+                                    </a>
+                                </li>
+                                <?php endif; ?>
+                                <li>
+                                    <a href="faq" class="dropdown-link">
+                                        <i class="fas fa-circle-question"></i>
+                                        <div>
+                                            <div class="dropdown-link-title">FAQs</div>
+                                            <span class="dropdown-link-desc">Frequently asked questions & help</span>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="video" class="dropdown-link">
+                                        <i class="fas fa-circle-play"></i>
+                                        <div>
+                                            <div class="dropdown-link-title">Videos & Tutorials</div>
+                                            <span class="dropdown-link-desc">Court procedures & legal webinars</span>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li class="dropdown-divider"></li>
+                                <li>
+                                    <a href="public-service-commission" class="dropdown-link">
+                                        <i class="fas fa-landmark-flag"></i>
+                                        <div>
+                                            <div class="dropdown-link-title">Public Service Commissions</div>
+                                            <span class="dropdown-link-desc">UPSC, BPSC, JPSC, UPPSC & 31 State PSCs</span>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="state-bar-council" class="dropdown-link">
+                                        <i class="fas fa-scale-unbalanced"></i>
+                                        <div>
+                                            <div class="dropdown-link-title">State Bar Councils</div>
+                                            <span class="dropdown-link-desc">26 State Bar Councils & BCI Directory</span>
+                                        </div>
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
 
-                        <!-- 3. LEGAL HUB (Dropdown) -->
+                        <!-- 3. ADVOCATE INDEX MULTI-TAB (3-Column Mega Menu) -->
                         <li class="nav-item">
-                            <a href="javascript:void(0)" class="nav-link <?= in_array($currentPage, ['acts', 'act-details', 'bare-acts', 'case-status-of-bihar', 'case-status-of-jharkhand', 'case-status-of-uttar-pradesh', 'college', 'law-college', 'courts', 'bar-associations', 'aibe', 'tools', 'calendars', 'notice']) ? 'active' : '' ?>">
-                                <i class="fas fa-layer-group"></i> <span>Legal Hub</span> <i class="fas fa-chevron-down nav-caret"></i>
+                            <a href="advocate-search-result" class="nav-link <?= in_array($currentPage, ['advocate-search-result', 'advocate-search-result-by-year', 'advocate-search-result-by-mobile', 'case-status-of-bihar', 'case-status-of-jharkhand', 'case-status-of-uttar-pradesh', 'college', 'law-college', 'courts', 'bar-associations']) ? 'active' : '' ?>">
+                                <i class="fas fa-address-book"></i> Advocate Index <i class="fas fa-chevron-down nav-caret"></i>
                             </a>
                             <div class="nav-dropdown dropdown-mega">
                                 <div class="dropdown-mega-grid">
-                                    <!-- Column 1: Bare Acts & Codes -->
+                                    <!-- Column 1: Advocate Directory -->
                                     <div class="mega-column">
                                         <div class="mega-column-header">
-                                            <i class="fas fa-book-bookmark"></i> Bare Acts & Codes
+                                            <i class="fas fa-user-tie"></i> Advocate Directory
                                         </div>
-                                        <a href="acts" class="dropdown-link">
-                                            <i class="fas fa-book"></i>
+                                        <a href="advocate-search-result" class="dropdown-link">
+                                            <i class="fas fa-signature"></i>
                                             <div>
-                                                <div class="dropdown-link-title">Central & State Acts</div>
-                                                <span class="dropdown-link-desc">Bare Acts Repository</span>
+                                                <div class="dropdown-link-title">By Name & District</div>
+                                                <span class="dropdown-link-desc">1.6 Lakh+ Directory</span>
                                             </div>
                                         </a>
-                                        <a href="acts?q=Bharatiya" class="dropdown-link">
-                                            <i class="fas fa-scale-balanced"></i>
+                                        <a href="advocate-search-result" class="dropdown-link">
+                                            <i class="fas fa-calendar-check"></i>
                                             <div>
-                                                <div class="dropdown-link-title">BNS, BNSS & BSA 2023</div>
-                                                <span class="dropdown-link-desc">New Indian Criminal Codes</span>
+                                                <div class="dropdown-link-title">By Enrollment Year</div>
+                                                <span class="dropdown-link-desc">Bar Council Year Search</span>
                                             </div>
                                         </a>
-                                        <a href="calendars" class="dropdown-link">
-                                            <i class="fas fa-calendar-days"></i>
+                                        <a href="advocate-search-result-by-mobile" class="dropdown-link">
+                                            <i class="fas fa-mobile-screen"></i>
                                             <div>
-                                                <div class="dropdown-link-title">Court Calendars</div>
-                                                <span class="dropdown-link-desc">High Court holiday PDFs</span>
-                                            </div>
-                                        </a>
-                                        <a href="notice" class="dropdown-link">
-                                            <i class="fas fa-bullhorn"></i>
-                                            <div>
-                                                <div class="dropdown-link-title">Notices & Circulars</div>
-                                                <span class="dropdown-link-desc">Court orders & updates</span>
+                                                <div class="dropdown-link-title">By Mobile Number</div>
+                                                <span class="dropdown-link-desc">Direct Contact Lookup</span>
                                             </div>
                                         </a>
                                     </div>
@@ -233,7 +294,7 @@ if ($headerAdvocate) {
                                             <i class="fas fa-landmark"></i>
                                             <div>
                                                 <div class="dropdown-link-title">Of Jharkhand</div>
-                                                <span class="dropdown-link-desc">Jharkhand HC & Courts</span>
+                                                <span class="dropdown-link-desc">Jharkhand HC & Civil Courts</span>
                                             </div>
                                         </a>
                                         <a href="case-status-of-uttar-pradesh" class="dropdown-link">
@@ -245,15 +306,15 @@ if ($headerAdvocate) {
                                         </a>
                                     </div>
 
-                                    <!-- Column 3: Institutions & Tools -->
+                                    <!-- Column 3: University & Institutions -->
                                     <div class="mega-column">
                                         <div class="mega-column-header">
-                                            <i class="fas fa-building-columns"></i> Institutions & Prep
+                                            <i class="fas fa-building-columns"></i> Institutions & Courts
                                         </div>
                                         <a href="college" class="dropdown-link">
                                             <i class="fas fa-graduation-cap"></i>
                                             <div>
-                                                <div class="dropdown-link-title">Law Colleges of India</div>
+                                                <div class="dropdown-link-title">Law Colleges</div>
                                                 <span class="dropdown-link-desc">40,000+ Colleges & BCI</span>
                                             </div>
                                         </a>
@@ -271,129 +332,92 @@ if ($headerAdvocate) {
                                                 <span class="dropdown-link-desc">340+ Registered Bodies</span>
                                             </div>
                                         </a>
-                                        <a href="aibe" class="dropdown-link">
-                                            <i class="fas fa-award"></i>
-                                            <div>
-                                                <div class="dropdown-link-title">AIBE Preparation Hub</div>
-                                                <span class="dropdown-link-desc">Exam syllabus & papers</span>
-                                            </div>
-                                        </a>
-                                        <a href="tools" class="dropdown-link">
-                                            <i class="fas fa-calculator"></i>
-                                            <div>
-                                                <div class="dropdown-link-title">Legal Tools</div>
-                                                <span class="dropdown-link-desc">Court fees & limitation</span>
-                                            </div>
-                                        </a>
                                     </div>
                                 </div>
                             </div>
                         </li>
 
-                        <!-- 4. ADVOCATE CORNER (Dropdown) -->
+                        <!-- 4. DOWNLOAD / LEGAL LIBRARY TAB (Dropdown) -->
                         <li class="nav-item">
-                            <a href="javascript:void(0)" class="nav-link <?= in_array($currentPage, ['claim-profile', 'services', 'pricing', 'state-bar-council', 'public-service-commission', 'faq', 'video', 'about']) ? 'active' : '' ?>">
-                                <i class="fas fa-user-tie"></i> <span>Advocate Corner</span> <i class="fas fa-chevron-down nav-caret"></i>
+                            <a href="acts" class="nav-link <?= in_array($currentPage, ['acts', 'act-details', 'calendars', 'notice', 'aibe', 'tools']) ? 'active' : '' ?>">
+                                <i class="fas fa-download"></i> Downloads <i class="fas fa-chevron-down nav-caret"></i>
                             </a>
                             <ul class="nav-dropdown dropdown-wide">
                                 <li>
-                                    <a href="claim-profile" class="dropdown-link">
-                                        <i class="fas fa-id-badge text-warning"></i>
+                                    <a href="acts" class="dropdown-link">
+                                        <i class="fas fa-book-bookmark"></i>
                                         <div>
-                                            <div class="dropdown-link-title">Claim Advocate Profile</div>
-                                            <span class="dropdown-link-desc">Verify & manage your public profile</span>
+                                            <div class="dropdown-link-title">Acts and Rules</div>
+                                            <span class="dropdown-link-desc">Central & State Bare Acts</span>
                                         </div>
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="services" class="dropdown-link">
-                                        <i class="fas fa-star text-warning"></i>
+                                    <a href="acts?q=Bharatiya" class="dropdown-link">
+                                        <i class="fas fa-scale-balanced"></i>
                                         <div>
-                                            <div class="dropdown-link-title">Advocate Services</div>
-                                            <span class="dropdown-link-desc">Profile enhancement & reach</span>
+                                            <div class="dropdown-link-title">BNS, BNSS & BSA 2023</div>
+                                            <span class="dropdown-link-desc">New Indian Criminal Law Codes</span>
                                         </div>
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="pricing" class="dropdown-link">
-                                        <i class="fas fa-shield-halved text-success"></i>
+                                    <a href="calendars" class="dropdown-link">
+                                        <i class="fas fa-calendar-days"></i>
                                         <div>
-                                            <div class="dropdown-link-title">Membership & Plans</div>
-                                            <span class="dropdown-link-desc">Verified badges & premium features</span>
+                                            <div class="dropdown-link-title">Calendars (2022-2026)</div>
+                                            <span class="dropdown-link-desc">High Court holiday schedules & PDFs</span>
                                         </div>
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="state-bar-council" class="dropdown-link">
-                                        <i class="fas fa-scale-unbalanced"></i>
+                                    <a href="notice" class="dropdown-link">
+                                        <i class="fas fa-bullhorn"></i>
                                         <div>
-                                            <div class="dropdown-link-title">State Bar Councils</div>
-                                            <span class="dropdown-link-desc">26 State Bar Councils directory</span>
+                                            <div class="dropdown-link-title">Notice & Circulars</div>
+                                            <span class="dropdown-link-desc">Court orders, exam dates & gazettes</span>
+                                        </div>
+                                    </a>
+                                </li>
+                                <li class="dropdown-divider"></li>
+                                <li>
+                                    <a href="aibe" class="dropdown-link">
+                                        <i class="fas fa-graduation-cap"></i>
+                                        <div>
+                                            <div class="dropdown-link-title">AIBE Preparation Hub</div>
+                                            <span class="dropdown-link-desc">Exam syllabus, weightage & guide</span>
                                         </div>
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="public-service-commission" class="dropdown-link">
-                                        <i class="fas fa-landmark-flag"></i>
+                                    <a href="tools" class="dropdown-link">
+                                        <i class="fas fa-calculator"></i>
                                         <div>
-                                            <div class="dropdown-link-title">Public Service Commissions</div>
-                                            <span class="dropdown-link-desc">UPSC, BPSC, JPSC & 31 State PSCs</span>
-                                        </div>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="video" class="dropdown-link">
-                                        <i class="fas fa-circle-play"></i>
-                                        <div>
-                                            <div class="dropdown-link-title">Videos & Procedures</div>
-                                            <span class="dropdown-link-desc">Court procedures & webinars</span>
-                                        </div>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="faq" class="dropdown-link">
-                                        <i class="fas fa-circle-question"></i>
-                                        <div>
-                                            <div class="dropdown-link-title">FAQs & Guidelines</div>
-                                            <span class="dropdown-link-desc">Common questions & helpdesk</span>
-                                        </div>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="about" class="dropdown-link">
-                                        <i class="fas fa-circle-info"></i>
-                                        <div>
-                                            <div class="dropdown-link-title">About My Advocate</div>
-                                            <span class="dropdown-link-desc">Our mission & digital platform</span>
+                                            <div class="dropdown-link-title">Legal Tools & Calculators</div>
+                                            <span class="dropdown-link-desc">Court fees & limitation calculations</span>
                                         </div>
                                     </a>
                                 </li>
                             </ul>
                         </li>
 
-                        <!-- Mobile Drawer Footer Action Buttons -->
+                        <!-- Mobile Drawer Footer (Login / Register / Profile) -->
                         <li class="nav-menu-footer">
                             <?php if (!empty($_SESSION['advocate_id'])): ?>
-                                <a href="dashboard" class="btn btn-primary w-100 mb-2" style="justify-content: center;">
+                                <a href="dashboard" class="btn btn-primary btn-block" style="width: 100%; justify-content: center;">
                                     <i class="fas fa-gauge"></i> Advocate Dashboard
                                 </a>
-                                <a href="logout.php" class="user-logout-btn" style="width: 100%;">
-                                    <i class="fas fa-right-from-bracket"></i> Sign Out
-                                </a>
                             <?php elseif (!empty($_SESSION['member_id'])): ?>
-                                <a href="member-profile" class="btn btn-primary w-100 mb-2" style="justify-content: center;">
-                                    <i class="fas fa-user-circle"></i> Member Profile
-                                </a>
-                                <a href="logout.php" class="user-logout-btn" style="width: 100%;">
-                                    <i class="fas fa-right-from-bracket"></i> Sign Out
+                                <a href="member-profile" class="btn btn-primary btn-block" style="width: 100%; justify-content: center;">
+                                    <i class="fas fa-user-circle"></i> Member Account
                                 </a>
                             <?php else: ?>
-                                <div class="drawer-action-group">
-                                    <a href="login" class="drawer-login-btn">
-                                        <i class="fas fa-right-to-bracket"></i> Login
+                                <div style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%;">
+                                    <a href="login" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                                        <i class="fas fa-right-to-bracket"></i> Login / Sign In
                                     </a>
-                                    <a href="register" class="drawer-join-btn">
-                                        <i class="fas fa-user-plus"></i> Join Free
+                                    <a href="register" class="btn btn-outline" style="width: 100%; justify-content: center;">
+                                        <i class="fas fa-user-plus"></i> Advocate Registration
                                     </a>
                                 </div>
                             <?php endif; ?>
@@ -562,12 +586,9 @@ if ($headerAdvocate) {
                             </div>
                         </div>
                     <?php else: ?>
-                        <div class="header-guest-actions">
-                            <a href="login" class="header-login-link">
+                        <div class="d-flex align-items-center gap-2">
+                            <a href="login" class="btn btn-primary btn-sm">
                                 <i class="fas fa-right-to-bracket"></i> Login
-                            </a>
-                            <a href="register" class="btn-join-free">
-                                <i class="fas fa-user-plus"></i> Join Free
                             </a>
                         </div>
                     <?php endif; ?>
