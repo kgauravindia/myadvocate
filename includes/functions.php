@@ -404,17 +404,17 @@ function renderAdvocateIndexBadge(array $advIndex, string $format = 'badge'): st
     $pct = (int)($advIndex['percent'] ?? 0);
     $grade = sanitize($advIndex['grade'] ?? 'B');
     $badgeClass = sanitize($advIndex['badge_class'] ?? 'adv-index-b');
-    $label = sanitize($advIndex['label'] ?? 'Profile Index');
+    $label = sanitize($advIndex['label'] ?? 'Profile Score');
 
     if ($format === 'compact') {
-        return '<span class="adv-index-badge ' . $badgeClass . '" title="Advocate Index: ' . $pct . '% (' . $label . ')"><i class="fas fa-bolt"></i> ' . $pct . '%</span>';
+        return '<span class="adv-index-badge ' . $badgeClass . '" title="Profile Score: ' . $pct . '% (' . $label . ')"><i class="fas fa-bolt"></i> ' . $pct . '%</span>';
     }
 
     if ($format === 'pill') {
-        return '<span class="adv-index-pill ' . $badgeClass . '"><i class="fas fa-bolt"></i> <strong>' . $pct . '%</strong> Advocate Index <span class="adv-index-grade-tag">' . $grade . '</span></span>';
+        return '<span class="adv-index-pill ' . $badgeClass . '"><i class="fas fa-bolt"></i> <strong>' . $pct . '%</strong> <span class="adv-index-grade-tag">' . $grade . '</span></span>';
     }
 
-    return '<span class="adv-index-badge ' . $badgeClass . '" title="Advocate Index: ' . $pct . '% (' . $label . ')"><i class="fas fa-bolt"></i> <strong>' . $pct . '%</strong> Index</span>';
+    return '<span class="adv-index-badge ' . $badgeClass . '" title="Profile Score: ' . $pct . '% (' . $label . ')"><i class="fas fa-bolt"></i> <strong>' . $pct . '%</strong></span>';
 }
 
 function getPracticeAreaIcon(string $practice): string {
@@ -1148,11 +1148,26 @@ function findUserByIdentifier(string $identifier, ?PDO $db = null): ?array {
         $params = [$identifier, $identifier, $identifier, $identifier, $identifier, $identifier];
 
         if (strlen($last10) >= 10) {
-            $sql .= " OR mobile LIKE ? OR mobile LIKE ? OR mobile LIKE ?";
+            $sql .= " OR mobile LIKE ? OR mobile LIKE ? OR mobile LIKE ? OR REPLACE(REPLACE(mobile, ' ', ''), '-', '') LIKE ?";
             $params[] = '%' . $last10;
             $params[] = '+91' . $last10;
             $params[] = '91' . $last10;
+            $params[] = '%' . $last10;
         }
+
+        // If enrollment number has parts (e.g. BR/1234/2020 or 1234/2020)
+        if (strpos($identifier, '/') !== false) {
+            $parts = explode('/', $identifier);
+            foreach ($parts as $p) {
+                $pClean = trim($p);
+                if (strlen($pClean) >= 2 && !in_array(strtolower($pClean), ['br', 'up', 'jh', 'dl', 'mh'])) {
+                    $sql .= " OR e_no = ? OR e_no LIKE ?";
+                    $params[] = $pClean;
+                    $params[] = '%' . $pClean . '%';
+                }
+            }
+        }
+
         $sql .= ") ORDER BY id DESC LIMIT 1";
 
         $stmtAdv = $db->prepare($sql);
@@ -1165,7 +1180,9 @@ function findUserByIdentifier(string $identifier, ?PDO $db = null): ?array {
             }
             return $adv;
         }
-    } catch (Exception $e) {}
+    } catch (Exception $e) {
+        error_log("findUserByIdentifier Advocate Exception: " . $e->getMessage());
+    }
 
     // 2. Check Member Table
     try {
@@ -1179,10 +1196,11 @@ function findUserByIdentifier(string $identifier, ?PDO $db = null): ?array {
         $params = [$identifier, $identifier, $identifier, $identifier];
 
         if (strlen($last10) >= 10) {
-            $sql .= " OR mobile LIKE ? OR mobile LIKE ? OR mobile LIKE ?";
+            $sql .= " OR mobile LIKE ? OR mobile LIKE ? OR mobile LIKE ? OR REPLACE(REPLACE(mobile, ' ', ''), '-', '') LIKE ?";
             $params[] = '%' . $last10;
             $params[] = '+91' . $last10;
             $params[] = '91' . $last10;
+            $params[] = '%' . $last10;
         }
         $sql .= ") ORDER BY id DESC LIMIT 1";
 
@@ -1196,7 +1214,9 @@ function findUserByIdentifier(string $identifier, ?PDO $db = null): ?array {
             }
             return $member;
         }
-    } catch (Exception $e) {}
+    } catch (Exception $e) {
+        error_log("findUserByIdentifier Member Exception: " . $e->getMessage());
+    }
 
     return null;
 }

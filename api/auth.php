@@ -141,10 +141,28 @@ switch ($task) {
             exit;
         }
 
+        $digits = preg_replace('/[^0-9]/', '', $identifier);
+        $last10 = (strlen($digits) >= 10) ? substr($digits, -10) : $digits;
+
         // Check Advocate
         try {
-            $stmtAdv = $db->prepare("SELECT id, name, mobile, email, e_no, password, status, plan_type FROM advocate WHERE (mobile = ? OR email = ? OR e_no = ?) AND status != 'BLOCK' LIMIT 1");
-            $stmtAdv->execute([$identifier, $identifier, $identifier]);
+            $sqlAdv = "SELECT id, name, mobile, email, e_no, password, status, plan_type 
+                       FROM advocate 
+                       WHERE (status != 'BLOCK' OR status IS NULL) AND (
+                           mobile = ? OR email = ? OR e_no = ? 
+                           OR TRIM(mobile) = ? OR TRIM(email) = ? OR TRIM(e_no) = ?";
+            $paramsAdv = [$identifier, $identifier, $identifier, $identifier, $identifier, $identifier];
+            if (strlen($last10) >= 10) {
+                $sqlAdv .= " OR mobile LIKE ? OR mobile LIKE ? OR mobile LIKE ? OR REPLACE(REPLACE(mobile, ' ', ''), '-', '') LIKE ?";
+                $paramsAdv[] = '%' . $last10;
+                $paramsAdv[] = '+91' . $last10;
+                $paramsAdv[] = '91' . $last10;
+                $paramsAdv[] = '%' . $last10;
+            }
+            $sqlAdv .= ") ORDER BY id DESC LIMIT 1";
+
+            $stmtAdv = $db->prepare($sqlAdv);
+            $stmtAdv->execute($paramsAdv);
             $adv = $stmtAdv->fetch(PDO::FETCH_ASSOC);
 
             if ($adv) {
@@ -159,6 +177,7 @@ switch ($task) {
                     $_SESSION['advocate_id'] = (int)$adv['id'];
                     $_SESSION['advocate_name'] = $adv['name'];
                     $_SESSION['user_type'] = 'advocate';
+                    session_write_close();
                     $targetUrl = ($redirect === 'pricing') ? 'pricing' : 'dashboard';
 
                     echo json_encode([
@@ -178,8 +197,23 @@ switch ($task) {
             }
 
             // Check Member
-            $stmtMem = $db->prepare("SELECT id, name, mobile, email, password, status FROM member WHERE (mobile = ? OR email = ?) AND status != 'BLOCK' LIMIT 1");
-            $stmtMem->execute([$identifier, $identifier]);
+            $sqlMem = "SELECT id, name, mobile, email, password, status 
+                       FROM member 
+                       WHERE (status != 'BLOCK' OR status IS NULL) AND (
+                           mobile = ? OR email = ? 
+                           OR TRIM(mobile) = ? OR TRIM(email) = ?";
+            $paramsMem = [$identifier, $identifier, $identifier, $identifier];
+            if (strlen($last10) >= 10) {
+                $sqlMem .= " OR mobile LIKE ? OR mobile LIKE ? OR mobile LIKE ? OR REPLACE(REPLACE(mobile, ' ', ''), '-', '') LIKE ?";
+                $paramsMem[] = '%' . $last10;
+                $paramsMem[] = '+91' . $last10;
+                $paramsMem[] = '91' . $last10;
+                $paramsMem[] = '%' . $last10;
+            }
+            $sqlMem .= ") ORDER BY id DESC LIMIT 1";
+
+            $stmtMem = $db->prepare($sqlMem);
+            $stmtMem->execute($paramsMem);
             $member = $stmtMem->fetch(PDO::FETCH_ASSOC);
 
             if ($member) {
@@ -194,6 +228,7 @@ switch ($task) {
                     $_SESSION['member_id'] = (int)$member['id'];
                     $_SESSION['member_name'] = $member['name'];
                     $_SESSION['user_type'] = 'member';
+                    session_write_close();
                     $targetUrl = !empty($redirect) ? $redirect : 'member-profile';
 
                     echo json_encode([

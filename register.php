@@ -68,8 +68,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = "An account with this mobile number or email already exists. Please sign in instead.";
             } else {
                 $hash = md5($password);
-                $stmt = $db->prepare("INSERT INTO member (name, mobile, email, password, gender, state_code, district_code, pincode, address, status, mobile_status, email_status, created_at, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE', 'VERIFIED', 'VERIFIED', NOW(), ?)");
-                $stmt->execute([$name, $mobile, $email, $hash, $gender, $stateCode, $districtCode, $pincode, $address, $name]);
+
+                // Fetch available columns in member table
+                $memberCols = [];
+                try {
+                    $colStmt = $db->query("DESCRIBE member");
+                    $memberCols = $colStmt->fetchAll(PDO::FETCH_COLUMN);
+                } catch (Exception $ce) {}
+
+                $memberData = [
+                    'name'          => $name,
+                    'mobile'        => $mobile,
+                    'email'         => $email,
+                    'password'      => $hash,
+                    'gender'        => $gender,
+                    'state_code'    => $stateCode,
+                    'district_code' => $districtCode,
+                    'pincode'       => $pincode,
+                    'address'       => $address,
+                    'status'        => 'ACTIVE',
+                    'mobile_status' => 'VERIFIED',
+                    'email_status'  => 'VERIFIED',
+                    'created_at'    => date('Y-m-d H:i:s'),
+                    'created_by'    => $name
+                ];
+
+                if (!empty($memberCols)) {
+                    $insertData = array_intersect_key($memberData, array_flip($memberCols));
+                } else {
+                    $insertData = $memberData;
+                }
+
+                $colNames = implode('`, `', array_keys($insertData));
+                $placeholders = implode(', ', array_fill(0, count($insertData), '?'));
+                $sql = "INSERT INTO `member` (`{$colNames}`) VALUES ({$placeholders})";
+
+                $stmt = $db->prepare($sql);
+                $stmt->execute(array_values($insertData));
                 $newMemberId = $db->lastInsertId();
 
                 $_SESSION['member_id'] = (int)$newMemberId;
@@ -80,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $successType = 'member';
             }
         } catch (Exception $e) {
-            $error = "Registration failed due to a database error. Please try again.";
+            $error = "Registration failed: " . htmlspecialchars($e->getMessage());
         }
     } else {
         // === ADVOCATE REGISTRATION ===
@@ -113,8 +148,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     $hash = md5($password);
                     $publicUrl = generateAdvocatePublicUrl($name, $stateCode, $districtCode, $db);
-                    $stmt = $db->prepare("INSERT INTO advocate (name, mobile, email, password, state_code, district_code, bc_id, e_no, e_year, court, public_url, type, plan_type, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE', 'registered', 'ACTIVE', NOW())");
-                    $stmt->execute([$name, $mobile, $email, $hash, $stateCode, $districtCode, $bcIdToSave, $eNo, $eYear, $court, $publicUrl]);
+
+                    // Fetch available columns in advocate table
+                    $advCols = [];
+                    try {
+                        $colStmt = $db->query("DESCRIBE advocate");
+                        $advCols = $colStmt->fetchAll(PDO::FETCH_COLUMN);
+                    } catch (Exception $ce) {}
+
+                    $advData = [
+                        'name'          => $name,
+                        'mobile'        => $mobile,
+                        'email'         => $email,
+                        'password'      => $hash,
+                        'state_code'    => $stateCode,
+                        'district_code' => $districtCode,
+                        'bc_id'         => $bcIdToSave,
+                        'e_no'          => $eNo,
+                        'e_year'        => $eYear,
+                        'court'         => $court,
+                        'public_url'    => $publicUrl,
+                        'type'          => 'ACTIVE',
+                        'plan_type'     => 'registered',
+                        'status'        => 'ACTIVE',
+                        'created_at'    => date('Y-m-d H:i:s')
+                    ];
+
+                    if (!empty($advCols)) {
+                        $insertData = array_intersect_key($advData, array_flip($advCols));
+                    } else {
+                        $insertData = $advData;
+                    }
+
+                    $colNames = implode('`, `', array_keys($insertData));
+                    $placeholders = implode(', ', array_fill(0, count($insertData), '?'));
+                    $sql = "INSERT INTO `advocate` (`{$colNames}`) VALUES ({$placeholders})";
+
+                    $stmt = $db->prepare($sql);
+                    $stmt->execute(array_values($insertData));
                     $newAdvocateId = $db->lastInsertId();
 
                     $_SESSION['advocate_id'] = (int)$newAdvocateId;
@@ -125,7 +196,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $successType = 'advocate';
                 }
             } catch (Exception $e) {
-                $error = "Advocate registration could not be completed. Please check your inputs or try claiming your profile.";
+                $error = "Advocate registration failed: " . htmlspecialchars($e->getMessage());
             }
         }
     }
