@@ -71,7 +71,17 @@ require_once INCLUDES_PATH . '/header.php';
     <!-- Acts Grid -->
     <?php if (!empty($acts)): ?>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
-            <?php foreach ($acts as $act): ?>
+            <?php foreach ($acts as $act): 
+                $pdfUrl = '';
+                if (!empty($act['hindi']) && filter_var($act['hindi'], FILTER_VALIDATE_URL)) {
+                    $pdfUrl = $act['hindi'];
+                } elseif (!empty($act['english']) && filter_var($act['english'], FILTER_VALIDATE_URL)) {
+                    $pdfUrl = $act['english'];
+                } elseif (!empty($act['official']) && filter_var($act['official'], FILTER_VALIDATE_URL)) {
+                    $pdfUrl = $act['official'];
+                }
+                $hindiTitle = (!empty($act['hindi']) && !filter_var($act['hindi'], FILTER_VALIDATE_URL)) ? $act['hindi'] : '';
+            ?>
                 <div class="act-card" style="display: flex; flex-direction: column; justify-content: space-between;">
                     <div>
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
@@ -83,18 +93,24 @@ require_once INCLUDES_PATH . '/header.php';
                         <h3 style="font-size: 1.15rem; margin-bottom: 0.5rem; line-height: 1.35;">
                             <a href="act-details?id=<?= $act['id'] ?>"><?= sanitize(cleanActName($act['name'])) ?></a>
                         </h3>
-                        <?php if (!empty($act['hindi'])): ?>
+                        <?php if (!empty($hindiTitle)): ?>
                             <p style="color: var(--text-muted); font-size: 0.8125rem; margin-bottom: 0.75rem;">
-                                <?= sanitize($act['hindi']) ?>
+                                <?= sanitize($hindiTitle) ?>
                             </p>
                         <?php endif; ?>
                     </div>
 
-                    <div style="border-top: 1px solid var(--border-color); padding-top: 0.85rem; margin-top: 0.85rem; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="border-top: 1px solid var(--border-color); padding-top: 0.85rem; margin-top: 0.85rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                         <a href="act-details?id=<?= $act['id'] ?>" class="btn btn-outline-primary btn-sm">
                             <i class="fas fa-book-open"></i> Read Full Act
                         </a>
-                        <span style="font-size: 0.75rem; color: var(--text-light);"><i class="fas fa-file-shield"></i> Official Text</span>
+                        <?php if (!empty($pdfUrl)): ?>
+                            <a href="<?= sanitize($pdfUrl) ?>" target="_blank" rel="noopener" class="btn btn-outline-gold btn-sm" title="Download Official Gazette PDF">
+                                <i class="fas fa-file-pdf"></i> Official PDF
+                            </a>
+                        <?php else: ?>
+                            <span style="font-size: 0.75rem; color: var(--text-light);"><i class="fas fa-file-shield"></i> Official Text</span>
+                        <?php endif; ?>
                     </div>
                 </div>
             <?php endforeach; ?>

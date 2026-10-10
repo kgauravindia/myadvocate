@@ -39,6 +39,22 @@ try {
     $featuredActs = $stmt->fetchAll();
 } catch (Exception $e) {}
 
+// Fetch Recently Joined Advocates (Last 4 as in advocateindex)
+$recentAdvocates = [];
+try {
+    $stmt = $db->query("SELECT a.id, a.name, a.photo, a.type, a.public_url, a.practice_area, a.created_at, a.e_no, a.e_year,
+                               s.name as state_name, d.name as district_name
+                        FROM advocate a
+                        LEFT JOIN state s ON a.state_code = s.code
+                        LEFT JOIN district d ON a.district_code = d.code
+                        WHERE a.status = 'ACTIVE' AND (a.type NOT IN ('PENDING', 'BLOCK', 'DIED') OR a.type IS NULL)
+                        ORDER BY a.created_at DESC, a.id DESC
+                        LIMIT 4");
+    $recentAdvocates = $stmt->fetchAll();
+} catch (Exception $e) {
+    $recentAdvocates = [];
+}
+
 require_once INCLUDES_PATH . '/header.php';
 ?>
 
@@ -161,6 +177,84 @@ require_once INCLUDES_PATH . '/header.php';
         </div>
     </div>
 </section>
+
+<!-- Recently Joined Advocates Section (as in advocateindex) -->
+<?php if (!empty($recentAdvocates)): ?>
+<section class="recent-adv-section">
+    <div class="container">
+        <div style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(22, 163, 74, 0.1); color: #16a34a; padding: 0.35rem 0.85rem; border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 700; margin-bottom: 0.5rem; border: 1px solid rgba(22, 163, 74, 0.2);">
+                    <i class="fas fa-user-plus"></i> NEW MEMBERS
+                </div>
+                <h2 style="font-size: 1.85rem; font-weight: 800; color: var(--primary); margin-bottom: 0.25rem;">Recently Joined Advocates</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0;">Welcome our newest legal professionals registered on the platform</p>
+            </div>
+            <div>
+                <a href="advocate-search-result" class="btn btn-outline-primary" style="border-radius: var(--radius-full); font-weight: 700; padding: 0.5rem 1.25rem;">
+                    Browse All <i class="fas fa-arrow-right" style="margin-left: 0.4rem;"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="recent-adv-grid">
+            <?php foreach ($recentAdvocates as $ra):
+                $profileLink = getAdvocateUrl($ra);
+                $locParts = array_filter([$ra['district_name'] ?? '', $ra['state_name'] ?? '']);
+                $locStr = implode(', ', $locParts);
+                $initials = strtoupper(substr(trim($ra['name'] ?: 'A'), 0, 1));
+                $nameParts = explode(' ', trim($ra['name'] ?? ''));
+                if (count($nameParts) > 1 && !empty($nameParts[0]) && !empty(end($nameParts))) {
+                    $initials = strtoupper(substr($nameParts[0], 0, 1) . substr(end($nameParts), 0, 1));
+                }
+                $joinedAgo = !empty($ra['created_at']) ? timeAgo($ra['created_at']) : 'Recently';
+                $photoUrl = getAdvocatePhotoUrl($ra['photo'] ?? '');
+                $practice = !empty($ra['practice_area']) ? $ra['practice_area'] : 'General Law';
+            ?>
+            <div class="recent-adv-card">
+                <div class="recent-adv-avatar-wrap">
+                    <?php if (!empty($photoUrl)): ?>
+                        <img src="<?= sanitize($photoUrl) ?>" alt="<?= sanitize($ra['name']) ?>" class="recent-adv-avatar" loading="lazy">
+                    <?php else: ?>
+                        <div class="recent-adv-avatar-initials">
+                            <span><?= sanitize($initials) ?></span>
+                        </div>
+                    <?php endif; ?>
+                    <span class="recent-adv-check" title="Registered Professional">
+                        <i class="fas fa-check"></i>
+                    </span>
+                </div>
+
+                <a href="<?= $profileLink ?>" class="recent-adv-name" title="<?= sanitize($ra['name']) ?>">
+                    <?= sanitize($ra['name']) ?>
+                </a>
+
+                <?php if ($locStr): ?>
+                    <div class="recent-adv-loc">
+                        <i class="fas fa-location-dot" style="color: var(--brand-red); font-size: 0.75rem;"></i>
+                        <span><?= sanitize($locStr) ?></span>
+                    </div>
+                <?php endif; ?>
+
+                <span class="recent-adv-practice" title="<?= sanitize($practice) ?>">
+                    <?= sanitize($practice) ?>
+                </span>
+
+                <div class="recent-adv-time">
+                    <i class="far fa-clock"></i> Joined <?= sanitize($joinedAgo) ?>
+                </div>
+
+                <div class="recent-adv-action">
+                    <a href="<?= $profileLink ?>" class="btn btn-outline-primary">
+                        View Profile
+                    </a>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
 
 <!-- Featured Bare Acts & New Criminal Legislation -->
 <section class="section" style="background: #ffffff; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">

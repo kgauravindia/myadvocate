@@ -1221,3 +1221,36 @@ function findUserByIdentifier(string $identifier, ?PDO $db = null): ?array {
     return null;
 }
 
+/**
+ * Format timestamp into human-readable relative time (e.g. "2 hours ago", "3 days ago")
+ */
+function timeAgo($timestamp): string {
+    if (empty($timestamp)) return "recently";
+    
+    $time = is_numeric($timestamp) ? (int)$timestamp : strtotime($timestamp);
+    if (!$time) return "recently";
+    
+    $diff = time() - $time;
+    if ($diff < 1) return 'just now';
+    
+    $intervals = [
+        31536000 => 'year',
+        2592000  => 'month',
+        604800   => 'week',
+        86400    => 'day',
+        3600     => 'hour',
+        60       => 'minute',
+        1        => 'second'
+    ];
+    
+    foreach ($intervals as $secs => $label) {
+        $d = $diff / $secs;
+        if ($d >= 1) {
+            $r = round($d);
+            return $r . ' ' . $label . ($r > 1 ? 's' : '') . ' ago';
+        }
+    }
+    
+    return 'just now';
+}
+
