@@ -169,10 +169,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                OR TRIM(mobile) = ? OR TRIM(email) = ? OR TRIM(e_no) = ?";
                 $paramsAdv = [$identifier, $identifier, $identifier, $identifier, $identifier, $identifier];
                 if (strlen($last10) >= 10) {
-                    $sqlAdv .= " OR mobile LIKE ? OR mobile LIKE ? OR mobile LIKE ?";
+                    $sqlAdv .= " OR mobile LIKE ? OR mobile LIKE ? OR mobile LIKE ? OR REPLACE(REPLACE(mobile, ' ', ''), '-', '') LIKE ?";
                     $paramsAdv[] = '%' . $last10;
                     $paramsAdv[] = '+91' . $last10;
                     $paramsAdv[] = '91' . $last10;
+                    $paramsAdv[] = '%' . $last10;
+                }
+                if (strpos($identifier, '/') !== false) {
+                    $parts = explode('/', $identifier);
+                    foreach ($parts as $p) {
+                        $pClean = trim($p);
+                        if (strlen($pClean) >= 2 && !in_array(strtolower($pClean), ['br', 'up', 'jh', 'dl', 'mh'])) {
+                            $sqlAdv .= " OR e_no = ? OR e_no LIKE ?";
+                            $paramsAdv[] = $pClean;
+                            $paramsAdv[] = '%' . $pClean . '%';
+                        }
+                    }
                 }
                 $sqlAdv .= ") ORDER BY id DESC LIMIT 1";
 
@@ -184,7 +196,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $userFound = true;
                     $passValid = false;
                     if (!empty($adv['password'])) {
-                        if (md5($password) === $adv['password'] || password_verify($password, $adv['password']) || $password === $adv['password']) {
+                        if (
+                            $password === $adv['password'] || 
+                            md5($password) === $adv['password'] || 
+                            sha1($password) === $adv['password'] || 
+                            password_verify($password, $adv['password'])
+                        ) {
                             $passValid = true;
                         }
                     }
@@ -193,6 +210,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $_SESSION['advocate_id'] = (int)$adv['id'];
                         $_SESSION['advocate_name'] = $adv['name'];
                         $_SESSION['user_type'] = 'advocate';
+                        session_write_close();
 
                         if ($redirect === 'pricing') {
                             header("Location: pricing");
@@ -211,10 +229,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                OR TRIM(mobile) = ? OR TRIM(email) = ?";
                 $paramsMem = [$identifier, $identifier, $identifier, $identifier];
                 if (strlen($last10) >= 10) {
-                    $sqlMem .= " OR mobile LIKE ? OR mobile LIKE ? OR mobile LIKE ?";
+                    $sqlMem .= " OR mobile LIKE ? OR mobile LIKE ? OR mobile LIKE ? OR REPLACE(REPLACE(mobile, ' ', ''), '-', '') LIKE ?";
                     $paramsMem[] = '%' . $last10;
                     $paramsMem[] = '+91' . $last10;
                     $paramsMem[] = '91' . $last10;
+                    $paramsMem[] = '%' . $last10;
                 }
                 $sqlMem .= ") ORDER BY id DESC LIMIT 1";
 
@@ -226,7 +245,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $userFound = true;
                     $passValid = false;
                     if (!empty($member['password'])) {
-                        if (md5($password) === $member['password'] || password_verify($password, $member['password']) || $password === $member['password']) {
+                        if (
+                            $password === $member['password'] || 
+                            md5($password) === $member['password'] || 
+                            sha1($password) === $member['password'] || 
+                            password_verify($password, $member['password'])
+                        ) {
                             $passValid = true;
                         }
                     }
@@ -235,6 +259,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $_SESSION['member_id'] = (int)$member['id'];
                         $_SESSION['member_name'] = $member['name'];
                         $_SESSION['user_type'] = 'member';
+                        session_write_close();
 
                         if (!empty($redirect)) {
                             header("Location: " . $redirect);
@@ -251,7 +276,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $error = "No account found matching this mobile number, email, or enrollment number.";
                 }
             } catch (Exception $e) {
-                $error = "Login service is temporarily unavailable. Please try again.";
+                $error = "Login service is temporarily unavailable. Please try again: " . $e->getMessage();
             }
         }
     }
@@ -321,7 +346,7 @@ require_once INCLUDES_PATH . '/header.php';
                 
                 <!-- Step 1: Input Mobile / Identifier to Send OTP -->
                 <div id="otp_step_1" style="<?= ($stepOtp === 1) ? 'display: block;' : 'display: none;' ?>">
-                    <form action="login" method="POST" id="form_send_otp" onsubmit="handleSendOtp(event)">
+                    <form action="" method="POST" id="form_send_otp" onsubmit="handleSendOtp(event)">
                         <input type="hidden" name="action" value="send_otp">
                         <input type="hidden" name="auth_mode" value="otp">
                         <?php if (!empty($redirect)): ?>
@@ -356,7 +381,7 @@ require_once INCLUDES_PATH . '/header.php';
                         <div id="display_masked_mobile" style="font-size: 1.1rem; font-weight: 800; color: var(--brand-dark); letter-spacing: 0.05em;">
                             <?= $maskedMobile ?: 'Registered Mobile' ?>
                         </div>
-                        <form action="login" method="POST" style="display: inline-block; margin-top: 0.4rem;">
+                        <form action="" method="POST" style="display: inline-block; margin-top: 0.4rem;">
                             <input type="hidden" name="action" value="change_number">
                             <input type="hidden" name="auth_mode" value="otp">
                             <button type="submit" style="background: none; border: none; color: var(--brand-red); font-size: 0.8rem; font-weight: 700; cursor: pointer; text-decoration: underline; padding: 0;">
@@ -365,7 +390,7 @@ require_once INCLUDES_PATH . '/header.php';
                         </form>
                     </div>
 
-                    <form action="login" method="POST" id="form_verify_otp" onsubmit="handleVerifyOtp(event)">
+                    <form action="" method="POST" id="form_verify_otp" onsubmit="handleVerifyOtp(event)">
                         <input type="hidden" name="action" value="verify_otp">
                         <input type="hidden" name="auth_mode" value="otp">
                         <?php if (!empty($redirect)): ?>
@@ -400,7 +425,7 @@ require_once INCLUDES_PATH . '/header.php';
             <!-- TAB 2: PASSWORD LOGIN -->
             <!-- ============================================== -->
             <div id="tab_pass_content" style="<?= ($activeTab === 'password') ? 'display: block;' : 'display: none;' ?>">
-                <form action="login" method="POST" id="form_pass_login">
+                    <form action="" method="POST" id="form_pass_login">
                     <input type="hidden" name="action" value="password_login">
                     <input type="hidden" name="auth_mode" value="password">
                     <?php if (!empty($redirect)): ?>
