@@ -72,6 +72,10 @@ if ($headerAdvocate) {
       gtag("config", "G-4BTK0TMSTG");
     </script>
 
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1272970612043134" crossorigin="anonymous"></script>
+
+
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
