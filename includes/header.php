@@ -51,6 +51,22 @@ if ($headerAdvocate) {
     $headerEnr = '';
     $headerEmail = '';
 }
+
+// Determine whether Google AdSense should be loaded
+// Exclude logged-in users (advocates & members), authentication/portal pages, or if $showAds = false
+$adExcludedPages = [
+    'login', 'register', 'signin', 'signup',
+    'change-password', 'reset-password', 'logout', 'signout',
+    'dashboard', 'my-profile', 'member-profile', 'claim-profile'
+];
+$shouldShowAds = true;
+if (isset($showAds) && $showAds === false) {
+    $shouldShowAds = false;
+} elseif (!empty($_SESSION['advocate_id']) || !empty($_SESSION['member_id'])) {
+    $shouldShowAds = false;
+} elseif (in_array($currentPage, $adExcludedPages, true)) {
+    $shouldShowAds = false;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -72,8 +88,10 @@ if ($headerAdvocate) {
       gtag("config", "G-4BTK0TMSTG");
     </script>
 
+    <?php if ($shouldShowAds): ?>
     <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1272970612043134" crossorigin="anonymous"></script>
+    <?php endif; ?>
 
 
 
