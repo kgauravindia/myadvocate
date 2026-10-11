@@ -25,8 +25,25 @@ RewriteRule ^profile/([a-zA-Z0-9_.-]+)/?$ profile.php?url=$1 [QSA,L]
 RewriteRule ^acts/([a-zA-Z0-9_-]+)/?$ act-details.php?id=$1 [QSA,L]
 
 # 7. Clean URL to PHP file mapping (e.g. /about -> about.php, /login -> login.php)
+RewriteCond %{DOCUMENT_ROOT}/search/$1.php -f [OR]
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^search/([a-zA-Z0-9_-]+)/?$ search/$1.php [QSA,L]
+
 RewriteCond %{REQUEST_FILENAME}.php -f
 RewriteRule ^([a-zA-Z0-9_-]+)/?$ $1.php [QSA,L]
+
+# Direct PIN Code Search Aliases
+RewriteRule ^pin-code/?$ search/pin-code.php [QSA,L]
+RewriteRule ^pincode/?$ search/pin-code.php [QSA,L]
+
+# Direct Bank IFSC Search Aliases
+RewriteRule ^bank-ifsc/?$ search/bank-ifsc.php [QSA,L]
+RewriteRule ^ifsc/?$ search/bank-ifsc.php [QSA,L]
+
+# Direct GST HSN / SAC Search Aliases
+RewriteRule ^hsn-sac/?$ search/hsn-sac.php [QSA,L]
+RewriteRule ^hsn/?$ search/hsn-sac.php [QSA,L]
+RewriteRule ^sac/?$ search/hsn-sac.php [QSA,L]
 
 # 8. Legal & Info Aliases
 RewriteRule ^privacy/?$ privacy-policy.php [QSA,L]
@@ -39,7 +56,7 @@ RewriteRule ^vision/?$ mission-vision.php [QSA,L]
 # 9. Search & Bare Acts Aliases
 RewriteRule ^advocates/?$ advocate-search-result.php [QSA,L]
 RewriteRule ^bare-acts/?$ acts.php [QSA,L]
-RewriteRule ^search/?$ advocate-search-result.php [QSA,L]
+RewriteRule ^search/?$ search/index.php [QSA,L]
 RewriteRule ^search-by-year/?$ advocate-search-result-by-year.php [QSA,L]
 RewriteRule ^search-by-mobile/?$ advocate-search-result-by-mobile.php [QSA,L]
 

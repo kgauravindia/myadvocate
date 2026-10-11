@@ -1181,6 +1181,7 @@ function findUserByIdentifier(string $identifier, ?PDO $db = null): ?array {
             return $adv;
         }
     } catch (Exception $e) {
+        $GLOBALS['last_db_error'] = $e->getMessage();
         error_log("findUserByIdentifier Advocate Exception: " . $e->getMessage());
     }
 
@@ -1215,6 +1216,9 @@ function findUserByIdentifier(string $identifier, ?PDO $db = null): ?array {
             return $member;
         }
     } catch (Exception $e) {
+        if (empty($GLOBALS['last_db_error'])) {
+            $GLOBALS['last_db_error'] = $e->getMessage();
+        }
         error_log("findUserByIdentifier Member Exception: " . $e->getMessage());
     }
 

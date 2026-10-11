@@ -102,6 +102,72 @@ require_once INCLUDES_PATH . '/header.php';
 
             <div id="limitationResult" style="margin-top: 1.25rem; display: none;"></div>
         </div>
+
+        <!-- Tool 3: Postal PIN Code Finder -->
+        <div class="stat-box" id="pincodeTool" style="border-top: 4px solid var(--brand-red, #c00000);">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <div class="action-icon icon-red" style="width: 36px; height: 36px; font-size: 1rem; background: #fef2f2; color: var(--brand-red, #c00000); display: inline-flex; align-items: center; justify-content: center; border-radius: 8px;"><i class="fas fa-map-pin"></i></div>
+                <h2 style="font-size: 1.3rem; color: var(--primary);">Postal PIN Code Finder</h2>
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;">
+                Find 6-digit PIN codes, delivery post offices, and postal circle details for court notices and legal summons.
+            </p>
+
+            <form action="search/pin-code.php" method="GET">
+                <div class="filter-group">
+                    <label class="filter-label">Enter 6-digit PIN Code or Post Office</label>
+                    <input type="text" name="q" class="filter-input" placeholder="e.g. 110001, 800001, Patna, Connaught Place" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <i class="fas fa-magnifying-glass"></i> Search Postal PIN Code
+                </button>
+            </form>
+        </div>
+
+        <!-- Tool 4: Bank IFSC & MICR Finder -->
+        <div class="stat-box" id="ifscTool" style="border-top: 4px solid #2563eb;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <div class="action-icon icon-blue" style="width: 36px; height: 36px; font-size: 1rem; background: #eff6ff; color: #2563eb; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px;"><i class="fas fa-building-columns"></i></div>
+                <h2 style="font-size: 1.3rem; color: var(--primary);">Bank IFSC &amp; MICR Finder</h2>
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;">
+                Lookup 11-digit Bank IFSC, MICR, branch address, and transfer capabilities (NEFT, RTGS, IMPS, UPI).
+            </p>
+
+            <form action="search/bank-ifsc.php" method="GET">
+                <div class="filter-group">
+                    <label class="filter-label">Enter 11-digit Bank IFSC Code</label>
+                    <input type="text" name="q" class="filter-input" placeholder="e.g. SBIN0000001, HDFC0000001" maxlength="11" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; background: #2563eb; border-color: #2563eb;">
+                    <i class="fas fa-magnifying-glass"></i> Verify Bank IFSC
+                </button>
+            </form>
+        </div>
+
+        <!-- Tool 5: GST HSN & SAC Finder -->
+        <div class="stat-box" id="hsnTool" style="border-top: 4px solid #d97706;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <div class="action-icon" style="width: 36px; height: 36px; font-size: 1rem; background: #fffbeb; color: #d97706; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px;"><i class="fas fa-barcode"></i></div>
+                <h2 style="font-size: 1.3rem; color: var(--primary);">GST HSN &amp; SAC Finder</h2>
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;">
+                Search 17,000+ Goods &amp; Services Tax codes, applicable tax rates (0% to 28%), and legal Reverse Charge (RCM) rules.
+            </p>
+
+            <form action="search/hsn-sac.php" method="GET">
+                <div class="filter-group">
+                    <label class="filter-label">Enter HSN / SAC Code or Description</label>
+                    <input type="text" name="q" class="filter-input" placeholder="e.g. 9982 (Legal), 8471, Advocate, Computer" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; background: #d97706; border-color: #d97706;">
+                    <i class="fas fa-magnifying-glass"></i> Search GST Rates
+                </button>
+            </form>
+        </div>
     </div>
 
     <!-- Informational Note -->

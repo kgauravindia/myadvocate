@@ -54,7 +54,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $user = findUserByIdentifier($identifier, $db);
             if (!$user) {
-                $error = "No account found matching '{$identifier}'. Please register or check your details.";
+                if (!empty($GLOBALS['last_db_error']) && stripos($GLOBALS['last_db_error'], "doesn't exist") !== false) {
+                    $error = "Database Error: " . $GLOBALS['last_db_error'] . ". Please import tables on Hostinger.";
+                } else {
+                    $error = "No account found matching '{$identifier}'. Please register or check your details.";
+                }
             } else {
                 $mobile = preg_replace('/[^0-9]/', '', $user['mobile'] ?? '');
                 if (strlen($mobile) === 12 && str_starts_with($mobile, '91')) {

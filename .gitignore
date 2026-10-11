@@ -14,6 +14,7 @@ config/db.php
 *.sqlite
 *.sqlite3
 *.db
+!data/gst/gst_catalog.db
 *.bak
 *.backup
 

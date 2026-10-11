@@ -60,6 +60,9 @@
                         <li><a href="act-details?id=bns"><i class="fas fa-scale-balanced" style="font-size: 0.75rem;"></i> BNS, BNSS & BSA 2023</a></li>
                         <li><a href="courts"><i class="fas fa-landmark" style="font-size: 0.75rem;"></i> Supreme & High Courts</a></li>
                         <li><a href="tools"><i class="fas fa-calculator" style="font-size: 0.75rem; color: var(--brand-gold-dark);"></i> Court Fee & Limitation</a></li>
+                        <li><a href="search/pin-code"><i class="fas fa-location-dot" style="font-size: 0.75rem; color: var(--brand-red);"></i> Postal PIN Code Search</a></li>
+                        <li><a href="search/bank-ifsc"><i class="fas fa-building-columns" style="font-size: 0.75rem; color: #2563eb;"></i> Bank IFSC &amp; MICR Lookup</a></li>
+                        <li><a href="search/hsn-sac"><i class="fas fa-barcode" style="font-size: 0.75rem; color: #d97706;"></i> GST HSN &amp; SAC Finder</a></li>
                         <li><a href="aibe"><i class="fas fa-graduation-cap" style="font-size: 0.75rem;"></i> AIBE Exam Prep</a></li>
                     </ul>
                 </div>

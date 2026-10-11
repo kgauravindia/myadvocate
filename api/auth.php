@@ -16,7 +16,11 @@ switch ($task) {
 
         $user = findUserByIdentifier($identifier, $db);
         if (!$user) {
-            echo json_encode(['status' => 'error', 'msg' => 'No account found matching this identifier. Please register or verify your details.']);
+            $msg = 'No account found matching this identifier. Please register or verify your details.';
+            if (!empty($GLOBALS['last_db_error']) && stripos($GLOBALS['last_db_error'], "doesn't exist") !== false) {
+                $msg = 'Database Error: Required table is missing in database (' . $GLOBALS['last_db_error'] . '). Please import the advocate and member tables.';
+            }
+            echo json_encode(['status' => 'error', 'msg' => $msg]);
             exit;
         }
 

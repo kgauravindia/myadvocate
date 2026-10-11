@@ -78,6 +78,9 @@ if (isset($showAds) && $showAds === false) {
     <meta name="keywords" content="<?= isset($pageKeywords) ? sanitize($pageKeywords) : 'advocate search, bare acts download, high court case status, law colleges india, legal resources, all india bar examination, aibe prep, vakil search' ?>">
     <meta name="author" content="OfferPlant">
     <link rel="canonical" href="<?= (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]" ?>">
+    <?php if (!empty($pageBaseUrl)): ?>
+    <base href="<?= htmlspecialchars($pageBaseUrl) ?>">
+    <?php endif; ?>
 
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-4BTK0TMSTG"></script>
@@ -265,7 +268,7 @@ if (isset($showAds) && $showAds === false) {
 
                         <!-- 3. SEARCH MULTI-TAB (3-Column Mega Menu) -->
                         <li class="nav-item">
-                            <a href="advocate-search-result" class="nav-link <?= in_array($currentPage, ['advocate-search-result', 'advocate-search-result-by-year', 'advocate-search-result-by-mobile', 'case-status-of-bihar', 'case-status-of-jharkhand', 'case-status-of-uttar-pradesh', 'college', 'law-college', 'courts', 'bar-associations']) ? 'active' : '' ?>">
+                            <a href="search/" class="nav-link <?= in_array($currentPage, ['advocates', 'advocate-search-result', 'advocate-search-result-by-year', 'advocate-search-result-by-mobile', 'case-status-of-bihar', 'case-status-of-jharkhand', 'case-status-of-uttar-pradesh', 'college', 'law-college', 'courts', 'bar-associations', 'pincode', 'bankifsc', 'hsnsac']) ? 'active' : '' ?>">
                                 <i class="fas fa-magnifying-glass"></i> Search <i class="fas fa-chevron-down nav-caret"></i>
                             </a>
                             <div class="nav-dropdown dropdown-mega">
@@ -275,11 +278,11 @@ if (isset($showAds) && $showAds === false) {
                                         <div class="mega-column-header">
                                             <i class="fas fa-user-tie"></i> Advocate
                                         </div>
-                                        <a href="advocate-search-result" class="dropdown-link">
+                                        <a href="search/" class="dropdown-link">
                                             <i class="fas fa-signature"></i>
                                             <div>
-                                                <div class="dropdown-link-title">By Name & District</div>
-                                                <span class="dropdown-link-desc">1.6 Lakh+ Directory</span>
+                                                <div class="dropdown-link-title">Advocate Directory</div>
+                                                <span class="dropdown-link-desc">1.6 Lakh+ Verified Directory</span>
                                             </div>
                                         </a>
                                         <a href="advocate-search-result" class="dropdown-link">
@@ -350,6 +353,27 @@ if (isset($showAds) && $showAds === false) {
                                             <div>
                                                 <div class="dropdown-link-title">Bar Associations</div>
                                                 <span class="dropdown-link-desc">340+ Registered Bodies</span>
+                                            </div>
+                                        </a>
+                                        <a href="search/pin-code" class="dropdown-link">
+                                            <i class="fas fa-location-dot" style="color: var(--brand-red);"></i>
+                                            <div>
+                                                <div class="dropdown-link-title">Postal PIN Code</div>
+                                                <span class="dropdown-link-desc">All India PIN Code & Post Office</span>
+                                            </div>
+                                        </a>
+                                        <a href="search/bank-ifsc" class="dropdown-link">
+                                            <i class="fas fa-building-columns" style="color: #2563eb;"></i>
+                                            <div>
+                                                <div class="dropdown-link-title">Bank IFSC &amp; MICR</div>
+                                                <span class="dropdown-link-desc">RBI Branch Verification</span>
+                                            </div>
+                                        </a>
+                                        <a href="search/hsn-sac" class="dropdown-link">
+                                            <i class="fas fa-barcode" style="color: #d97706;"></i>
+                                            <div>
+                                                <div class="dropdown-link-title">GST HSN &amp; SAC</div>
+                                                <span class="dropdown-link-desc">Goods &amp; Services Tax Rates</span>
                                             </div>
                                         </a>
                                     </div>
