@@ -39,13 +39,14 @@ try {
     $featuredActs = $stmt->fetchAll();
 } catch (Exception $e) {}
 
-// Fetch Recently Joined Advocates (Newest legal professionals registered on the platform)
+// Fetch Recently Joined Advocates (Only shows advocate.type=ACTIVE or VERIFIED)
 $recentAdvocates = [];
 try {
     $stmt = $db->query("SELECT id, name, photo, type, status, public_url, practice_area, created_at, e_no, e_year, state_code, district_code
                         FROM advocate
-                        WHERE (status != 'BLOCK' OR status IS NULL)
-                          AND (type NOT IN ('BLOCK', 'DIED') OR type IS NULL)
+                        WHERE type IN ('ACTIVE', 'VERIFIED')
+                          AND type NOT IN ('PENDING', 'BLOCK', 'DIED')
+                          AND (status != 'BLOCK' OR status IS NULL)
                           AND name IS NOT NULL AND TRIM(name) != ''
                         ORDER BY id DESC
                         LIMIT 4");
@@ -285,12 +286,23 @@ require_once INCLUDES_PATH . '/header.php';
     border-radius: 6px;
     border: 1px solid #bbf7d0;
 }
+.recent-adv-status-badge.badge-verified {
+    color: #1d4ed8;
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
 .recent-adv-status-dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
     background: #16a34a;
     display: inline-block;
+}
+.recent-adv-status-badge.badge-verified .recent-adv-status-dot {
+    background: #2563eb;
+}
+.recent-adv-check-badge.badge-verified {
+    background: #2563eb;
 }
 .recent-adv-enr-tag {
     color: #64748b;
@@ -492,6 +504,17 @@ require_once INCLUDES_PATH . '/header.php';
 [data-theme="dark"] .recent-adv-card-footer {
     border-top-color: #334155;
 }
+[data-theme="dark"] .recent-adv-status-badge.badge-verified {
+    background: rgba(37, 99, 235, 0.15);
+    border-color: rgba(59, 130, 246, 0.35);
+    color: #93c5fd;
+}
+[data-theme="dark"] .recent-adv-status-badge.badge-verified .recent-adv-status-dot {
+    background: #60a5fa;
+}
+[data-theme="dark"] .recent-adv-check-badge.badge-verified {
+    background: #2563eb;
+}
 </style>
 
 <section class="recent-adv-section">
@@ -533,12 +556,14 @@ require_once INCLUDES_PATH . '/header.php';
                 $primaryPractices = array_slice($allPractices, 0, 2);
                 $remainingCount = count($allPractices) - 2;
                 $enrYear = !empty($ra['e_year']) ? $ra['e_year'] : (!empty($ra['e_no']) ? $ra['e_no'] : 'Registered');
+                $isVerified = strtoupper($ra['type'] ?? '') === 'VERIFIED';
+                $statusLabel = $isVerified ? 'Verified Counsel' : 'Active Counsel';
             ?>
             <div class="recent-adv-card">
                 <!-- Top Status Bar inside Card -->
                 <div class="recent-adv-card-meta">
-                    <span class="recent-adv-status-badge">
-                        <span class="recent-adv-status-dot"></span> Active Counsel
+                    <span class="recent-adv-status-badge <?= $isVerified ? 'badge-verified' : '' ?>">
+                        <span class="recent-adv-status-dot"></span> <?= $statusLabel ?>
                     </span>
                     <span class="recent-adv-enr-tag">
                         Enr: <?= sanitize($enrYear) ?>
@@ -555,7 +580,7 @@ require_once INCLUDES_PATH . '/header.php';
                                 <span><?= sanitize($initials) ?></span>
                             </div>
                         <?php endif; ?>
-                        <span class="recent-adv-check-badge" title="Registered Professional">
+                        <span class="recent-adv-check-badge <?= $isVerified ? 'badge-verified' : '' ?>" title="<?= $isVerified ? 'Verified Legal Counsel' : 'Active Counsel' ?>">
                             <i class="fas fa-check"></i>
                         </span>
                     </div>
