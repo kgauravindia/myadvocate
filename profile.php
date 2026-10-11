@@ -63,24 +63,12 @@ $advocate = null;
 
 try {
     if (!empty($id) && is_numeric($id)) {
-        $stmt = $db->prepare("SELECT a.*, s.name as state_name, d.name as district_name, bc.name as bar_council_name, ba.name as association_name 
-                              FROM advocate a 
-                              LEFT JOIN state s ON a.state_code = s.code 
-                              LEFT JOIN district d ON a.district_code = d.code 
-                              LEFT JOIN bc ON a.bc_id = bc.id 
-                              LEFT JOIN ba ON a.ba_code = ba.code 
-                              WHERE a.id = ? LIMIT 1");
+        $stmt = $db->prepare("SELECT * FROM advocate WHERE id = ? LIMIT 1");
         $stmt->execute([(int)$id]);
         $advocate = $stmt->fetch();
     } elseif (!empty($publicUrl)) {
         $cleanPublicUrl = ltrim(trim($publicUrl), '@');
-        $stmt = $db->prepare("SELECT a.*, s.name as state_name, d.name as district_name, bc.name as bar_council_name, ba.name as association_name 
-                              FROM advocate a 
-                              LEFT JOIN state s ON a.state_code = s.code 
-                              LEFT JOIN district d ON a.district_code = d.code 
-                              LEFT JOIN bc ON a.bc_id = bc.id 
-                              LEFT JOIN ba ON a.ba_code = ba.code 
-                              WHERE a.public_url = ? OR a.public_url = ? OR a.public_url = ? LIMIT 1");
+        $stmt = $db->prepare("SELECT * FROM advocate WHERE public_url = ? OR public_url = ? OR public_url = ? LIMIT 1");
         $stmt->execute([$publicUrl, $cleanPublicUrl, '@' . $cleanPublicUrl]);
         $advocate = $stmt->fetch();
 
@@ -95,29 +83,17 @@ try {
             $tokens = explode('-', $slugClean);
             if (count($tokens) >= 2) {
                 if ($slugYear) {
-                    $st = $db->prepare("SELECT a.*, s.name as state_name, d.name as district_name, bc.name as bar_council_name, ba.name as association_name 
-                                        FROM advocate a 
-                                        LEFT JOIN state s ON a.state_code = s.code 
-                                        LEFT JOIN district d ON a.district_code = d.code 
-                                        LEFT JOIN bc ON a.bc_id = bc.id 
-                                        LEFT JOIN ba ON a.ba_code = ba.code 
-                                        WHERE (a.name LIKE ? OR a.name LIKE ?) AND a.e_year = ? LIMIT 1");
+                    $st = $db->prepare("SELECT * FROM advocate WHERE (name LIKE ? OR name LIKE ?) AND e_year = ? LIMIT 1");
                     $st->execute(['%' . $tokens[0] . ' ' . $tokens[1] . '%', '%' . str_replace('-', ' ', $slugClean) . '%', $slugYear]);
                     $advocate = $st->fetch();
                 }
             }
         }
     } elseif (!empty($enrNo) && !empty($enrYear)) {
-        $sql = "SELECT a.*, s.name as state_name, d.name as district_name, bc.name as bar_council_name, ba.name as association_name 
-                FROM advocate a 
-                LEFT JOIN state s ON a.state_code = s.code 
-                LEFT JOIN district d ON a.district_code = d.code 
-                LEFT JOIN bc ON a.bc_id = bc.id 
-                LEFT JOIN ba ON a.ba_code = ba.code 
-                WHERE a.e_no = ? AND a.e_year = ?";
+        $sql = "SELECT * FROM advocate WHERE e_no = ? AND e_year = ?";
         $args = [$enrNo, $enrYear];
         if (!empty($stateCode)) {
-            $sql .= " AND a.state_code = ?";
+            $sql .= " AND state_code = ?";
             $args[] = $stateCode;
         }
         $sql .= " LIMIT 1";
@@ -125,25 +101,40 @@ try {
         $stmt->execute($args);
         $advocate = $stmt->fetch();
     } elseif (!empty($mobile)) {
-        $stmt = $db->prepare("SELECT a.*, s.name as state_name, d.name as district_name, bc.name as bar_council_name, ba.name as association_name 
-                              FROM advocate a 
-                              LEFT JOIN state s ON a.state_code = s.code 
-                              LEFT JOIN district d ON a.district_code = d.code 
-                              LEFT JOIN bc ON a.bc_id = bc.id 
-                              LEFT JOIN ba ON a.ba_code = ba.code 
-                              WHERE a.mobile = ? LIMIT 1");
+        $stmt = $db->prepare("SELECT * FROM advocate WHERE mobile = ? LIMIT 1");
         $stmt->execute([$mobile]);
         $advocate = $stmt->fetch();
     } elseif (!empty($_SESSION['advocate_id'])) {
-        $stmt = $db->prepare("SELECT a.*, s.name as state_name, d.name as district_name, bc.name as bar_council_name, ba.name as association_name 
-                              FROM advocate a 
-                              LEFT JOIN state s ON a.state_code = s.code 
-                              LEFT JOIN district d ON a.district_code = d.code 
-                              LEFT JOIN bc ON a.bc_id = bc.id 
-                              LEFT JOIN ba ON a.ba_code = ba.code 
-                              WHERE a.id = ? LIMIT 1");
+        $stmt = $db->prepare("SELECT * FROM advocate WHERE id = ? LIMIT 1");
         $stmt->execute([$_SESSION['advocate_id']]);
         $advocate = $stmt->fetch();
+    }
+
+    if ($advocate) {
+        $allStates = getStates();
+        $sCode = $advocate['state_code'] ?? '';
+        $advocate['state_name'] = $allStates[$sCode] ?? $sCode;
+        if (!empty($advocate['district_code'])) {
+            try {
+                $dStmt = $db->prepare("SELECT name FROM district WHERE code = ? LIMIT 1");
+                $dStmt->execute([$advocate['district_code']]);
+                $advocate['district_name'] = $dStmt->fetchColumn() ?: '';
+            } catch (Exception $de) {}
+        }
+        if (!empty($advocate['bc_id'])) {
+            try {
+                $bcStmt = $db->prepare("SELECT name FROM bc WHERE id = ? OR bc_id = ? LIMIT 1");
+                $bcStmt->execute([$advocate['bc_id'], $advocate['bc_id']]);
+                $advocate['bar_council_name'] = $bcStmt->fetchColumn() ?: '';
+            } catch (Exception $be) {}
+        }
+        if (!empty($advocate['ba_code'])) {
+            try {
+                $baStmt = $db->prepare("SELECT name FROM ba WHERE code = ? LIMIT 1");
+                $baStmt->execute([$advocate['ba_code']]);
+                $advocate['association_name'] = $baStmt->fetchColumn() ?: '';
+            } catch (Exception $bae) {}
+        }
     }
 } catch (Exception $e) {
     $advocate = null;
