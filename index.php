@@ -519,7 +519,7 @@ require_once INCLUDES_PATH . '/header.php';
                 $rawName = trim($ra['name'] ?? 'Advocate');
                 $formattedName = mb_convert_case($rawName, MB_CASE_TITLE, "UTF-8");
                 $locParts = array_filter([$ra['district_name'] ?? '', $ra['state_name'] ?? '']);
-                $locStr = !empty($locParts) ? implode(', ', $locParts) : 'Pan-India Legal Practice';
+                $locStr = !empty($locParts) ? implode(', ', $locParts) : 'Not available';
                 
                 $initials = strtoupper(substr($rawName, 0, 1));
                 $nameParts = preg_split('/\s+/', $rawName);
