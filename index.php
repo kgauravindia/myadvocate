@@ -39,18 +39,38 @@ try {
     $featuredActs = $stmt->fetchAll();
 } catch (Exception $e) {}
 
-// Fetch Recently Joined Advocates (Last 4 as in advocateindex)
+// Fetch Recently Joined Advocates (Newest legal professionals registered on the platform)
 $recentAdvocates = [];
 try {
-    $stmt = $db->query("SELECT a.id, a.name, a.photo, a.type, a.public_url, a.practice_area, a.created_at, a.e_no, a.e_year,
-                               s.name as state_name, d.name as district_name
-                        FROM advocate a
-                        LEFT JOIN state s ON a.state_code = s.code
-                        LEFT JOIN district d ON a.district_code = d.code
-                        WHERE a.type IN ('ACTIVE', 'VERIFIED') AND a.type NOT IN ('PENDING', 'BLOCK', 'DIED') AND (a.status != 'BLOCK' OR a.status IS NULL)
-                        ORDER BY a.created_at DESC, a.id DESC
+    $stmt = $db->query("SELECT id, name, photo, type, status, public_url, practice_area, created_at, e_no, e_year, state_code, district_code
+                        FROM advocate
+                        WHERE (status != 'BLOCK' OR status IS NULL)
+                          AND (type NOT IN ('BLOCK', 'DIED') OR type IS NULL)
+                          AND name IS NOT NULL AND TRIM(name) != ''
+                        ORDER BY id DESC
                         LIMIT 4");
-    $recentAdvocates = $stmt->fetchAll();
+    $recentAdvocates = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    if (!empty($recentAdvocates)) {
+        $districtCodes = array_filter(array_unique(array_column($recentAdvocates, 'district_code')));
+        $districtMap = [];
+        if (!empty($districtCodes)) {
+            try {
+                $inClause = implode(',', array_fill(0, count($districtCodes), '?'));
+                $dStmt = $db->prepare("SELECT code, name FROM district WHERE code IN ($inClause)");
+                $dStmt->execute(array_values($districtCodes));
+                $districtMap = $dStmt->fetchAll(PDO::FETCH_KEY_PAIR);
+            } catch (Exception $de) {}
+        }
+
+        foreach ($recentAdvocates as &$ra) {
+            $sCode = $ra['state_code'] ?? '';
+            $dCode = $ra['district_code'] ?? '';
+            $ra['state_name'] = $states[$sCode] ?? $sCode;
+            $ra['district_name'] = $districtMap[$dCode] ?? $dCode;
+        }
+        unset($ra);
+    }
 } catch (Exception $e) {
     $recentAdvocates = [];
 }
@@ -207,7 +227,7 @@ require_once INCLUDES_PATH . '/header.php';
                 if (count($nameParts) > 1 && !empty($nameParts[0]) && !empty(end($nameParts))) {
                     $initials = strtoupper(substr($nameParts[0], 0, 1) . substr(end($nameParts), 0, 1));
                 }
-                $joinedAgo = !empty($ra['created_at']) ? timeAgo($ra['created_at']) : 'Recently';
+                $joinedAgo = (!empty($ra['created_at']) && function_exists('timeAgo')) ? timeAgo($ra['created_at']) : 'Recently';
                 $photoUrl = getAdvocatePhotoUrl($ra['photo'] ?? '');
                 $practice = !empty($ra['practice_area']) ? $ra['practice_area'] : 'General Law';
             ?>

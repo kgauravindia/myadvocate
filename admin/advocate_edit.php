@@ -141,6 +141,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 recordAdvocateProfileUpdate((int)$id, ['id_proof' => 'Uploaded ID proof document via admin'], 'admin');
             }
         }
+
+        // Trigger approval SMS if advocate profile is approved or SMS requested
+        $wasPending = in_array(strtoupper(trim($adv['type'] ?? '')), ['PENDING']) || strtoupper(trim($adv['status'] ?? '')) !== 'ACTIVE';
+        $nowApproved = in_array(strtoupper(trim($statusType)), ['ACTIVE', 'VERIFIED']);
+        $sendSmsRequested = !empty($_POST['send_approval_sms']);
+
+        if (($wasPending && $nowApproved) || $sendSmsRequested) {
+            $smsRes = sendAdvocateProfileApprovedSMS((int)$id);
+            if (!empty($smsRes['success'])) {
+                $msg .= " Approval SMS dispatched to advocate mobile.";
+            }
+        }
         
         // Refresh
         $stmt->execute([$id]);
@@ -450,9 +462,19 @@ $practiceAreasList = getAdvocatePracticeAreas();
                 <div class="filter-group">
                     <label class="filter-label">Account Status</label>
                     <select name="type" class="filter-select">
-                        <option value="PENDING" <?= ($adv['type'] ?? '') === 'PENDING' ? 'selected' : '' ?>>PENDING (Unclaimed)</option>
-                        <option value="ACTIVE" <?= ($adv['type'] ?? '') === 'ACTIVE' ? 'selected' : '' ?>>ACTIVE (Claimed / Managed)</option>
+                        <option value="PENDING" <?= ($adv['type'] ?? '') === 'PENDING' ? 'selected' : '' ?>>PENDING (Unapproved / Under Review)</option>
+                        <option value="ACTIVE" <?= ($adv['type'] ?? '') === 'ACTIVE' ? 'selected' : '' ?>>ACTIVE (Approved &amp; Published)</option>
+                        <option value="VERIFIED" <?= ($adv['type'] ?? '') === 'VERIFIED' ? 'selected' : '' ?>>VERIFIED (Verified Advocate)</option>
+                        <option value="BLOCK" <?= ($adv['type'] ?? '') === 'BLOCK' ? 'selected' : '' ?>>BLOCK (Suspended)</option>
+                        <option value="DIED" <?= ($adv['type'] ?? '') === 'DIED' ? 'selected' : '' ?>>DIED (Deceased)</option>
                     </select>
+                </div>
+
+                <div style="margin-top: 0.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.5rem 0.75rem;">
+                    <label style="font-size: 0.8125rem; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; margin: 0; color: #334155; font-weight: 600;">
+                        <input type="checkbox" name="send_approval_sms" value="1" <?= (($adv['type'] ?? '') === 'PENDING' ? 'checked' : '') ?>>
+                        <i class="fas fa-paper-plane" style="color: var(--brand-red); font-size: 0.8rem;"></i> Send SMS to advocate when approving
+                    </label>
                 </div>
 
                 <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">

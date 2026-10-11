@@ -1124,6 +1124,29 @@ function sendOTPSMS(string $mobile, string $otp, string $name = 'User'): array {
 }
 
 /**
+ * Send Profile Approval SMS notification to advocate
+ */
+function sendAdvocateProfileApprovedSMS($advocate): array {
+    $db = getDB();
+    if (is_numeric($advocate)) {
+        $stmt = $db->prepare("SELECT id, name, mobile, public_url FROM advocate WHERE id = ? LIMIT 1");
+        $stmt->execute([(int)$advocate]);
+        $advocate = $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    if (empty($advocate) || empty($advocate['mobile'])) {
+        return ['success' => false, 'message' => 'Advocate mobile number not found.'];
+    }
+
+    $mobile = trim((string)$advocate['mobile']);
+    $displayName = trim((string)($advocate['name'] ?? '')) ?: 'Advocate';
+    $profileUrl = !empty($advocate['public_url']) ? APP_URL . '/' . ltrim($advocate['public_url'], '/') : APP_URL;
+
+    $smsText = "Dear " . $displayName . ", \nYour Advocate Profile has been approved & verified on My Advocate. \nView Profile: " . $profileUrl . " \nRegards \nEMYADV \nOfferPlant";
+
+    return sendSMSMessage($mobile, $smsText);
+}
+
+/**
  * Find user (Advocate or Member) by mobile, email, or enrollment number
  */
 function findUserByIdentifier(string $identifier, ?PDO $db = null): ?array {

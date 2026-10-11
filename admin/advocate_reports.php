@@ -16,8 +16,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         try {
             $upStmt = $db->prepare("UPDATE advocate SET type = 'ACTIVE', status = 'ACTIVE', updated_at = NOW() WHERE id = ?");
             $upStmt->execute([$approveId]);
+
+            // Dispatch Approval SMS
+            $smsResult = sendAdvocateProfileApprovedSMS($approveId);
+
             $redirParams = $_GET;
             $redirParams['approved'] = 1;
+            if (!empty($smsResult['success'])) {
+                $redirParams['sms_sent'] = 1;
+            }
             header("Location: advocate_reports.php?" . http_build_query($redirParams));
             exit;
         } catch (Exception $e) {}
@@ -229,6 +236,11 @@ if ($tab === 'updated') {
         <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; font-size: 0.875rem;">
             <i class="fas fa-circle-check" style="color: #10b981; font-size: 1.1rem;"></i>
             Advocate approved successfully! Profile is now ACTIVE in directory listings.
+            <?php if (isset($_GET['sms_sent'])): ?>
+                <span class="badge" style="background: #10b981; color: white; font-size: 0.725rem; padding: 0.2rem 0.5rem; border-radius: 4px; margin-left: 0.5rem; font-weight: 700;">
+                    <i class="fas fa-paper-plane me-1"></i> SMS Dispatched
+                </span>
+            <?php endif; ?>
         </div>
         <a href="advocate_reports.php?tab=<?= urlencode($tab) ?>" style="color: #065f46; text-decoration: none; font-size: 0.8125rem;">Dismiss &times;</a>
     </div>

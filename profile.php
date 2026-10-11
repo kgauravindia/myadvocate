@@ -151,8 +151,9 @@ try {
 
 if ($advocate) {
     $advType = strtoupper(trim((string)($advocate['type'] ?? '')));
+    $advStatus = strtoupper(trim((string)($advocate['status'] ?? '')));
     $isOwner = !empty($_SESSION['advocate_id']) && (int)$_SESSION['advocate_id'] === (int)$advocate['id'];
-    if (!$isOwner && (!in_array($advType, ['ACTIVE', 'VERIFIED']) || in_array($advType, ['PENDING', 'BLOCK', 'DIED']))) {
+    if (!$isOwner && ($advStatus === 'BLOCK' || in_array($advType, ['BLOCK', 'DIED']))) {
         $advocate = null;
     }
 }
