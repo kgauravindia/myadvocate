@@ -363,7 +363,7 @@ if (isset($showAds) && $showAds === false) {
                                             </div>
                                         </a>
                                         <a href="search/bank-ifsc" class="dropdown-link">
-                                            <i class="fas fa-building-columns" style="color: #2563eb;"></i>
+                                            <i class="fas fa-building-columns" style="color: var(--brand-red);"></i>
                                             <div>
                                                 <div class="dropdown-link-title">Bank IFSC &amp; MICR</div>
                                                 <span class="dropdown-link-desc">RBI Branch Verification</span>

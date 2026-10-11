@@ -17,7 +17,7 @@ $baCount = 340;
 $hcCount = 24;
 
 try {
-    $advocateCount = (int)$db->query("SELECT COUNT(*) FROM advocate WHERE status = 'ACTIVE'")->fetchColumn();
+    $advocateCount = (int)$db->query("SELECT COUNT(*) FROM advocate WHERE type IN ('ACTIVE', 'VERIFIED') AND type NOT IN ('PENDING', 'BLOCK', 'DIED') AND (status != 'BLOCK' OR status IS NULL)")->fetchColumn();
     $actsCount = (int)$db->query("SELECT COUNT(*) FROM acts WHERE status = 'ACTIVE'")->fetchColumn();
     $noticesCount = (int)$db->query("SELECT COUNT(*) FROM notice WHERE status = 'ACTIVE'")->fetchColumn();
     $collegesCount = (int)$db->query("SELECT COUNT(*) FROM law_college WHERE (status = 'ACTIVE' OR status = '' OR status IS NULL) AND name != ''")->fetchColumn();
@@ -47,7 +47,7 @@ try {
                         FROM advocate a
                         LEFT JOIN state s ON a.state_code = s.code
                         LEFT JOIN district d ON a.district_code = d.code
-                        WHERE a.status = 'ACTIVE' AND (a.type NOT IN ('PENDING', 'BLOCK', 'DIED') OR a.type IS NULL)
+                        WHERE a.type IN ('ACTIVE', 'VERIFIED') AND a.type NOT IN ('PENDING', 'BLOCK', 'DIED') AND (a.status != 'BLOCK' OR a.status IS NULL)
                         ORDER BY a.created_at DESC, a.id DESC
                         LIMIT 4");
     $recentAdvocates = $stmt->fetchAll();

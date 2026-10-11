@@ -36,7 +36,7 @@ $perPage = 18;
 $offset = ($page - 1) * $perPage;
 
 // Build Dynamic SQL Query
-$whereClause = "WHERE (status = 'ACTIVE' OR status = '' OR status IS NULL OR status = '1')";
+$whereClause = "WHERE type IN ('ACTIVE', 'VERIFIED') AND type NOT IN ('PENDING', 'BLOCK', 'DIED') AND (status != 'BLOCK' OR status IS NULL)";
 $params = [];
 
 if (!empty($mobileQuery)) {
@@ -101,7 +101,7 @@ try {
     $totalResults = (int)$countStmt->fetchColumn();
 } catch (Exception $e) {
     try {
-        $fallbackWhere = str_replace("WHERE (status = 'ACTIVE' OR status = '' OR status IS NULL OR status = '1')", "WHERE 1=1", $whereClause);
+        $fallbackWhere = str_replace("AND (status != 'BLOCK' OR status IS NULL)", "", $whereClause);
         $countStmt = $db->prepare("SELECT COUNT(*) FROM advocate $fallbackWhere");
         $countStmt->execute($params);
         $totalResults = (int)$countStmt->fetchColumn();
@@ -121,7 +121,7 @@ try {
     $advocates = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     try {
-        $fallbackWhere = str_replace("WHERE (status = 'ACTIVE' OR status = '' OR status IS NULL OR status = '1')", "WHERE 1=1", $whereClause);
+        $fallbackWhere = str_replace("AND (status != 'BLOCK' OR status IS NULL)", "", $whereClause);
         $stmt = $db->prepare("SELECT * FROM advocate $fallbackWhere ORDER BY id DESC LIMIT $perPage OFFSET $offset");
         $stmt->execute($params);
         $advocates = $stmt->fetchAll(PDO::FETCH_ASSOC);

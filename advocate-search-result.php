@@ -24,8 +24,8 @@ $perPage = 18;
 $offset = ($page - 1) * $perPage;
 
 // Build Dynamic SQL Query
-$sql = "SELECT * FROM advocate WHERE (status = 'ACTIVE' OR status = '' OR status IS NULL OR status = '1')";
-$countSql = "SELECT COUNT(*) FROM advocate WHERE (status = 'ACTIVE' OR status = '' OR status IS NULL OR status = '1')";
+$sql = "SELECT * FROM advocate WHERE type IN ('ACTIVE', 'VERIFIED') AND type NOT IN ('PENDING', 'BLOCK', 'DIED') AND (status != 'BLOCK' OR status IS NULL)";
+$countSql = "SELECT COUNT(*) FROM advocate WHERE type IN ('ACTIVE', 'VERIFIED') AND type NOT IN ('PENDING', 'BLOCK', 'DIED') AND (status != 'BLOCK' OR status IS NULL)";
 $params = [];
 
 if (!empty($mobileQuery)) {
@@ -105,7 +105,7 @@ try {
     $totalResults = (int)$countStmt->fetchColumn();
 } catch (Exception $e) {
     try {
-        $countSqlFallback = str_replace("WHERE (status = 'ACTIVE' OR status = '' OR status IS NULL OR status = '1')", "WHERE 1=1", $countSql);
+        $countSqlFallback = str_replace("AND (status != 'BLOCK' OR status IS NULL)", "", $countSql);
         $countStmt = $db->prepare($countSqlFallback);
         $countStmt->execute($params);
         $totalResults = (int)$countStmt->fetchColumn();
@@ -124,7 +124,7 @@ try {
     $advocates = $stmt->fetchAll();
 } catch (Exception $e) {
     try {
-        $sqlFallback = str_replace("WHERE (status = 'ACTIVE' OR status = '' OR status IS NULL OR status = '1')", "WHERE 1=1", $sql);
+        $sqlFallback = str_replace("AND (status != 'BLOCK' OR status IS NULL)", "", $sql);
         $stmt = $db->prepare($sqlFallback);
         $stmt->execute($params);
         $advocates = $stmt->fetchAll();

@@ -44,11 +44,11 @@
                 <div>
                     <h4 class="footer-title">Advocate Services</h4>
                     <ul class="footer-links">
-                        <li><a href="advocates"><i class="fas fa-search" style="font-size: 0.75rem; color: var(--brand-red);"></i> Find Advocates</a></li>
-                        <li><a href="claim-profile"><i class="fas fa-id-badge" style="font-size: 0.75rem; color: var(--brand-gold-dark);"></i> Claim Profile</a></li>
-                        <li><a href="register"><i class="fas fa-user-plus" style="font-size: 0.75rem;"></i> Register as Advocate</a></li>
-                        <li><a href="login"><i class="fas fa-right-to-bracket" style="font-size: 0.75rem;"></i> Advocate Login</a></li>
-                        <li><a href="pricing"><i class="fas fa-shield-check" style="font-size: 0.75rem;"></i> Verification Plans</a></li>
+                        <li><a href="advocates"><i class="fas fa-magnifying-glass" style="font-size: 0.75rem; color: var(--brand-red);"></i> Find Advocates</a></li>
+                        <li><a href="claim-profile"><i class="fas fa-id-badge" style="font-size: 0.75rem; color: var(--brand-red);"></i> Claim Profile</a></li>
+                        <li><a href="register"><i class="fas fa-user-plus" style="font-size: 0.75rem; color: var(--brand-red);"></i> Register as Advocate</a></li>
+                        <li><a href="login"><i class="fas fa-right-to-bracket" style="font-size: 0.75rem; color: var(--brand-red);"></i> Advocate Login</a></li>
+                        <li><a href="pricing"><i class="fas fa-shield-halved" style="font-size: 0.75rem; color: var(--brand-red);"></i> Verification Plans</a></li>
                     </ul>
                 </div>
 
@@ -57,25 +57,25 @@
                     <h4 class="footer-title">Legal Resources</h4>
                     <ul class="footer-links">
                         <li><a href="bare-acts"><i class="fas fa-book-bookmark" style="font-size: 0.75rem; color: var(--brand-red);"></i> Central Bare Acts</a></li>
-                        <li><a href="act-details?id=bns"><i class="fas fa-scale-balanced" style="font-size: 0.75rem;"></i> BNS, BNSS & BSA 2023</a></li>
-                        <li><a href="courts"><i class="fas fa-landmark" style="font-size: 0.75rem;"></i> Supreme & High Courts</a></li>
-                        <li><a href="tools"><i class="fas fa-calculator" style="font-size: 0.75rem; color: var(--brand-gold-dark);"></i> Court Fee & Limitation</a></li>
+                        <li><a href="act-details?id=bns"><i class="fas fa-scale-balanced" style="font-size: 0.75rem; color: var(--brand-red);"></i> BNS, BNSS &amp; BSA 2023</a></li>
+                        <li><a href="courts"><i class="fas fa-landmark" style="font-size: 0.75rem; color: var(--brand-red);"></i> Supreme &amp; High Courts</a></li>
+                        <li><a href="tools"><i class="fas fa-calculator" style="font-size: 0.75rem; color: var(--brand-red);"></i> Court Fee &amp; Limitation</a></li>
                         <li><a href="search/pin-code"><i class="fas fa-location-dot" style="font-size: 0.75rem; color: var(--brand-red);"></i> Postal PIN Code Search</a></li>
-                        <li><a href="search/bank-ifsc"><i class="fas fa-building-columns" style="font-size: 0.75rem; color: #2563eb;"></i> Bank IFSC &amp; MICR Lookup</a></li>
-                        <li><a href="search/hsn-sac"><i class="fas fa-barcode" style="font-size: 0.75rem; color: #d97706;"></i> GST HSN &amp; SAC Finder</a></li>
-                        <li><a href="aibe"><i class="fas fa-graduation-cap" style="font-size: 0.75rem;"></i> AIBE Exam Prep</a></li>
+                        <li><a href="search/bank-ifsc"><i class="fas fa-building-columns" style="font-size: 0.75rem; color: var(--brand-red);"></i> Bank IFSC &amp; MICR Lookup</a></li>
+                        <li><a href="search/hsn-sac"><i class="fas fa-barcode" style="font-size: 0.75rem; color: var(--brand-red);"></i> GST HSN &amp; SAC Finder</a></li>
+                        <li><a href="aibe"><i class="fas fa-graduation-cap" style="font-size: 0.75rem; color: var(--brand-red);"></i> AIBE Exam Prep</a></li>
                     </ul>
                 </div>
 
                 <!-- Column 3: Quick Links & Information -->
                 <div>
-                    <h4 class="footer-title">Company & Info</h4>
+                    <h4 class="footer-title">Company &amp; Info</h4>
                     <ul class="footer-links">
-                        <li><a href="about"><i class="fas fa-circle-info" style="font-size: 0.75rem;"></i> About Us</a></li>
+                        <li><a href="about"><i class="fas fa-circle-info" style="font-size: 0.75rem; color: var(--brand-red);"></i> About Us</a></li>
                         <li><a href="mission-vision"><i class="fas fa-compass" style="font-size: 0.75rem; color: var(--brand-red);"></i> Mission &amp; Vision</a></li>
-                        <li><a href="state-bar-council"><i class="fas fa-scale-unbalanced" style="font-size: 0.75rem;"></i> State Bar Councils</a></li>
-                        <li><a href="public-service-commission"><i class="fas fa-landmark-flag" style="font-size: 0.75rem;"></i> Public Service Commissions</a></li>
-                        <li><a href="faq"><i class="fas fa-circle-question" style="font-size: 0.75rem;"></i> FAQs &amp; Help</a></li>
+                        <li><a href="state-bar-council"><i class="fas fa-scale-unbalanced" style="font-size: 0.75rem; color: var(--brand-red);"></i> State Bar Councils</a></li>
+                        <li><a href="public-service-commission"><i class="fas fa-landmark-flag" style="font-size: 0.75rem; color: var(--brand-red);"></i> Public Service Commissions</a></li>
+                        <li><a href="faq"><i class="fas fa-circle-question" style="font-size: 0.75rem; color: var(--brand-red);"></i> FAQs &amp; Help</a></li>
                     </ul>
                 </div>
             </div>

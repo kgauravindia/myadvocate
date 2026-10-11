@@ -1681,6 +1681,17 @@ a:hover {
     color: #64748b;
     transition: var(--transition);
     font-size: 0.875rem;
+    display: inline-flex;
+    align-items: center;
+}
+
+.footer-links a i {
+    font-size: 0.75rem;
+    color: var(--brand-red);
+    margin-right: 6px;
+    width: 14px;
+    text-align: center;
+    transition: var(--transition);
 }
 
 .footer-links a:hover {

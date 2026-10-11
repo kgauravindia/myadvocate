@@ -110,7 +110,7 @@ $district_urls = [];
 $stateAdvStmt = $db->query("
     SELECT state_code, COUNT(*) as cnt, MAX(COALESCE(updated_at, created_at)) as last_act
     FROM advocate
-    WHERE (status != 'BLOCK' OR status IS NULL) AND state_code != ''
+    WHERE type IN ('ACTIVE', 'VERIFIED') AND type NOT IN ('PENDING', 'BLOCK', 'DIED') AND (status != 'BLOCK' OR status IS NULL) AND state_code != ''
     GROUP BY state_code
 ");
 $stateAdvMap = [];
@@ -136,7 +136,7 @@ foreach ($states as $st) {
 $distAdvStmt = $db->query("
     SELECT district_code, COUNT(*) as cnt, MAX(COALESCE(updated_at, created_at)) as last_act
     FROM advocate
-    WHERE (status != 'BLOCK' OR status IS NULL) AND district_code != ''
+    WHERE type IN ('ACTIVE', 'VERIFIED') AND type NOT IN ('PENDING', 'BLOCK', 'DIED') AND (status != 'BLOCK' OR status IS NULL) AND district_code != ''
     GROUP BY district_code
 ");
 $distAdvMap = [];
@@ -213,7 +213,7 @@ $adv_sql = "
            d.name as dist_name
     FROM advocate a 
     LEFT JOIN district d ON a.district_code = d.code 
-    WHERE (a.status != 'BLOCK' OR a.status IS NULL) $noindex_clause
+    WHERE a.type IN ('ACTIVE', 'VERIFIED') AND a.type NOT IN ('PENDING', 'BLOCK', 'DIED') AND (a.status != 'BLOCK' OR a.status IS NULL) $noindex_clause
     ORDER BY a.id ASC
 ";
 

@@ -149,6 +149,14 @@ try {
     $advocate = null;
 }
 
+if ($advocate) {
+    $advType = strtoupper(trim((string)($advocate['type'] ?? '')));
+    $isOwner = !empty($_SESSION['advocate_id']) && (int)$_SESSION['advocate_id'] === (int)$advocate['id'];
+    if (!$isOwner && (!in_array($advType, ['ACTIVE', 'VERIFIED']) || in_array($advType, ['PENDING', 'BLOCK', 'DIED']))) {
+        $advocate = null;
+    }
+}
+
 if ($advocate && !empty($advocate['public_url'])) {
     $cleanHandle = ltrim(trim($advocate['public_url']), '@');
     if (!empty($_GET['id']) && empty($_GET['url'])) {
@@ -213,7 +221,7 @@ $relatedAdvocates = [];
 try {
     $rStmt = $db->prepare("SELECT id, name, photo, practice_area, public_url, plan_type, type, state_code, district_code, e_no, e_year, court, mobile, email, about, id_proof 
                            FROM advocate 
-                           WHERE status = 'ACTIVE' AND id != ? AND (district_code = ? OR state_code = ?) 
+                           WHERE type IN ('ACTIVE', 'VERIFIED') AND type NOT IN ('PENDING', 'BLOCK', 'DIED') AND (status != 'BLOCK' OR status IS NULL) AND id != ? AND (district_code = ? OR state_code = ?) 
                            ORDER BY (district_code = ?) DESC,
                            (
                                (CASE WHEN photo IS NOT NULL AND photo != '' AND photo != '0' THEN 20 ELSE 0 END) +

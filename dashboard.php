@@ -1288,7 +1288,7 @@ require_once INCLUDES_PATH . '/header.php';
                     Upgrade to Premium Verification to unlock verified badges, prioritized directory ranking, and enhanced profile visibility.
                 </p>
                 <a href="pricing" class="btn btn-outline-primary btn-sm" style="width: 100%; justify-content: center; min-height: 38px;">
-                    <i class="fas fa-shield-check me-1"></i> View Verification Plans
+                    <i class="fas fa-shield-halved me-1"></i> View Verification Plans
                 </a>
             </div>
 
