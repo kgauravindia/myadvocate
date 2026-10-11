@@ -200,73 +200,405 @@ require_once INCLUDES_PATH . '/header.php';
 
 <!-- Recently Joined Advocates Section (as in advocateindex) -->
 <?php if (!empty($recentAdvocates)): ?>
+<style>
+/* Scoped styles for Recently Joined Advocates to ensure immediate styling regardless of browser cache */
+.recent-adv-section {
+    padding: 3.5rem 0;
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    border-top: 1px solid var(--border-color, #e2e8f0);
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+    position: relative;
+}
+.recent-adv-header-wrap {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 2.25rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+.recent-adv-tag-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: linear-gradient(135deg, rgba(22, 163, 74, 0.12), rgba(16, 185, 129, 0.08));
+    color: #15803d;
+    padding: 0.4rem 0.95rem;
+    border-radius: 999px;
+    font-size: 0.775rem;
+    font-weight: 800;
+    margin-bottom: 0.65rem;
+    border: 1px solid rgba(22, 163, 74, 0.25);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+.recent-adv-heading {
+    font-size: 1.95rem;
+    font-weight: 800;
+    color: var(--primary, #0f172a);
+    margin-bottom: 0.35rem;
+    letter-spacing: -0.02em;
+}
+.recent-adv-subheading {
+    color: var(--text-muted, #64748b);
+    font-size: 0.95rem;
+    margin-bottom: 0;
+}
+.recent-adv-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+}
+.recent-adv-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 1.5rem 1.35rem;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+}
+.recent-adv-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 35px -10px rgba(15, 23, 42, 0.12);
+    border-color: #fde047;
+}
+.recent-adv-card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.1rem;
+    font-size: 0.725rem;
+}
+.recent-adv-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: #16a34a;
+    font-weight: 700;
+    background: #ecfdf5;
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+    border: 1px solid #bbf7d0;
+}
+.recent-adv-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #16a34a;
+    display: inline-block;
+}
+.recent-adv-enr-tag {
+    color: #64748b;
+    font-weight: 600;
+    background: #f1f5f9;
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+}
+.recent-adv-identity-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+.recent-adv-avatar-wrap {
+    position: relative;
+    flex-shrink: 0;
+}
+.recent-adv-avatar-img {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #ffffff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    display: block;
+}
+.recent-adv-avatar-fallback {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: 800;
+    font-family: var(--font-heading, sans-serif);
+    border: 3px solid #ffffff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.recent-adv-check-badge {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #16a34a;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+}
+.recent-adv-name-link {
+    font-family: var(--font-heading, sans-serif);
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--primary, #0f172a);
+    text-decoration: none;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+    transition: color 0.2s ease;
+}
+.recent-adv-name-link:hover {
+    color: var(--brand-red, #c00000);
+}
+.recent-adv-loc-text {
+    font-size: 0.775rem;
+    color: var(--text-muted, #64748b);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.recent-adv-practices-wrap {
+    margin-bottom: 1.15rem;
+    min-height: 48px;
+}
+.recent-adv-practices-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.4rem;
+}
+.recent-adv-chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+}
+.recent-adv-chip {
+    background: #f8fafc;
+    color: #334155;
+    border: 1px solid #e2e8f0;
+    font-size: 0.725rem;
+    font-weight: 600;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    white-space: nowrap;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.recent-adv-chip-more {
+    background: #fef9c3;
+    color: #854d0e;
+    border: 1px solid #fde047;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+}
+.recent-adv-card-footer {
+    margin-top: auto;
+    padding-top: 0.85rem;
+    border-top: 1px dashed #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+.recent-adv-time-tag {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+.recent-adv-btn-view {
+    padding: 0.4rem 0.95rem;
+    font-size: 0.775rem;
+    font-weight: 700;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+.recent-adv-btn-view:hover i {
+    transform: translateX(3px);
+}
+.recent-adv-btn-view i {
+    transition: transform 0.2s ease;
+}
+
+/* Dark mode overrides */
+[data-theme="dark"] .recent-adv-section {
+    background: #0f172a;
+    border-color: #1e293b;
+}
+[data-theme="dark"] .recent-adv-heading {
+    color: #f8fafc;
+}
+[data-theme="dark"] .recent-adv-card {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+[data-theme="dark"] .recent-adv-card:hover {
+    border-color: var(--brand-gold, #ffc000);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+}
+[data-theme="dark"] .recent-adv-name-link {
+    color: #f8fafc;
+}
+[data-theme="dark"] .recent-adv-name-link:hover {
+    color: var(--brand-gold, #ffc000);
+}
+[data-theme="dark"] .recent-adv-enr-tag {
+    background: #0f172a;
+    border-color: #334155;
+    color: #94a3b8;
+}
+[data-theme="dark"] .recent-adv-chip {
+    background: #0f172a;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+[data-theme="dark"] .recent-adv-chip-more {
+    background: rgba(254, 240, 138, 0.15);
+    border-color: rgba(254, 240, 138, 0.3);
+    color: #fef08a;
+}
+[data-theme="dark"] .recent-adv-card-footer {
+    border-top-color: #334155;
+}
+</style>
+
 <section class="recent-adv-section">
     <div class="container">
-        <div style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <!-- Section Header -->
+        <div class="recent-adv-header-wrap">
             <div>
-                <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(22, 163, 74, 0.1); color: #16a34a; padding: 0.35rem 0.85rem; border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 700; margin-bottom: 0.5rem; border: 1px solid rgba(22, 163, 74, 0.2);">
-                    <i class="fas fa-user-plus"></i> NEW MEMBERS
+                <div class="recent-adv-tag-pill">
+                    <i class="fas fa-sparkles" style="color: #eab308;"></i> New Members Directory
                 </div>
-                <h2 style="font-size: 1.85rem; font-weight: 800; color: var(--primary); margin-bottom: 0.25rem;">Recently Joined Advocates</h2>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0;">Welcome our newest legal professionals registered on the platform</p>
+                <h2 class="recent-adv-heading">Recently Joined Advocates</h2>
+                <p class="recent-adv-subheading">Welcome our newest verified legal counsel and advocate profiles registered on My Advocate</p>
             </div>
             <div>
-                <a href="advocate-search-result" class="btn btn-outline-primary" style="border-radius: var(--radius-full); font-weight: 700; padding: 0.5rem 1.25rem;">
-                    Browse All <i class="fas fa-arrow-right" style="margin-left: 0.4rem;"></i>
+                <a href="advocate-search-result" class="btn btn-outline-primary" style="border-radius: 999px; font-weight: 700; padding: 0.55rem 1.35rem; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                    Browse Directory (1.6L+) <i class="fas fa-arrow-right"></i>
                 </a>
             </div>
         </div>
 
+        <!-- 4-Card Responsive Grid -->
         <div class="recent-adv-grid">
             <?php foreach ($recentAdvocates as $ra):
                 $profileLink = getAdvocateUrl($ra);
+                $rawName = trim($ra['name'] ?? 'Advocate');
+                $formattedName = mb_convert_case($rawName, MB_CASE_TITLE, "UTF-8");
                 $locParts = array_filter([$ra['district_name'] ?? '', $ra['state_name'] ?? '']);
-                $locStr = implode(', ', $locParts);
-                $initials = strtoupper(substr(trim($ra['name'] ?: 'A'), 0, 1));
-                $nameParts = explode(' ', trim($ra['name'] ?? ''));
+                $locStr = !empty($locParts) ? implode(', ', $locParts) : 'Pan-India Legal Practice';
+                
+                $initials = strtoupper(substr($rawName, 0, 1));
+                $nameParts = preg_split('/\s+/', $rawName);
                 if (count($nameParts) > 1 && !empty($nameParts[0]) && !empty(end($nameParts))) {
                     $initials = strtoupper(substr($nameParts[0], 0, 1) . substr(end($nameParts), 0, 1));
                 }
+                
                 $joinedAgo = (!empty($ra['created_at']) && function_exists('timeAgo')) ? timeAgo($ra['created_at']) : 'Recently';
                 $photoUrl = getAdvocatePhotoUrl($ra['photo'] ?? '');
-                $practice = !empty($ra['practice_area']) ? $ra['practice_area'] : 'General Law';
+                $allPractices = parsePracticeAreas($ra['practice_area'] ?? '');
+                $primaryPractices = array_slice($allPractices, 0, 2);
+                $remainingCount = count($allPractices) - 2;
+                $enrYear = !empty($ra['e_year']) ? $ra['e_year'] : (!empty($ra['e_no']) ? $ra['e_no'] : 'Registered');
             ?>
             <div class="recent-adv-card">
-                <div class="recent-adv-avatar-wrap">
-                    <?php if (!empty($photoUrl)): ?>
-                        <img src="<?= sanitize($photoUrl) ?>" alt="<?= sanitize($ra['name']) ?>" class="recent-adv-avatar" loading="lazy">
-                    <?php else: ?>
-                        <div class="recent-adv-avatar-initials">
-                            <span><?= sanitize($initials) ?></span>
-                        </div>
-                    <?php endif; ?>
-                    <span class="recent-adv-check" title="Registered Professional">
-                        <i class="fas fa-check"></i>
+                <!-- Top Status Bar inside Card -->
+                <div class="recent-adv-card-meta">
+                    <span class="recent-adv-status-badge">
+                        <span class="recent-adv-status-dot"></span> Active Counsel
+                    </span>
+                    <span class="recent-adv-enr-tag">
+                        Enr: <?= sanitize($enrYear) ?>
                     </span>
                 </div>
 
-                <a href="<?= $profileLink ?>" class="recent-adv-name" title="<?= sanitize($ra['name']) ?>">
-                    <?= sanitize($ra['name']) ?>
-                </a>
-
-                <?php if ($locStr): ?>
-                    <div class="recent-adv-loc">
-                        <i class="fas fa-location-dot" style="color: var(--brand-red); font-size: 0.75rem;"></i>
-                        <span><?= sanitize($locStr) ?></span>
+                <!-- Avatar & Identity Row -->
+                <div class="recent-adv-identity-row">
+                    <div class="recent-adv-avatar-wrap">
+                        <?php if (!empty($photoUrl)): ?>
+                            <img src="<?= sanitize($photoUrl) ?>" alt="<?= sanitize($formattedName) ?>" class="recent-adv-avatar-img" loading="lazy">
+                        <?php else: ?>
+                            <div class="recent-adv-avatar-fallback">
+                                <span><?= sanitize($initials) ?></span>
+                            </div>
+                        <?php endif; ?>
+                        <span class="recent-adv-check-badge" title="Registered Professional">
+                            <i class="fas fa-check"></i>
+                        </span>
                     </div>
-                <?php endif; ?>
 
-                <span class="recent-adv-practice" title="<?= sanitize($practice) ?>">
-                    <?= sanitize($practice) ?>
-                </span>
-
-                <div class="recent-adv-time">
-                    <i class="far fa-clock"></i> Joined <?= sanitize($joinedAgo) ?>
+                    <div style="min-width: 0; flex: 1;">
+                        <a href="<?= $profileLink ?>" class="recent-adv-name-link" title="<?= sanitize($formattedName) ?>">
+                            <?= sanitize($formattedName) ?>
+                        </a>
+                        <div class="recent-adv-loc-text" title="<?= sanitize($locStr) ?>">
+                            <i class="fas fa-location-dot" style="color: var(--brand-red, #c00000); font-size: 0.75rem; flex-shrink: 0;"></i>
+                            <span style="overflow: hidden; text-overflow: ellipsis;"><?= sanitize($locStr) ?></span>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="recent-adv-action">
-                    <a href="<?= $profileLink ?>" class="btn btn-outline-primary">
-                        View Profile
+                <!-- Practice Specialty Chips -->
+                <div class="recent-adv-practices-wrap">
+                    <div class="recent-adv-practices-label">
+                        Practice Disciplines
+                    </div>
+                    <div class="recent-adv-chip-list">
+                        <?php foreach ($primaryPractices as $p): ?>
+                            <span class="recent-adv-chip" title="<?= sanitize($p) ?>">
+                                <?= sanitize($p) ?>
+                            </span>
+                        <?php endforeach; ?>
+                        <?php if ($remainingCount > 0): ?>
+                            <span class="recent-adv-chip-more" title="<?= sanitize(implode(', ', array_slice($allPractices, 2))) ?>">
+                                +<?= $remainingCount ?> more
+                            </span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- Divider & Footer Action -->
+                <div class="recent-adv-card-footer">
+                    <div class="recent-adv-time-tag">
+                        <i class="far fa-clock" style="color: #cbd5e1;"></i>
+                        <span><?= sanitize($joinedAgo) ?></span>
+                    </div>
+
+                    <a href="<?= $profileLink ?>" class="btn btn-outline-primary recent-adv-btn-view">
+                        View Profile <i class="fas fa-chevron-right" style="font-size: 0.65rem;"></i>
                     </a>
                 </div>
             </div>
