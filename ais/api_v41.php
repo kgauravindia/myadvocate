@@ -1,13 +1,13 @@
 <?php
 header("Access-Control-Allow-Origin: *");
 require_once('function_v41.php');
-$token =xss_clean($_REQUEST['token']);
+$token = !empty($_REQUEST['token']) ? xss_clean($_REQUEST['token']) : $api_key;
 
-if($token ==$api_key) 
+if($token == $api_key) 
 {
-	if(isset($_GET['task']))
+	if(isset($_REQUEST['task']))
 	{
-	$task =xss_clean($_REQUEST['task']);
+	$task = xss_clean($_REQUEST['task']);
 	switch($task)
 		{
 		    //==== App Info ==== //
@@ -17,31 +17,40 @@ if($token ==$api_key)
 				break;	
 		    case "notification":
 			    extract($_POST);
-			    $result['total'] =0;
-			    $fromdate = get_data($user_type,$id,'updated_at')['data'];
-				$todate =	date('Y-m-d H:m:s');
-				$sql="select * from advocate where created_at between '$fromdate' and '$todate' and status !='BLOCK'";
-			    $result['advocate']=direct_sql($sql)['count'];
-			    
-			    $sql2="select * from exam where created_at between '$fromdate' and '$todate' and status='ACTIVE'";
-			    $result['exam']=direct_sql($sql2)['count'];
-                
-                $sql3="select * from member where created_at between '$fromdate' and '$todate' and status !='BLOCK'";
-			    $result['member']=direct_sql($sql3)['count'];
-			    
-			     $sql4="select * from notice where created_at between '$fromdate' and '$todate' and status='ACTIVE'";
-			    $result['notice']=direct_sql($sql4)['count'];
-			   
-			    $sql5="select * from question where created_at between '$fromdate' and '$todate' and status='ACTIVE'";
-			    $result['question']=direct_sql($sql5)['count'];
-			    
-			    $sql6="select * from subject where created_at between '$fromdate' and '$todate' and status='ACTIVE'";
-			    $result['subject']=direct_sql($sql6)['count'];
-			    
-			    foreach($result as $ct)
-			    {
-			        $result['total'] = $result['total']+$ct;
+			    $result = array('advocate'=>0, 'exam'=>0, 'member'=>0, 'notice'=>0, 'question'=>0, 'subject'=>0, 'total'=>0);
+			    $fromdate = date('Y-m-d H:i:s', strtotime('-30 days'));
+			    if (!empty($user_type) && !empty($id) && in_array($user_type, array('advocate', 'member'))) {
+			        $user_data = get_data($user_type, $id, 'updated_at');
+			        if (!empty($user_data['data'])) {
+			            $fromdate = $user_data['data'];
+			        }
 			    }
+				$todate = date('Y-m-d H:i:s');
+				$sql = "select * from advocate where created_at between '$fromdate' and '$todate' and status !='BLOCK'";
+			    $adv_res = direct_sql($sql);
+			    $result['advocate'] = !empty($adv_res['count']) ? $adv_res['count'] : 0;
+			    
+			    $sql2 = "select * from exam where created_at between '$fromdate' and '$todate' and status='ACTIVE'";
+			    $exam_res = direct_sql($sql2);
+			    $result['exam'] = !empty($exam_res['count']) ? $exam_res['count'] : 0;
+                
+                $sql3 = "select * from member where created_at between '$fromdate' and '$todate' and status !='BLOCK'";
+			    $mem_res = direct_sql($sql3);
+			    $result['member'] = !empty($mem_res['count']) ? $mem_res['count'] : 0;
+			    
+			    $sql4 = "select * from notice where created_at between '$fromdate' and '$todate' and status='ACTIVE'";
+			    $not_res = direct_sql($sql4);
+			    $result['notice'] = !empty($not_res['count']) ? $not_res['count'] : 0;
+			   
+			    $sql5 = "select * from question where created_at between '$fromdate' and '$todate' and status='ACTIVE'";
+			    $q_res = direct_sql($sql5);
+			    $result['question'] = !empty($q_res['count']) ? $q_res['count'] : 0;
+			    
+			    $sql6 = "select * from subject where created_at between '$fromdate' and '$todate' and status='ACTIVE'";
+			    $sub_res = direct_sql($sql6);
+			    $result['subject'] = !empty($sub_res['count']) ? $sub_res['count'] : 0;
+			    
+			    $result['total'] = $result['advocate'] + $result['exam'] + $result['member'] + $result['notice'] + $result['question'] + $result['subject'];
 			    echo json_encode($result);
 				break;
 			
@@ -69,33 +78,74 @@ if($token ==$api_key)
 		    // ==== Advocate Info ====//		
 			case "search_advocate":
 			    extract($_POST);
-			    $sql = "select  advocate.* , district.name as district_name, state.name as state_name, bc.name as bc_name from district, state, bc, advocate where advocate.district_code=district.code and advocate.state_code=state.code and advocate.bc_id=bc.id and advocate.state_code='$state_code' and  advocate.district_code ='$district_code' and advocate.name like '%$name%' and advocate.type in('ACTIVE','VERIFIED','PREMIUM') order by rand() ";
-			    $res =direct_sql($sql,false);
+			    $name = !empty($name) ? trim($name) : '';
+			    $state_clause = !empty($state_code) ? " and advocate.state_code='$state_code' " : "";
+			    $dist_clause = !empty($district_code) ? " and advocate.district_code='$district_code' " : "";
+			    $sql = "select advocate.*, district.name as district_name, state.name as state_name, bc.name as bc_name 
+			            from advocate 
+			            left join district on advocate.district_code = district.code 
+			            left join state on advocate.state_code = state.code 
+			            left join bc on advocate.bc_id = bc.id 
+			            where advocate.name like '%$name%' and advocate.type in('ACTIVE','VERIFIED','PREMIUM') $state_clause $dist_clause 
+			            order by advocate.id desc limit 100";
+			    $res = direct_sql($sql, false);
 				echo json_encode($res);
 				break;	
 			case "search_advocate_eno":
 			    extract($_POST);
-			    $sql = "select  advocate.* , district.name as district_name, state.name as state_name, bc.name as bc_name from district, state, bc, advocate where advocate.district_code=district.code and advocate.state_code=state.code and advocate.bc_id=bc.id and advocate.state_code='$state_code' and advocate.e_no like '%$e_no%' and advocate.type in('ACTIVE','VERIFIED','PREMIUM') order by rand() ";
-			    $res =direct_sql($sql,false);
+			    $e_no = !empty($e_no) ? trim($e_no) : '';
+			    $state_clause = !empty($state_code) ? " and advocate.state_code='$state_code' " : "";
+			    $sql = "select advocate.*, district.name as district_name, state.name as state_name, bc.name as bc_name 
+			            from advocate 
+			            left join district on advocate.district_code = district.code 
+			            left join state on advocate.state_code = state.code 
+			            left join bc on advocate.bc_id = bc.id 
+			            where advocate.e_no like '%$e_no%' and advocate.type in('ACTIVE','VERIFIED','PREMIUM') $state_clause 
+			            order by advocate.id desc limit 100";
+			    $res = direct_sql($sql, false);
 				echo json_encode($res);
 				break;
 			case "search_advocate_mobile":
 			    extract($_POST);
-			    $sql = "select  advocate.* , district.name as district_name, state.name as state_name, bc.name as bc_name from district, state, bc, advocate where advocate.district_code=district.code and advocate.state_code=state.code and advocate.bc_id=bc.id and advocate.mobile like '$mobile' and advocate.type in('ACTIVE','VERIFIED','PREMIUM') order by rand() ";
-			    $res =direct_sql($sql,false);
+			    $mobile = !empty($mobile) ? trim($mobile) : '';
+			    $sql = "select advocate.*, district.name as district_name, state.name as state_name, bc.name as bc_name 
+			            from advocate 
+			            left join district on advocate.district_code = district.code 
+			            left join state on advocate.state_code = state.code 
+			            left join bc on advocate.bc_id = bc.id 
+			            where advocate.mobile like '%$mobile%' and advocate.type in('ACTIVE','VERIFIED','PREMIUM') 
+			            order by advocate.id desc limit 100";
+			    $res = direct_sql($sql, false);
 				echo json_encode($res);
 				break;
 			case "search_advocate_pa":
 			    extract($_POST);
-			    $sql = "select  advocate.* , district.name as district_name, state.name as state_name, bc.name as bc_name from district, state, bc, advocate where advocate.district_code=district.code and advocate.state_code=state.code and advocate.bc_id=bc.id and advocate.state_code='$state_code' and  advocate.district_code ='$district_code' and advocate.practice_area like '%$pa%' and advocate.type in('ACTIVE','VERIFIED','PREMIUM') order by rand() ";
-			    $res =direct_sql($sql,false);
+			    $pa = !empty($pa) ? trim($pa) : '';
+			    $state_clause = !empty($state_code) ? " and advocate.state_code='$state_code' " : "";
+			    $dist_clause = !empty($district_code) ? " and advocate.district_code='$district_code' " : "";
+			    $sql = "select advocate.*, district.name as district_name, state.name as state_name, bc.name as bc_name 
+			            from advocate 
+			            left join district on advocate.district_code = district.code 
+			            left join state on advocate.state_code = state.code 
+			            left join bc on advocate.bc_id = bc.id 
+			            where advocate.practice_area like '%$pa%' and advocate.type in('ACTIVE','VERIFIED','PREMIUM') $state_clause $dist_clause 
+			            order by advocate.id desc limit 100";
+			    $res = direct_sql($sql, false);
 				echo json_encode($res);
 				break;
-				
 			case "search_advocate_year":
 			    extract($_POST);
-			    $sql = "select  advocate.* , district.name as district_name, state.name as state_name, bc.name as bc_name from district, state, bc, advocate where advocate.district_code=district.code and advocate.state_code=state.code and advocate.bc_id=bc.id and advocate.state_code='$state_code' and  advocate.district_code ='$district_code' and advocate.e_year like '%$e_year%' and advocate.type in('ACTIVE','VERIFIED','PREMIUM') order by rand() ";
-			    $res =direct_sql($sql,false);
+			    $e_year = !empty($e_year) ? trim($e_year) : '';
+			    $state_clause = !empty($state_code) ? " and advocate.state_code='$state_code' " : "";
+			    $dist_clause = !empty($district_code) ? " and advocate.district_code='$district_code' " : "";
+			    $sql = "select advocate.*, district.name as district_name, state.name as state_name, bc.name as bc_name 
+			            from advocate 
+			            left join district on advocate.district_code = district.code 
+			            left join state on advocate.state_code = state.code 
+			            left join bc on advocate.bc_id = bc.id 
+			            where advocate.e_year like '%$e_year%' and advocate.type in('ACTIVE','VERIFIED','PREMIUM') $state_clause $dist_clause 
+			            order by advocate.id desc limit 100";
+			    $res = direct_sql($sql, false);
 				echo json_encode($res);
 				break;	
 			case "get_pa":
@@ -159,6 +209,7 @@ if($token ==$api_key)
 				break;
 			case "univ_info":
 			    extract($_POST);
+			    $state_code = !empty($state_code) ? $state_code : (!empty($_REQUEST['state']) ? $_REQUEST['state'] : '');
 		       	$res =direct_sql("select university.name, university.type, university.code, university.year, university.address, university.location, university.speciality, university.affiliated_college, university.constituent_college, university.url, district.name as district_name, state.name as state_name from university,state, district where university.state_code ='$state_code' and university.state_code =state.code and university.district_code = district.code");
 		       	echo json_encode($res);
 				break;
@@ -397,36 +448,42 @@ if($token ==$api_key)
 	    	// ==== Others ==== //
             case "search_ifsc":
 			    extract($_POST);
+			    $ifsc = !empty($ifsc) ? trim($ifsc) : (!empty($_REQUEST['ifsc']) ? trim($_REQUEST['ifsc']) : '');
 			    $sql = "select  * from bank_ifsc where bank_ifsc.ifsc='$ifsc' and status='ACTIVE' order by ifsc";
 			    $res =direct_sql($sql,false);
 				echo json_encode($res);
 				break;
 			case "search_ifsc_by_branch":
 			    extract($_POST);
+			    $ifsc = !empty($ifsc) ? trim($ifsc) : (!empty($_REQUEST['ifsc']) ? trim($_REQUEST['ifsc']) : '');
 			    $sql = "select  * from bank_ifsc where bank_ifsc.branch like '%$ifsc%' and status='ACTIVE' order by ifsc";
 			    $res =direct_sql($sql,false);
 				echo json_encode($res);
 				break;
 			case "search_pincode_code":
 			    extract($_POST);
+			    $pincode = !empty($pincode) ? trim($pincode) : (!empty($_REQUEST['pincode']) ? trim($_REQUEST['pincode']) : '');
 			    $sql = "select  * from pincode where pincode.pincode='$pincode' and status='ACTIVE' order by locality_name";
 			    $res =direct_sql($sql,false);
 				echo json_encode($res);
 				break;	
 			case "search_pincode_by_name":
 			    extract($_POST);
-			    $sql = "select  * from pincode where pincode.locality like '#$pincode' and status='ACTIVE' order by pincode";
+			    $pincode = !empty($pincode) ? trim($pincode) : (!empty($_REQUEST['pincode']) ? trim($_REQUEST['pincode']) : '');
+			    $sql = "select  * from pincode where pincode.locality like '%$pincode%' and status='ACTIVE' order by pincode";
 			    $res =direct_sql($sql,false);
 				echo json_encode($res);
 				break;		
 			case "search_hsnsac":
 			    extract($_POST);
+			    $hsnsaccode = !empty($hsnsaccode) ? trim($hsnsaccode) : (!empty($_REQUEST['hsnsaccode']) ? trim($_REQUEST['hsnsaccode']) : '');
 			    $sql = "select  * from hsnsac where hsnsac.code='$hsnsaccode' and status='ACTIVE' order by code";
 			    $res =direct_sql($sql,false);
 				echo json_encode($res);
 				break;
 			case "search_hsnsac_by_name":
 			    extract($_POST);
+			    $hsnsaccode = !empty($hsnsaccode) ? trim($hsnsaccode) : (!empty($_REQUEST['hsnsaccode']) ? trim($_REQUEST['hsnsaccode']) : '');
 			    $sql = "select  * from hsnsac where hsnsac.description like '%$hsnsaccode%' and status='ACTIVE' order by code";
 			    $res =direct_sql($sql,false);
 				echo json_encode($res);

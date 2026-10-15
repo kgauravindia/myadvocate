@@ -1,6 +1,15 @@
 <?php
-require_once('config_v41.php');
-$con = mysqli_connect( $host_name, $db_user, $db_password, $db_name) or die("Unable to Connect, Check the Connection Parameter. " .mysqli_error($con)) ;
+require_once(__DIR__ . '/config_v41.php');
+$con = @mysqli_connect($host_name, $db_user, $db_password, $db_name);
+if (!$con && ($host_name === 'localhost' || $host_name === '127.0.0.1')) {
+    $con = @mysqli_connect('localhost', 'root', '', $db_name);
+    if (!$con) {
+        $con = @mysqli_connect('localhost', 'root', '', 'u305984835_myadvocate');
+    }
+}
+if (!$con) {
+    die("Unable to Connect, Check Connection Parameters: " . mysqli_connect_error());
+}
 mysqli_query($con, "SET character_set_results = 'utf8', character_set_client = 'utf8', character_set_connection = 'utf8', character_set_database = 'utf8', character_set_server = 'utf8'");
 /*-------------- DUMMY DATA------------------------*/
 //$user_id =1;
@@ -343,30 +352,41 @@ function delete_multi_data( $table_name, $whereArr)
 function direct_sql($sql, $type='get')
 	{
 		global $con;
-		$result =null;
-		$res = mysqli_query($con,$sql) or die("Error In Loading Data : ".mysqli_error($con));
-		if($type=='set')
-		{
-			$ct =mysqli_affected_rows($con);
-		}else{
-
-
-			$ct =mysqli_num_rows($res);	
-		if ($ct >=1)
-			{
-				while($row =mysqli_fetch_assoc($res))
-				{
-					$data[] = $row;
-				}
-			$result['count']=$ct;
-			$result['status']='success';
-			$result['data']=$data;
-			}	
-		else{
-			$result['count']=0;
-			$result['status']='error';
-			$result['data']=null;
+		$result = array('count' => 0, 'status' => 'error', 'data' => array());
+		try {
+			$res = @mysqli_query($con, $sql);
+			if (!$res) {
+				$result['msg'] = mysqli_error($con);
+				return $result;
 			}
+			if($type=='set')
+			{
+				$ct = mysqli_affected_rows($con);
+				$result['count'] = $ct;
+				$result['status'] = 'success';
+			} else {
+				$ct = mysqli_num_rows($res);	
+				if ($ct >= 1)
+				{
+					$data = array();
+					while($row = mysqli_fetch_assoc($res))
+					{
+						$data[] = $row;
+					}
+					$result['count'] = $ct;
+					$result['status'] = 'success';
+					$result['data'] = $data;
+				} else {
+					$result['count'] = 0;
+					$result['status'] = 'error';
+					$result['data'] = array();
+				}
+			}
+		} catch (\Throwable $e) {
+			$result['count'] = 0;
+			$result['status'] = 'error';
+			$result['data'] = array();
+			$result['msg'] = $e->getMessage();
 		}
 		return $result;
 	}

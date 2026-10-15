@@ -1,22 +1,21 @@
 {
   "background_color": "#ffffff",
-  "description": "My Advocate - India's Premier Legal Information & Advocate Directory Platform",
+  "description": "MyAdv India is an online platform to help advocates and common people of India",
   "dir": "ltr",
   "display": "standalone",
-  "name": "My Advocate - Legal Platform",
+  "name": "MyAdv India",
   "orientation": "portrait-primary",
-  "scope": "./",
-  "short_name": "My Advocate",
-  "start_url": "index.html",
-  "theme_color": "#C90016",
+  "scope": "/",
+  "short_name": "MyAdv",
+  "start_url": "/index.html",
+  "theme_color": "#e10101",
   "categories": [
     "business",
-    "legal",
-    "productivity",
-    "education"
+    "news",
+    "productivity"
   ],
   "screenshots": [],
-  "icons": [
+ "icons": [
     {
       "src": "img/icon/android-launchericon-72-72.png",
       "sizes": "72x72",

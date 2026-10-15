@@ -29,18 +29,35 @@ var base_url = 'https://myadv.in';
 function shot()
 {
 	alert("Sharing")
-  var msg ="Hi, *MyAdvocateAI* helps me solve all types of legal queries. *Download Now*";
-  var url ="https://myadv.in/app/";
+  var msg ="Hi, *MyAdv India* help me to solve all type of legal queries.  *Download Now*";
+  var url ="https://play.google.com/store/apps/details?id=com.offerplant.myadvindia";
    var imageLink = 'https://myadv.in/images/app-download-img.png';
+    
+	// navigator.screenshot.save(function(error,res){
+  // if(error){
+    // console.error(error);
+  // }else{
+    // console.log('ok',res.filePath); //should be path/to/myScreenshot.jpg
+    // //imageLink = res.filePath;
+   
+    // //window.plugins.socialsharing.share(msg, null, 'file://'+imageLink, url );
+    // window.plugins.socialsharing.share(msg, imageLink, null, url);
+	
+	// //window.plugins.socialsharing.share('Message, subject, image and link', 'The subject', 'https://www.google.nl/images/srpr/logo4w.png', 'http://www.x-services.nl');
+	 // //message, subject, image and link
+    // }
+  // },'jpg',50,'myScreenShot');
+  
   window.plugins.socialsharing.share(msg, imageLink, null, url);
 }
 
 function sharenow()
 {
 	alert("Sharing")
-  var msg ="Hi, *MyAdvocateAI* helps me solve all types of legal queries. *Download Now*";
-  var url ="https://myadv.in/app/";
+  var msg ="Hi, *MyAdv India* help me to solve all type of legal queries.  *Download Now*";
+  var url ="https://play.google.com/store/apps/details?id=com.offerplant.myadvindia";
     var imageLink = 'https://myadv.in/images/app-download-img.png';
+    //window.plugins.socialsharing.share(msg, null, 'file://'+imageLink, url );
     window.plugins.socialsharing.share(msg, null, imageLink, url);
  }
 

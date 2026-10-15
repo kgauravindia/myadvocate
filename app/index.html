@@ -4,296 +4,148 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="content-type" content="text/html;charset=UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, maximum-scale=1, user-scalable=no">
-	<meta name="theme-color" content="#C90016">
-	<title>My Advocate - Legal Platform</title>
-	<!-- Fonts & Icons -->
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<meta name="theme-color" content="#e10101">
 	<link rel="stylesheet" href="css/bootstrap.min.css">
-	<link rel="stylesheet" href="css/style.css?v=2.1">
+	<link rel="stylesheet" href="css/style.css">
 	<link rel="manifest" href="manifest.json">
 </head>
-
-<body>
 <div id='apparea'>
 	<div id='loader'></div>
-
-	<!-- App Topbar -->
 	<nav class="navbar fixed-top navbar-expand-lg navbar-light text-light" id='apphead'>
-		<div id='apptitle' style="display: flex; align-items: center; gap: 10px;">
-			<img src='img/logo-circle.png' alt="My Advocate" style="height: 38px; width: 38px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255, 255, 255, 0.85); box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
-			<div style="display: flex; flex-direction: column; line-height: 1.1;">
-				<span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: #ffffff; letter-spacing: -0.02em;">MY ADVOCATE</span>
-				<span style="font-size: 0.6rem; font-weight: 700; color: #FEF08A; letter-spacing: 0.06em; text-transform: uppercase;">Legal Portal &bull; India</span>
-			</div>
-		</div>
+		<h5 id='apptitle' class='col-8'>
+			<img src='img/logo.png' height='30px' align='left'>
+		</h5>
 		<div id='appmenu'>
-			<a href='https://t.me/myadvocateai' target="_blank" title="Telegram"><img src='img/telegram.png' height='22px'></a>
-			<a href='https://instagram.com/myadvocateai' target="_blank" title="Instagram"><img src='img/instagram.png' height='22px'></a>
-			<a href='https://twitter.com/myadvocateai' target="_blank" title="X (Twitter)"><img src='img/twitter.png' height='22px'></a>
+			<a href='https://facebook.com/MyAdvIndia'><img src='img/facebook.png' height='25px' align='right'
+					class='m-1'> </a>
+			<a href='https://twitter.com/MyAdvIndia'><img src='img/twitter.png' height='25px' align='right' class='m-1'
+					onclick="applaunch('com.twitter.android')"> </a>
+			<a href='https://instagram.com/MyAdvIndia'><img src='img/instagram.png' height='25px' align='right'
+					class='m-1' onclick="applaunch('com.instagram.android')"> </a>
 		</div>
 	</nav>
-
-	<!-- App Body -->
-	<div class="container-fluid" id='appbody'>
-		
-		<!-- Hero Welcome Card -->
-		<div class="app-hero-card" id='welcome'>
-			<div class="app-hero-tag">
-				<i class="fas fa-sparkles"></i> Verified Legal Intelligence
-			</div>
-			<h4 class="app-hero-title">Find Advocates. Explore Law.</h4>
-			<p class="app-hero-lead">India's premier digital legal platform connecting citizens, advocates, and students with verified directories and Bare Acts.</p>
-			
-			<!-- Quick Search Advocate Interactive Form -->
-			<form action="../advocate-search-result" method="get" class="app-search-box" id="search_advocate_hero" onsubmit="return handleHeroSearch(event)">
-				<i class="fas fa-magnifying-glass ms-2" style="color: var(--brand-red); font-size: 0.95rem; margin-left: 8px;"></i>
-				<input type="text" name="name" id="hero_search_query" class="app-search-input" placeholder="Search Advocate, Enrollment, Court..." autocomplete="off">
-				<button type="submit" class="app-search-btn">
-					<i class="fas fa-search"></i> Find
-				</button>
-			</form>
+	<div class="container-fluid " id='appbody'>
+		<div class="jumbotron" id='welcome'>
+			<h4 align='center'>Welcome to MyAdv India</h4>
+			<p align='justify'>MyAdv India is an online platform to help advocates and common people of India. </p>
 		</div>
+		<div class='row mx-1'>
+			<div class='col qicon'>
+				<img src='img/cdownload.png' id='acts_list' height='40px'>
+				<br>Acts & Rules
+			</div>
 
-		<!-- Interactive Feature Slider -->
-		<div id="appHeroSlider" class="carousel slide app-slider-container" data-ride="carousel" data-interval="4000">
-			<ol class="carousel-indicators">
-				<li data-target="#appHeroSlider" data-slide-to="0" class="active"></li>
-				<li data-target="#appHeroSlider" data-slide-to="1"></li>
-				<li data-target="#appHeroSlider" data-slide-to="2"></li>
-				<li data-target="#appHeroSlider" data-slide-to="3"></li>
-			</ol>
-			<div class="carousel-inner">
-				<!-- Slide 1: Advocates Directory -->
-				<div class="carousel-item active">
-					<div class="app-slide-card slide-dark">
-						<div>
-							<div class="slide-pill"><i class="fas fa-users-tie text-warning"></i> 103,000+ Advocates</div>
-							<h5 class="slide-title">Advocate Directory</h5>
-							<p class="slide-desc">Search verified advocates by State Bar Council, Enrollment, District, & Court.</p>
-						</div>
-						<button type="button" class="slide-action-btn" onclick="$('#search_advocate').trigger('click');">
-							<i class="fas fa-magnifying-glass text-danger"></i> Search Directory
-						</button>
-					</div>
-				</div>
-				<!-- Slide 2: Bare Acts 2023 -->
-				<div class="carousel-item">
-					<div class="app-slide-card slide-crimson">
-						<div>
-							<div class="slide-pill"><i class="fas fa-book-bookmark text-warning"></i> BNS &bull; BNSS &bull; BSA 2023</div>
-							<h5 class="slide-title">New Criminal Codes</h5>
-							<p class="slide-desc">Explore Bharatiya Nyaya Sanhita & Central Bare Acts in English & Hindi PDF.</p>
-						</div>
-						<button type="button" class="slide-action-btn" onclick="$('#acts_list').trigger('click');">
-							<i class="fas fa-book-open text-danger"></i> Read Bare Acts
-						</button>
-					</div>
-				</div>
-				<!-- Slide 3: AIBE Hub -->
-				<div class="carousel-item">
-					<div class="app-slide-card slide-amber">
-						<div>
-							<div class="slide-pill"><i class="fas fa-graduation-cap text-light"></i> Bar Examination</div>
-							<h5 class="slide-title">AIBE Question Bank</h5>
-							<p class="slide-desc">Practice 19+ Law Subjects with past papers, solutions & syllabus breakdown.</p>
-						</div>
-						<button type="button" class="slide-action-btn" onclick="$('#exam_list').trigger('click');">
-							<i class="fas fa-clipboard-check text-warning"></i> Start Prep
-						</button>
-					</div>
-				</div>
-				<!-- Slide 4: Real-time Bank IFSC & PIN Code -->
-				<div class="carousel-item">
-					<div class="app-slide-card slide-emerald">
-						<div>
-							<div class="slide-pill"><i class="fas fa-bolt text-warning"></i> Real-time OLAW API</div>
-							<h5 class="slide-title">Bank IFSC & PIN Codes</h5>
-							<p class="slide-desc">Instant verified RBI IFSC branch details & 19,000+ Indian PIN Codes.</p>
-						</div>
-						<button type="button" class="slide-action-btn" onclick="$('#ifsc').trigger('click');">
-							<i class="fas fa-building-columns text-success"></i> Lookup IFSC
-						</button>
-					</div>
-				</div>
+			<div class='col qicon'>
+				<img src='img/bar.png' id='bc_list' height='40px'>
+				<br> Bar Councils
+			</div>
+
+			<div class='col qicon'>
+				<img src='img/case.png' id='case' data-id='1' height='40px'>
+				<br>Case Status
 			</div>
 		</div>
-
-		<!-- Section Title: Core Legal Services -->
-		<div class="app-section-title">
-			<span><i class="fas fa-layer-group text-danger me-1"></i> Legal Hub</span>
-			<span class="app-section-badge">8 Pillars</span>
-		</div>
-
-		<!-- Grid Row 1: Primary Services -->
-		<div class='row mx-0'>
-			<div class='col-4 px-1'>
-				<div class='qicon' id='search_advocate'>
-					<img src='img/newsearch.png' alt="Advocates">
-					<div>Advocates</div>
-				</div>
+		<div class='row mx-1'>
+			<!--<div class='col qicon'>
+				<img src='img/newsearch.png' id='search' height='40px'>
+				<br>Search Advocate
+			</div>-->
+			<div class='col qicon'>
+				<a href='https://filing.ecourts.gov.in/'> <img src='img/myecourt.png' height='40px'> </a>
+				<br>eFiling
 			</div>
-			<div class='col-4 px-1'>
-				<div class='qicon' id='acts_list'>
-					<img src='img/cdownload.png' alt="Bare Acts">
-					<div>Bare Acts</div>
-				</div>
+			<div class='col qicon'>
+				<img src='img/exam.png' id='exam_list' height='40px'>
+				<br>Examination
 			</div>
-			<div class='col-4 px-1'>
-				<div class='qicon' id='case' data-id='1'>
-					<img src='img/case.png' alt="Case Status">
-					<div>Case Status</div>
-				</div>
+			<div class='col qicon'>
+				<img src='img/faq.png' id='faq' height='40px'>
+				<br>FAQ
 			</div>
 		</div>
+		<div class='row mx-1'>
 
-		<!-- Grid Row 2: Institutions & Exams -->
-		<div class='row mx-0'>
-			<div class='col-4 px-1'>
-				<div class='qicon' id='bc_list'>
-					<img src='img/bar.png' alt="Bar Councils">
-					<div>Bar Councils</div>
-				</div>
+			<div class='col qicon'>
+				<img src='img/monitor.png' id='hsnsac_list' height='40px'>
+				<br>HSN SAC
 			</div>
-			<div class='col-4 px-1'>
-				<a href='https://filing.ecourts.gov.in/' target="_blank" class='qicon'>
-					<img src='img/myecourt.png' alt="eFiling">
-					<div>eFiling</div>
-				</a>
+			<div class='col qicon'>
+				<img src='img/ifsc.png' id='ifsc' height='40px'>
+				<br>IFSC
 			</div>
-			<div class='col-4 px-1'>
-				<div class='qicon' id='exam_list'>
-					<img src='img/exam.png' alt="AIBE Exam">
-					<div>AIBE Hub</div>
-				</div>
+			<div class='col qicon'>
+				<img src='img/obd.png' id='obd' data-id='1' height='40px'>
+				<br>Online DisplayBoard
 			</div>
 		</div>
+		<div class='row mx-1'>
 
-		<!-- Grid Row 3: Live Courts & Utilities -->
-		<div class='row mx-0'>
-			<div class='col-4 px-1'>
-				<div class='qicon' id='obd' data-id='1'>
-					<img src='img/obd.png' alt="Display Board">
-					<div>Display Board</div>
-				</div>
+
+			<div class='col qicon'>
+				<img src='img/pincode.png' id='pincode_list' height='40px'>
+				<br>Pincode
 			</div>
-			<div class='col-4 px-1'>
-				<a href='https://indiankanoon.org' target="_blank" class='qicon'>
-					<img src='img/book.png' alt="Search Law">
-					<div>Search Law</div>
-				</a>
+			<div class='col qicon'>
+				<a href='https://indiankanoon.org'> <img src='img/book.png' height='40px'> </a>
+				<br>Search Law
 			</div>
-			<div class='col-4 px-1'>
-				<div class='qicon' id='faq'>
-					<img src='img/faq.png' alt="Legal Tools & FAQ">
-					<div>Legal FAQ</div>
-				</div>
+			<div class='col qicon'>
+				<a href='https://www.youtube.com/channel/UC500odmthCIKPu6R8kmZV2Q'> <img src='img/video.png'
+						height='40px'> </a>
+				<br>Video
 			</div>
+
 		</div>
-
-		<!-- Section Title: Utility Codes -->
-		<div class="app-section-title">
-			<span><i class="fas fa-screwdriver-wrench text-warning me-1"></i> Codes & Directories</span>
-			<span class="app-section-badge">National</span>
-		</div>
-
-		<!-- Grid Row 4: Utility Codes -->
-		<div class='row mx-0'>
-			<div class='col-4 px-1'>
-				<div class='qicon' id='hsnsac_list'>
-					<img src='img/monitor.png' alt="HSN SAC">
-					<div>HSN / SAC</div>
-				</div>
-			</div>
-			<div class='col-4 px-1'>
-				<div class='qicon' id='ifsc'>
-					<img src='img/ifsc.png' alt="Bank IFSC">
-					<div>Bank IFSC</div>
-				</div>
-			</div>
-			<div class='col-4 px-1'>
-				<div class='qicon' id='pincode_list'>
-					<img src='img/pincode.png' alt="Pincode">
-					<div>Pincodes</div>
-				</div>
-			</div>
-		</div>
-
-		<!-- Portal Login / Claim Card -->
-		<a href='login.html' class="portal-card">
-			<h6><i class="fas fa-id-card-clip" style="color: #F59E0B;"></i> Advocate & Member Portal</h6>
-			<p>Login to claim profile, access question banks, notifications & dashboard.</p>
-			<div class="portal-btn">
-				<i class="fas fa-arrow-right-to-bracket"></i> Login / Register
+		<a href='login.html'>
+			<div class="jumbotron mt-2">
+				<center>
+					<h6>Click Here Login to Get More</h6>
+					<p> Examination, Notification etc. </p>
+				</center>
 			</div>
 		</a>
-
-		<!-- Social Media Pill -->
-		<div class="social-bar-pill">
-			<a href="https://t.me/myadvocateai" target="_blank" title="Telegram"><img src='img/telegram.png' height='24px' alt="Telegram"></a>
-			<a href="https://www.youtube.com/channel/UC500odmthCIKPu6R8kmZV2Q" target="_blank" title="YouTube"><img src='img/video.png' height='24px' alt="YouTube"></a>
-			<a href='https://instagram.com/myadvocateai' target="_blank" title="Instagram"><img src='img/instagram.png' height='24px' alt="Instagram"></a>
-			<a href='https://twitter.com/myadvocateai' target="_blank" title="Twitter"><img src='img/twitter.png' height='24px' alt="Twitter"></a>
-			<a href='https://facebook.com/myadvocateai' target="_blank" title="Facebook"><img src='img/facebook.png' height='24px' alt="Facebook"></a>
-			<a href="https://myadvocateai.blogspot.com" target="_blank" title="Blog"><img src='img/blogger.png' height='24px' alt="Blog"></a>
-		</div>
-
+		<p align='center' style='background-color:#cf0204; padding:6px 5px;border-radius:50px;border:double 8px #fff;'>
+			<a href="https://myadvindia.blogspot.com"> <img src='img/blogger.png' height='25px'></a> &nbsp;&nbsp;&nbsp;
+			<a href='https://facebook.com/myadvindia'> <img src='img/facebook.png' height='25px'> </a>
+			&nbsp;&nbsp;&nbsp;<a href='https://twitter.com/myadvindia'> <img src='img/twitter.png' height='25px'> </a>
+			&nbsp;&nbsp;&nbsp; <a href='https://instagram.com/myadvindia'> <img src='img/instagram.png' height='25px'>
+			</a> &nbsp;&nbsp;&nbsp; <a href='https://t.me/myadvindia'> <img src='img/telegram.png' height='25px'> </a>
+		</p>
 	</div>
-
-	<!-- Fixed Bottom Navigation -->
-	<nav class="navbar fixed-bottom navbar-expand-lg navbar-light" id='appfoot'>
-		<div class='app-nav-item active' id='home' data-id='1'>
-			<img src='img/home.png' height='22px' alt="Home">
-			<span>Home</span>
+	<nav class="navbar fixed-bottom navbar-expand-lg navbar-light " id='appfoot'>
+		<div class='col'>
+			<img src='img/home.png' id='home' data-id='1' align='left' height='25px'>
 		</div>
-		<a href="../advocate-search-result" class='app-nav-item' id='search_advocate_foot'>
-			<img src='img/search.png' height='22px' alt="Search">
-			<span>Search</span>
-		</a>
-		<div class='app-nav-item' id='acts_nav' onclick="$('#acts_list').trigger('click');">
-			<img src='img/book.png' height='22px' alt="Bare Acts">
-			<span>Acts</span>
+		<div class='col'>
+			<img src='img/search.png' id='search_advocate' align='left' height='25px'>
 		</div>
-		<div class='app-nav-item' id='qprev' onclick='sharenow()'>
-			<img src='img/share.png' height='22px' alt="Share">
-			<span>Share</span>
+		<div class='col'>
+			<img src='img/share.png' id='qprev' onclick='sharenow()' align='left' height='25px'>
 		</div>
-		<a href="login.html" class='app-nav-item'>
-			<img src='img/lock.png' height='22px' alt="Login">
-			<span>Portal</span>
-		</a>
+		<div class='col'>
+			<a href="login.html"> <img src='img/lock.png' align='right' height='25px'></a>
+		</div>
 	</nav>
 </div>
 
-<!-- Scripts -->
 <script src="js/jquery.min.js"></script>
-<script src="js/popper.min.js"></script>
 <script src="js/bootstrap.min.js"></script>
-<script src="js/app.js"></script>
+<script src="js/popper.min.js"></script>
 
-<script>
-	function handleHeroSearch(e) {
-		if (e) e.preventDefault();
-		var q = $.trim($('#hero_search_query').val());
-		if (q.length > 0) {
-			window.location.href = '../advocate-search-result?name=' + encodeURIComponent(q);
-		} else {
-			window.location.href = '../advocate-search-result';
-		}
-		return false;
-	}
-</script>
+<script src="js/app.js"></script>
 
 <script type="application/javascript" src="https://sdki.truepush.com/sdk/v2.0.4/app.js" async></script>
 <script>
 	var truepush = window.truepush || [];
+
 	truepush.push(function () {
 		truepush.Init({
 			id: "64d8e70b6765a05a15f5e6a6"
 		}, function (error) {
 			if (error) console.error(error);
-		});
-	});
+		})
+	})
 </script>
 
 <script>

@@ -54,9 +54,9 @@ $dev_contact ="9431426600";
 $api_key ='a9dcc62d6078b881d318aca0ead65ab5'; //MyAdvIndia@2020
 
 $host_name ='localhost';
-$db_user ='u305984835_myadv_user';
-$db_password ='User@1234!';
-$db_name ='u305984835_myadv_db';
+$db_user ='u305984835_myadvocate';
+$db_password ='Adv@@2026!';
+$db_name ='u305984835_myadvocate';
 
 $gender_list =array('','MALE','FEMALE','OTHER');
 $duration_list =array('',1,2,3,4,6,9,12,15,18,24);

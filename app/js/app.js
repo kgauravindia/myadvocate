@@ -1,18 +1,8 @@
 /*-----app.js --*/
 /*-MYADVINDIA APP SCRIPT --*/
-	var isLocal = (typeof window !== 'undefined' && window.location) ? (
-		window.location.hostname === 'localhost' ||
-		window.location.hostname === '127.0.0.1' ||
-		window.location.hostname.indexOf('.test') > -1 ||
-		window.location.hostname.indexOf('.local') > -1
-	) : false;
-	var basePath = (typeof window !== 'undefined' && window.location && window.location.pathname.indexOf('/myadvocate') > -1) ? '/myadvocate' : '';
-	var defaultApiUrl = 'https://myadv.in/api/api.php?token=a9dcc62d6078b881d318aca0ead65ab5&';
-	var base_url = (isLocal && window.location.origin) ? (window.location.origin + basePath + '/api/api.php?token=a9dcc62d6078b881d318aca0ead65ab5&') : defaultApiUrl;
+	var base_url = 'https://myadv.in/ais/api_v41.php?token=a9dcc62d6078b881d318aca0ead65ab5&';
 	var base_url_ed = 'https://ed.olaw.in/app/api_v41.php?token=a9dcc62d6078b881d318aca0ead65ab5&';
-	var olaw_api_url = 'https://olaw.in/api.php';
-	var olaw_api_key = 'OLAW_D776A66967200383A932';
-	var file_url = (isLocal && window.location.origin) ? (window.location.origin + basePath + '/upload/') : 'https://myadv.in/upload/';
+	var file_url = 'https://myadv.in/upload/';
 	var goback ="<img src='icon/back.png' height='25px' onclick='window.history.back()'>";
 	var myadv_version =localStorage.getItem('myadv_version'); 
 	var myadv_user_type =localStorage.getItem('myadv_user_type'); 
@@ -26,8 +16,17 @@
 		if (visibility === 'ADVOCATE' && myadv_user_type === 'advocate') return val;
 		return masked;
 	}
-	
-	if($("#welcome").length>0 && localStorage.getItem('myadv_name') != null)
+	//document.addEventListener('contextmenu', event => event.preventDefault());
+	// Disable right-click
+window.addEventListener('contextmenu', function (e) {
+    e.preventDefault();
+});
+
+// Disable user selection
+document.addEventListener('selectstart', function (e) {
+    e.preventDefault();
+});
+	if($("#welcome").length>0 &&localStorage.getItem('myadv_name') !=null)
 	{
 		$("#welcome").html('Welcome ! ' + localStorage.getItem('myadv_name'));	
 	}
@@ -36,14 +35,12 @@
 		url:base_url+'task=app_version',
 		success:function(data)
 		{
-			try {
-				var obj = (typeof data === 'object') ? data : JSON.parse(data);
-				if(parseFloat(myadv_version) < parseFloat(obj.version))
-				{
-					$("#updateapp").css('display','block');
-				}
-			} catch(e) {
-				console.log('App version parse error:', e);
+			
+			obj=JSON.parse(data);
+			console.log(obj);
+			if( parseFloat(myadv_version) < parseFloat(obj.version))
+			{
+			$("#updateapp").css('display','block');
 			}
 		},
 		complete:function()
@@ -51,31 +48,21 @@
 			$("#loader").hide();
 		}
 	});
-
-function shot() {
-	sharenow();
-}
+	
 
 function sharenow() {
-	var shareUrl = (window.location.origin && window.location.origin !== 'null') ? (window.location.origin + basePath + '/app/') : 'https://myadv.in/app/';
-	var shareData = {
-		title: 'MyAdvocate - Legal Portal India',
-		text: 'Hi, MyAdvocate helps solve all legal queries & access advocate directories. Explore now:',
-		url: shareUrl
-	};
-	if (navigator.share) {
-		navigator.share(shareData)
-			.then(() => console.log('Shared successfully'))
-			.catch(error => console.log('Share dismissed:', error));
-	} else if (navigator.clipboard && navigator.clipboard.writeText) {
-		navigator.clipboard.writeText(shareUrl).then(function() {
-			alert('App link copied to clipboard!\n' + shareUrl);
-		}).catch(function() {
-			prompt('Share this link with colleagues:', shareUrl);
-		});
-	} else {
-		prompt('Share this link with colleagues:', shareUrl);
-	}
+  if (navigator.share) {
+    navigator.share({
+      title: 'MyAdv India',
+      text: 'Hi, MyAdv India help me to solve all type of legal queries.  Download Now',
+      url: "https://play.google.com/store/apps/details?id=com.offerplant.myadvindia"
+    })
+    .then(() => console.log('Shared successfully'))
+    .catch(error => console.error('Error sharing:', error));
+  } else {
+    console.log('Sharing not supported on this device');
+    // You can provide an alternative sharing method for devices that don't support the Web Share API
+  }
 }
 	
 	/*- Function  List --*/
@@ -861,7 +848,7 @@ $("#apparea").on("click",".ba_all_list", function(){
 });
 
 
-$("#apparea").on("click", "#univ_list", function(){
+$("#univ_list").on("click", function(){
 
 	$.ajax({
 		type:'POST',
@@ -1315,51 +1302,71 @@ $("#apparea").on("click","#search_advocate_btn_mobile", function(){
 });
 //============ PINCODE ============== //
 $("#apparea").on("click","#pincode_list", function(){
-	$("#apphead").html("<img src='img/back.png' align='left' height='25px' onclick='location.reload()'> <div style='float:right'> <img src='img/pincode.png' height='25px' > Search Pincode </div>");
-	$("#appbody").html("<div class='card p-3 mb-3'><h6 class='font-weight-bold text-dark mb-2'><i class='fas fa-location-dot text-danger mr-1'></i> Search Indian PIN Code</h6><input type='tel' id='search_pincode_code' maxlength='6' class='form-control mb-2' placeholder='Enter 6-Digit PIN Code (e.g. 110001)'><button class='btn btn-danger btn-block' id='search_pincode_code_result'><i class='fas fa-magnifying-glass mr-1'></i> Search Post Offices</button><small class='text-muted d-block mt-2'>Instant national post office and district directory powered by OLAW API.</small></div>");
+
+	$.ajax({
+		type:'POST',
+		url:base_url+'task=search_pincode_code',
+		beforeSend:function(){
+			$("#loader").show();
+		},
+		success:function(data)
+		{
+			$("#apphead").html("<img src='img/back.png' align='left' height='25px' onclick='location.reload()'> <div style='float:right'> <img src='img/pincode.png' height='25px' > Search Pincode </div>");
+			$("#appbody").html("<input type='tel' id='search_pincode_code' maxlength='6' class='form-control' placeholder='Pincode' > <button class='btn btn-danger btn-block mt-2' id='search_pincode_code_result' > Search Post Office</button>");
+				
+		},
+		complete:function()
+		{
+			$("#loader").hide();
+		}
+	});
 });
 
 $("#apparea").on("click","#search_pincode_code_result", function(){
-	var pincode = $("#search_pincode_code").val().trim();
-	if(pincode.length < 6)
+	
+	var pincode = $("#search_pincode_code").val();
+	if(pincode.length <6 )
 	{
-		alert("Please enter a valid 6-digit PIN Code");
+		alert("Invalid PIN Code")
 	}
 	else{
 		$.ajax({
-			type: 'GET',
-			url: olaw_api_url + '?api_key=' + encodeURIComponent(olaw_api_key) + '&action=pincode&pincode=' + encodeURIComponent(pincode),
-			beforeSend: function(){
+			type:'POST',
+			url:base_url+'task=search_pincode_code',
+			data:{'pincode':pincode},
+			beforeSend:function(){
 				$("#loader").show();
 			},
-			success: function(res)
+			success:function(data)
 			{
-				var obj = (typeof res === 'object') ? res : JSON.parse(res);
-				if(obj.status === 'success' && obj.data && obj.data.length > 0)
-				{
-					var list = Array.isArray(obj.data) ? obj.data : [obj.data];
-					$("#appbody").html("<div class='bg-gray text-danger mb-2'><b>" + list.length + " Post Offices / Localities in PIN: " + pincode + "</b></div>");
-					for(var i = 0; i < list.length; i++)
+				obj = JSON.parse(data);
+				//console.log(obj);
+				if(obj.count>0)
+			{
+				
+				$("#appbody").html("<div class='bg-gray text-danger'>" + obj.count +" Locality Available </div>");	
+				if (obj.count<200)
 					{
-						var x = list[i];
-						var data = "<div class='card mt-1'><div class='card-body'>" +
-							"<span class='text-danger'><b>" + (x.locality_name || x.office_name || 'Locality') + "</b></span><hr>" +
-							"<b>PIN Code:</b> " + (x.pincode || pincode) + "<br>" +
-							"<b>Post Office:</b> " + (x.office_name || '—') + "<br>" +
-							"<b>District:</b> " + (x.district_name || '—') + "<br>" +
-							"<b>State/UT:</b> " + (x.state_name || '—') +
-							"</div></div>";
-						$("#appbody").append(data);
+						var ct=obj.count;
 					}
-				}
 				else{
-					$("#appbody").html("<div class='text-danger text-center p-3'>No locations found for PIN Code: " + pincode + "</div>");
+						ct=100;
+					}
+				for(var i=0;  i<ct; i++)
+				{
+					var x = obj['data'][i];
+					var data = " <div class='card mt-1'><div class='card-body'> <span class='text-danger'><b>"+x.locality_name+"&nbsp; </b></span><hr> Pincode: "+x.pincode+" <br>Post Office: "+x.office_name+" <br> District: "+x.district_name+"<br>State/UT: "+x.state_name+"  </div></div>";
+					
+					$("#appbody").append(data);	
+					
 				}
+			}
+			else{
+				$("#appbody").append("<div class='text-danger text-center'> No Pincode Available </div>");
+			}
 			},
-			error: function(){
-				$("#appbody").html("<div class='text-danger text-center p-3'>Unable to connect to PIN Code API. Please try again.</div>");
-			},
-			complete: function(){
+			complete:function()
+			{
 				$("#loader").hide();
 			}
 		});
@@ -1388,177 +1395,173 @@ $("#apparea").on("click","#hsnsac_list", function(){
 });
 
 $("#apparea").on("click","#search_hsnsac_result", function(){
-	var hsnsaccode = $("#search_hsnsac").val().trim();
-	if(hsnsaccode.length < 1)
+	
+	var hsnsaccode = $("#search_hsnsac").val();
+	if(hsnsaccode.length <1 )
 	{
-		alert("Please enter an HSN / SAC Code");
+		alert("Invalid HSN SAC Code")
 	}
 	else{
-		$("#loader").show();
-		// Try olaw API first
 		$.ajax({
-			type: 'GET',
-			url: olaw_api_url + '?api_key=' + encodeURIComponent(olaw_api_key) + '&action=hsn-sac&q=' + encodeURIComponent(hsnsaccode),
-			success: function(res)
-			{
-				var obj = (typeof res === 'object') ? res : null;
-				try { if (!obj) obj = JSON.parse(res); } catch(e){}
-				if(obj && obj.status === 'success' && obj.data)
-				{
-					$("#loader").hide();
-					var list = Array.isArray(obj.data) ? obj.data : [obj.data];
-					$("#appbody").html("<div class='bg-gray text-danger mb-2'><b>" + list.length + " HSN / SAC Records Found</b></div>");
-					for(var i = 0; i < list.length; i++)
-					{
-						var x = list[i];
-						var data = "<div class='card mt-1'><div class='card-body'>" +
-							"<span class='text-danger'><b>" + (x.code || hsnsaccode) + "</b></span><hr>" +
-							"<b>Description:</b> " + (x.description || x.title || '—') + "<br>" +
-							"<b>Type:</b> <b>" + (x.type || 'Goods / Services') + "</b>" +
-							"</div></div>";
-						$("#appbody").append(data);
-					}
-				}
-				else{
-					fallbackHsnSearch(hsnsaccode, 'code');
-				}
+			type:'POST',
+			url:base_url+'task=search_hsnsac',
+			data:{'hsnsaccode':hsnsaccode},
+			beforeSend:function(){
+				$("#loader").show();
 			},
-			error: function(){
-				fallbackHsnSearch(hsnsaccode, 'code');
+			success:function(data)
+			{
+				obj = JSON.parse(data);
+				//console.log(obj);
+				if(obj.count>0)
+			{
+				
+				$("#appbody").html("<div class='bg-gray text-danger'>" + obj.count +" HSN SAC Available </div>");	
+				if (obj.count<20)
+					{
+						var ct=obj.count;
+					}
+				else{
+						ct=20;
+					}
+				for(var i=0;  i<ct; i++)
+				{
+					var x = obj['data'][i];
+					var data = " <div class='card mt-1'><div class='card-body'> <span class='text-danger'><b>"+x.code+"&nbsp; </b></span><hr> <b>Description:</b> "+x.description+" <br> Type : <b>"+x.type+"</b> <br> </div>";
+					
+					$("#appbody").append(data);	
+					
+				}
+			}
+			else{
+				$("#appbody").append("<div class='text-danger text-center'> No HSN SAC Available </div>");
+			}
+			},
+			complete:function()
+			{
+				$("#loader").hide();
 			}
 		});
 	}
 });
 
 $("#apparea").on("click","#search_hsnsac_result_by_name", function(){
-	var hsnsaccode = $("#search_hsnsac_by_name").val().trim();
-	if(hsnsaccode.length < 1)
+	
+	var hsnsaccode = $("#search_hsnsac_by_name").val();
+	if(hsnsaccode.length <1 )
 	{
-		alert("Please enter an HSN / SAC keyword");
+		alert("Invalid HSN SAC Name")
 	}
 	else{
-		$("#loader").show();
 		$.ajax({
-			type: 'GET',
-			url: olaw_api_url + '?api_key=' + encodeURIComponent(olaw_api_key) + '&action=hsn-sac&q=' + encodeURIComponent(hsnsaccode),
-			success: function(res)
-			{
-				var obj = (typeof res === 'object') ? res : null;
-				try { if (!obj) obj = JSON.parse(res); } catch(e){}
-				if(obj && obj.status === 'success' && obj.data)
-				{
-					$("#loader").hide();
-					var list = Array.isArray(obj.data) ? obj.data : [obj.data];
-					$("#appbody").html("<div class='bg-gray text-danger mb-2'><b>" + list.length + " HSN / SAC Records Found</b></div>");
-					for(var i = 0; i < list.length; i++)
-					{
-						var x = list[i];
-						var data = "<div class='card mt-1'><div class='card-body'>" +
-							"<span class='text-danger'><b>" + (x.code || '—') + "</b></span><hr>" +
-							"<b>Description:</b> " + (x.description || x.title || '—') + "<br>" +
-							"<b>Type:</b> <b>" + (x.type || 'Goods / Services') + "</b>" +
-							"</div></div>";
-						$("#appbody").append(data);
-					}
-				}
-				else{
-					fallbackHsnSearch(hsnsaccode, 'name');
-				}
+			type:'POST',
+			url:base_url+'task=search_hsnsac_by_name',
+			data:{'hsnsaccode':hsnsaccode},
+			beforeSend:function(){
+				$("#loader").show();
 			},
-			error: function(){
-				fallbackHsnSearch(hsnsaccode, 'name');
+			success:function(data)
+			{
+				obj = JSON.parse(data);
+				//console.log(obj);
+				if(obj.count>0)
+			{
+				
+				$("#appbody").html("<div class='bg-gray text-danger'>" + obj.count +" HSN SAC Available </div>");	
+				if (obj.count<20)
+					{
+						var ct=obj.count;
+					}
+				else{
+						ct=20;
+					}
+				for(var i=0;  i<ct; i++)
+				{
+					var x = obj['data'][i];
+					var data = " <div class='card mt-1'><div class='card-body'> <span class='text-danger'><b>"+x.code+"&nbsp; </b></span><hr> <b>Description:</b> "+x.description+" <br> Type : <b>"+x.type+" </b><br> </div>";
+					
+					$("#appbody").append(data);	
+					
+				}
+			}
+			else{
+				$("#appbody").append("<div class='text-danger text-center'> No HSN SAC Available </div>");
+			}
+			},
+			complete:function()
+			{
+				$("#loader").hide();
 			}
 		});
 	}
 });
 
-function fallbackHsnSearch(query, searchType) {
-	var task = (searchType === 'name') ? 'search_hsnsac_by_name' : 'search_hsnsac';
+// ==== IFSC ==== //
+$("#apparea").on("click","#ifsc", function(){
+
 	$.ajax({
-		type: 'POST',
-		url: base_url + 'task=' + task,
-		data: {'hsnsaccode': query},
-		success: function(data)
+		type:'POST',
+		url:base_url+'task=ifsc',
+		beforeSend:function(){
+			$("#loader").show();
+		},
+		success:function(data)
 		{
-			try {
-				var obj = JSON.parse(data);
-				if(obj.count > 0)
-				{
-					$("#appbody").html("<div class='bg-gray text-danger mb-2'><b>" + obj.count + " HSN / SAC Available</b></div>");
-					var ct = (obj.count < 30) ? obj.count : 30;
-					for(var i = 0; i < ct; i++)
-					{
-						var x = obj['data'][i];
-						var card = "<div class='card mt-1'><div class='card-body'>" +
-							"<span class='text-danger'><b>" + (x.code || '—') + "</b></span><hr>" +
-							"<b>Description:</b> " + (x.description || '—') + "<br>" +
-							"<b>Type:</b> <b>" + (x.type || '—') + "</b>" +
-							"</div></div>";
-						$("#appbody").append(card);
-					}
-				}
-				else{
-					$("#appbody").html("<div class='text-danger text-center p-3'>No HSN / SAC records found for: " + query + "</div>");
-				}
-			} catch(e) {
-				$("#appbody").html("<div class='text-danger text-center p-3'>No HSN / SAC records found.</div>");
-			}
+			$("#apphead").html("<img src='img/back.png' align='left' height='25px' onclick='location.reload()'> <div style='float:right'> <img src='img/ifsc.png' height='25px' > Search IFSC </div>");
+			$("#appbody").html("<center><b> IFSC by Code </b></center><input type='text' id='ifsc_text' maxlength='11' class='form-control' placeholder='11 Digit IFSC' > <button class='btn btn-danger btn-block mt-2' id='ifsc_text_result' > IFSC by Code</button><center> <b>Search by Branch </b> </center><input type='text' id='ifsc_branch' maxlength='20' class='form-control' placeholder='Name' > <button class='btn btn-danger btn-block mt-2' id='ifsc_branch_result' > IFSC by Name</button> Indian Financial System Code (IFSC) is 11 digit code issued by RBI for all Banks");
 		},
-		error: function(){
-			$("#appbody").html("<div class='text-danger text-center p-3'>Unable to complete HSN search. Please try again.</div>");
-		},
-		complete: function(){
+		complete:function()
+		{
 			$("#loader").hide();
 		}
 	});
-}
-
-// ==== IFSC ==== //
-$("#apparea").on("click","#ifsc", function(){
-	$("#apphead").html("<img src='img/back.png' align='left' height='25px' onclick='location.reload()'> <div style='float:right'> <img src='img/ifsc.png' height='25px' > Search IFSC </div>");
-	$("#appbody").html("<div class='card p-3 mb-3'><h6 class='font-weight-bold text-dark mb-2'><i class='fas fa-building-columns text-danger mr-1'></i> Search Bank IFSC</h6><input type='text' id='ifsc_text' maxlength='11' class='form-control mb-2 text-uppercase' placeholder='Enter 11-Digit IFSC (e.g. SBIN0000001)'><button class='btn btn-danger btn-block' id='ifsc_text_result'><i class='fas fa-magnifying-glass mr-1'></i> Lookup IFSC Details</button><small class='text-muted d-block mt-2'>Instant verified RBI database powered by OLAW API.</small></div>");
 });
 
 $("#apparea").on("click","#ifsc_text_result", function(){
-	var ifsc = $("#ifsc_text").val().trim().toUpperCase();
-	if(ifsc.length < 11)
+	
+	var ifsc = $("#ifsc_text").val();
+	if(ifsc.length <11 )
 	{
-		alert("Please enter a valid 11-digit IFSC code");
+		alert("Invalid IFSC")
 	}
 	else{
 		$.ajax({
-			type: 'GET',
-			url: olaw_api_url + '?api_key=' + encodeURIComponent(olaw_api_key) + '&action=bank-ifsc&ifsc=' + encodeURIComponent(ifsc),
-			beforeSend: function(){
+			type:'POST',
+			url:base_url+'task=search_ifsc',
+			data:{'ifsc':ifsc},
+			beforeSend:function(){
 				$("#loader").show();
 			},
-			success: function(res)
+			success:function(data)
 			{
-				var obj = (typeof res === 'object') ? res : JSON.parse(res);
-				if(obj.status === 'success' && obj.data)
-				{
-					var x = obj.data;
-					$("#appbody").html("<div class='bg-gray text-danger mb-2'><b>Verified RBI Bank Record</b></div>");
-					var data = "<div class='card mt-1'><div class='card-body'>" +
-						"<span class='text-danger'><b>" + (x.ifsc || ifsc) + "</b></span> &nbsp; <small class='badge badge-success'>ACTIVE</small><hr>" +
-						"<b>Bank Name:</b> " + (x.bank || '—') + "<br>" +
-						"<b>Branch Name:</b> " + (x.branch || '—') + "<br>" +
-						"<b>MICR Code:</b> " + (x.micr || '—') + "<br>" +
-						"<b>Address:</b> " + (x.address || '—') + "<br>" +
-						"<b>City:</b> " + (x.city1 || x.city2 || '—') + "<br>" +
-						"<b>State/UT:</b> " + (x.state || '—') + "<br>" +
-						(x.phone ? ("<b>Phone:</b> " + (x.stdcode ? x.stdcode + '-' : '') + x.phone + "<br>") : "") +
-						"</div></div>";
-					$("#appbody").append(data);
-				}
+				obj = JSON.parse(data);
+				//console.log(obj);
+				if(obj.count>0)
+			{
+				
+				$("#appbody").html("<div class='bg-gray text-danger'>" + obj.count +" IFSC Available </div>");	
+				if (obj.count<50)
+					{
+						var ct=obj.count;
+					}
 				else{
-					$("#appbody").html("<div class='text-danger text-center p-3'>No IFSC details found for: " + ifsc + "</div>");
+						ct=2;
+					}
+				for(var i=0;  i<ct; i++)
+				{
+					var x = obj['data'][i];
+					var data = " <div class='card mt-1'><div class='card-body'> <span class='text-danger'><b>"+x.ifsc+"&nbsp; </b></span><hr> <b>Bank Name:</b> "+x.bank+" <br> <b>Branch Name:</b> "+x.branch+" <br> <b>Address:</b> "+x.address+" <br> <b>City:</b> "+x.city1+", "+x.city2+" <br> <b>State/UT:</b> "+x.state+" <br> <b>Phone:</b> "+x.stdcode+""+x.phone+" <br> <b>Last Update:</b> "+x.updated_at+" <br> </div>";
+					
+					$("#appbody").append(data);	
+					
 				}
+			}
+			else{
+				$("#appbody").append("<div class='text-danger text-center'> No IFSC Available </div>");
+			}
 			},
-			error: function(){
-				$("#appbody").html("<div class='text-danger text-center p-3'>Unable to connect to IFSC API. Please try again.</div>");
-			},
-			complete: function(){
+			complete:function()
+			{
 				$("#loader").hide();
 			}
 		});
@@ -1648,7 +1651,8 @@ $("#apparea").on("change","#search_state_list", function(){
 
 
 
-$("#apparea").on("click", "#acts_list", function(){
+$("#acts_list").on("click", function(){
+
 	$.ajax({
 		type:'POST',
 		url:base_url+'task=acts_info',
@@ -1659,21 +1663,12 @@ $("#apparea").on("click", "#acts_list", function(){
 		{
 			$("#apphead").html("<img src='img/back.png' align='left' height='25px' onclick='location.reload()'> <div style='float:right'> <img src='img/cdownload.png' height='25px' style='filter: brightness(0.5) saturate(100%);'> Acts and Rules </div>");
 			$("#appbody").html('');
-			try {
-				var obj = (typeof data === 'object') ? data : JSON.parse(data);
-				if (obj.data && obj.data.length > 0) {
-					for(var i=0; i< obj.data.length; i++)
-					{
-						var act = obj.data[i];
-						var list = "<div data-toggle='collapse' class='btn btn-block bg-secondary text-light my-1 text-left' data-target='#acts_list"+i+"' style='font-size: 0.9rem;'> "+act.name.slice(0,30)+"...<img src='img/plus.png' height='18px' class='float-right'></div>"+"<div id='acts_list"+i+"' class='collapse p-2 bg-light border rounded mb-2'><b>"+ act.name+"</b> ("+ (act.year || 'N/A') +")<br><div class='mt-2'><a href='"+ act.english+"' target='_blank' class='btn btn-sm btn-outline-danger me-2'>English PDF</a> <a href='"+ act.hindi+"' target='_blank' class='btn btn-sm btn-outline-secondary me-2'>Hindi PDF</a> <a href='"+act.official+"' target='_blank' class='btn btn-sm btn-outline-info'>Official Link</a></div></div>"; 
-						$("#appbody").append(list);
-					}
-				} else {
-					$("#appbody").html("<div class='p-4 text-center text-muted'>No Acts Found</div>");
-				}
-			} catch(e) {
-				console.log('Acts parse error:', e);
-				$("#appbody").html("<div class='p-4 text-center text-muted'>Error loading Acts & Rules.</div>");
+			obj =JSON.parse(data);
+			// console.log(obj);
+			for(var i=0; i< obj.count; i++)
+			{
+				var list = "<div data-toggle='collapse' class='btn btn-block bg-secondary text-light my-1' data-target='#acts_list"+i+"' > "+obj.data[i].name.slice(0,20)+"...<img src='img/plus.png' height='20px' class='float-right'></div>"+"<div id='acts_list"+i+"' class='collapse in p-2'><b>"+ obj.data[i].name+"</b> &nbsp; "+ obj.data[i].year +" <br> Download in PDF <a href='"+ obj.data[i].english+"'> English</a> and <a href='"+ obj.data[i].hindi+"'> Hindi </a>"+ ""+ "<br> More details visit <a href='"+obj.data[i].official+"'> Official Website </a></div>"; 
+				$("#appbody").append(list);
 			}
 		},
 		complete:function()
@@ -1683,7 +1678,9 @@ $("#apparea").on("click", "#acts_list", function(){
 	});
 });
 
-$("#apparea").on("click", "#notice_list", function(){
+
+$("#notice_list").on("click", function(){
+
 	$.ajax({
 		type:'POST',
 		url:base_url+'task=notice_info',
@@ -1694,21 +1691,12 @@ $("#apparea").on("click", "#notice_list", function(){
 		{
 			$("#apphead").html("<img src='img/back.png' align='left' height='25px' onclick='location.reload()'> <div style='float:right'> <img src='img/new.png' height='25px' style='filter: brightness(0.5) saturate(100%);'> New Notifications </div>");
 			$("#appbody").html('');
-			try {
-				var obj = (typeof data === 'object') ? data : JSON.parse(data);
-				if (obj.data && obj.data.length > 0) {
-					for(var i=0; i< obj.data.length; i++)
-					{
-						var noti = obj.data[i];
-						var list = "<div data-toggle='collapse' class='btn btn-block bg-secondary text-light my-1 text-left' data-target='#notice"+i+"' style='font-size: 0.9rem;'> "+noti.name.slice(0,30)+"...<img src='img/plus.png' height='18px' class='float-right'></div>"+"<div id='notice"+i+"' class='collapse p-2 bg-light border rounded mb-2'><b>"+ noti.name+"</b><p class='mt-1 mb-2 text-muted'>"+ (noti.details || '') +"</p><div class='mb-2'><a href='"+ noti.url_1+"' target='_blank' class='btn btn-sm btn-outline-primary me-2'>Official Link</a> <a href='"+ noti.url_2+"' target='_blank' class='btn btn-sm btn-outline-secondary'>Details</a></div><small class='text-danger'>Last Date: "+(noti.last_date || 'N/A')+"</small></div>"; 
-						$("#appbody").append(list);
-					}
-				} else {
-					$("#appbody").html("<div class='p-4 text-center text-muted'>No Notifications Found</div>");
-				}
-			} catch(e) {
-				console.log('Notice parse error:', e);
-				$("#appbody").html("<div class='p-4 text-center text-muted'>Error loading Notifications.</div>");
+			obj =JSON.parse(data);
+			// console.log(obj);
+			for(var i=0; i< obj.count; i++)
+			{
+				var list = "<div data-toggle='collapse' class='btn btn-block bg-secondary text-light my-1' data-target='#notice"+i+"' > "+obj.data[i].name.slice(0,20)+"...<img src='img/plus.png' height='20px' class='float-right'></div>"+"<div id='notice"+i+"' class='collapse in p-2'><b>"+ obj.data[i].name+"</b> &nbsp; "+ obj.data[i].details +" <br><a href='"+ obj.data[i].url_1+"'>Official Link</a><br><a href='"+ obj.data[i].url_2+"'>More Details</a>"+ ""+ "<br>"+obj.data[i].last_date+"</div>"; 
+				$("#appbody").append(list);
 			}
 		},
 		complete:function()
@@ -2129,24 +2117,18 @@ $("#apparea").on("click", "#verify_email" , function(){
 });
 
 $("#apparea").on('click',"#profile",function(){
-	if (localStorage.getItem('myadv_id') == null) {
-		window.location.href = 'login.html';
-		return;
-	}
-	var u_name = localStorage.getItem('myadv_name') || 'User';
-	var u_mobile = localStorage.getItem('myadv_mobile') || '';
-	var u_type = localStorage.getItem('myadv_user_type') || '';
-	var profile = "<div class='jumbotron'><h5>Welcome ! "+u_name+" </h5> Mobile:<b> "+u_mobile+" </b> <br> Update profile to get notification.</div><div class='row mx-1' ><div class='col qicon'> <img src='img/badge.png' id='update_user_p' data-id='1' height='40px'> <br> Personal Details</div><div class='col qicon'> <img src='img/mobile.png' id='verify_mobile' height='40px'> <br>Verify Mobile</div><div class='col qicon'> <img src='img/email.png' id='verify_email' height='40px'> <br>Verify Email</div></div> <div id='adv_display' style='display:none'> <div class='row mx-1' > <div class='col qicon' id='update_user_a_status'> <h6> Know Profile Status </h6></div></div> <div class='row mx-1' ><div class='col qicon'> <img src='img/bar.png' id='update_user_a' height='40px'> <br>Update Bar Council</div><div class='col qicon'> <img src='img/upload_docs.png' id='update_user_id_proof' height='40px'>  <br>Upload Docs</div><div class='col qicon'> <img src='img/visibility_settings.png' id='update_visibility' height='40px'>  <br>Visibility Settings</div></div><div class='row mx-1' ><div class='col qicon'> <img src='img/pay.png' id='new_payment1' height='40px'> <br>Pay Now</div><div class='col qicon'> <img src='img/upload.png' id='update_user_photo' height='40px'><br>Upload Photo</div> <div class='col qicon'> <img src='img/about_info.png' id='update_user_a_about' height='40px'>  <br>About Me</div></div></div><div class='row mx-1 mt-3'><div class='col qicon text-danger' id='delete_profile_btn' style='cursor:pointer;'><img src='img/delete_danger.png' height='40px'><br>Delete Profile</div></div>";
+	var profile = "<div class='jumbotron'><h5>Welcome ! "+myadv_name+" </h5> Mobile:<b> "+myadv_mobile+" </b> <br> Update profile to get notification.</div><div class='row mx-1' ><div class='col qicon'> <img src='img/badge.png' id='update_user_p' data-id='1' height='40px'> <br> Personal Details</div><div class='col qicon'> <img src='img/mobile.png' id='verify_mobile' height='40px'> <br>Verify Mobile</div><div class='col qicon'> <img src='img/email.png' id='verify_email' height='40px'> <br>Verify Email</div></div> <div id='adv_display' style='display:none'> <div class='row mx-1' > <div class='col qicon' id='update_user_a_status'> <h6> Know Profile Status </h6></div></div> <div class='row mx-1' ><div class='col qicon'> <img src='img/bar.png' id='update_user_a' height='40px'> <br>Update Bar Council</div><div class='col qicon'> <img src='img/upload_docs.png' id='update_user_id_proof' height='40px'>  <br>Upload Docs</div><div class='col qicon'> <img src='img/visibility_settings.png' id='update_visibility' height='40px'>  <br>Visibility Settings</div></div><div class='row mx-1' ><div class='col qicon'> <img src='img/pay.png' id='new_payment1' height='40px'> <br>Pay Now</div><div class='col qicon'> <img src='img/upload.png' id='update_user_photo' height='40px'><br>Upload Photo</div> <div class='col qicon'> <img src='img/about_info.png' id='update_user_a_about' height='40px'>  <br>About Me</div></div></div><div class='row mx-1 mt-3'><div class='col qicon text-danger' id='delete_profile_btn' style='cursor:pointer;'><img src='img/delete_danger.png' height='40px'><br>Delete Profile</div></div>";
 	
 	$("#apphead").html("My Profile <div style='float:left'> </div> <img src='img/logout.png' id='logout' height='25px'>");
 	$("#appbody").html(profile);
-	if(u_type =='advocate')
+	if(myadv_user_type =='advocate')
 	{
 		$("#adv_display").css("display","block");
 	}
 	else{
 		$("#adv_display").hide();
 	}
+	
 });
 
 $("#apparea").on("click", "#delete_profile_btn", function(){
@@ -2268,55 +2250,51 @@ $("#id_proof").on('submit',(function(e){
 }));
 
 function notice_box(){
-	var u_type = localStorage.getItem('myadv_user_type') || '';
-	var u_id = localStorage.getItem('myadv_id') || '';
 	$.ajax({
 		type:'POST',
 		url:base_url+'task=notification',
-		data:{'user_type':u_type,'id':u_id},
+		data:{'user_type':myadv_user_type,'id':myadv_id},
 		beforeSend:function(){
 			//$("#loader").show();
 		},
 		success:function(data)
 		{
-			try {
-				var myobj = (typeof data === 'object') ? data : JSON.parse(data);
-				if(myobj.advocate>0)
-				{
-					$("#advocate_count").html("<b>"+myobj.advocate +"</b> Advocate");
-				}
-				if(myobj.exam>0)
-				{
-					$("#exam_count").html("<b>"+myobj.exam +"</b> Exam Set");
-				}
-				if(myobj.member>0)
-				{
-					$("#member_count").html("<b>"+myobj.member +"</b> Member");
-				}
-				if(myobj.notice>0)
-				{
-					$("#notice_count").html("<b>"+myobj.notice +"</b> Notification");
-				}
-				if(myobj.question>0)
-				{
-					$("#question_count").html("<b>"+myobj.question +"</b> Question");
-				}
-				if(myobj.subject>0)
-				{
-					$("#subject_count").html("<b>"+myobj.subject +"</b> Subject");
-				}
-				if(myobj.total>0)
-				{
-					$("#total_count").html(myobj.total);
-					$("#clear_all").css('display','block');
-				}
-				else{
-					$("#notice_box").html("<div class='p-3 text-center text-muted'><i class='fa fa-bell-slash mb-2' style='font-size:24px'></i><br>No New Updates</div>");
-				}
-			} catch(e) {
-				console.log('Notice parse error:', e);
-				$("#notice_box").html("<div class='p-3 text-center text-muted'>No New Updates</div>");
+			//console.log(data);
+			myobj =JSON.parse(data);
+			if(myobj.advocate>0)
+			{
+				$("#advocate_count").html("<b>"+myobj.advocate +"</b> Advocate");
 			}
+			if(myobj.exam>0)
+			{
+				$("#exam_count").html("<b>"+myobj.exam +"</b> Exam Set");
+			}
+			if(myobj.member>0)
+			{
+				$("#member_count").html("<b>"+myobj.member +"</b> Member");
+			}
+			if(myobj.notice>0)
+			{
+				$("#notice_count").html("<b>"+myobj.notice +"</b> Notification");
+			}
+			if(myobj.question>0)
+			{
+				$("#question_count").html("<b>"+myobj.question +"</b> Question");
+			}
+			if(myobj.subject>0)
+			{
+				$("#subject_count").html("<b>"+myobj.subject +"</b> Subject");
+			}
+			if(myobj.total>0)
+			{
+				$("#total_count").html(myobj.total);
+				$("#clear_all").css('display','block');
+			}
+			else{
+				$("#notice_box").html("<center> No Update Found </center>");
+			}
+				
+				
 		},
 		complete:function()
 		{

@@ -54,7 +54,7 @@ $dev_contact ="9431426600";
 $api_key ='a9dcc62d6078b881d318aca0ead65ab5'; //MyAdvIndia@2020
 
 $host_name ='localhost';
-$db_user ='u305984835_myadvadvocate';
+$db_user ='u305984835_myadvocate';
 $db_password ='Adv@@2026!';
 $db_name ='u305984835_myadvocate';
 
