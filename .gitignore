@@ -1,5 +1,6 @@
 # Sensitive Credentials & Database Config
 config/db.php
+ais/config_v41.php
 .env
 .env.*
 *.key
