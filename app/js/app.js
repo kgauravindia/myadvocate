@@ -1,10 +1,18 @@
 /*-----app.js --*/
 /*-MYADVINDIA APP SCRIPT --*/
-	var base_url = 'https://myadv.in/ais/api_v41.php?token=a9dcc62d6078b881d318aca0ead65ab5&';
+	var isLocal = (typeof window !== 'undefined' && window.location) ? (
+		window.location.hostname === 'localhost' ||
+		window.location.hostname === '127.0.0.1' ||
+		window.location.hostname.indexOf('.test') > -1 ||
+		window.location.hostname.indexOf('.local') > -1
+	) : false;
+	var basePath = (typeof window !== 'undefined' && window.location && window.location.pathname.indexOf('/myadvocate') > -1) ? '/myadvocate' : '';
+	var defaultApiUrl = 'https://myadv.in/api/api.php?token=a9dcc62d6078b881d318aca0ead65ab5&';
+	var base_url = (isLocal && window.location.origin) ? (window.location.origin + basePath + '/api/api.php?token=a9dcc62d6078b881d318aca0ead65ab5&') : defaultApiUrl;
 	var base_url_ed = 'https://ed.olaw.in/app/api_v41.php?token=a9dcc62d6078b881d318aca0ead65ab5&';
 	var olaw_api_url = 'https://olaw.in/api.php';
 	var olaw_api_key = 'OLAW_D776A66967200383A932';
-	var file_url = 'https://myadv.in/upload/';
+	var file_url = (isLocal && window.location.origin) ? (window.location.origin + basePath + '/upload/') : 'https://myadv.in/upload/';
 	var goback ="<img src='icon/back.png' height='25px' onclick='window.history.back()'>";
 	var myadv_version =localStorage.getItem('myadv_version'); 
 	var myadv_user_type =localStorage.getItem('myadv_user_type'); 
@@ -18,17 +26,8 @@
 		if (visibility === 'ADVOCATE' && myadv_user_type === 'advocate') return val;
 		return masked;
 	}
-	//document.addEventListener('contextmenu', event => event.preventDefault());
-	// Disable right-click
-window.addEventListener('contextmenu', function (e) {
-    e.preventDefault();
-});
-
-// Disable user selection
-document.addEventListener('selectstart', function (e) {
-    e.preventDefault();
-});
-	if($("#welcome").length>0 &&localStorage.getItem('myadv_name') !=null)
+	
+	if($("#welcome").length>0 && localStorage.getItem('myadv_name') != null)
 	{
 		$("#welcome").html('Welcome ! ' + localStorage.getItem('myadv_name'));	
 	}
@@ -37,12 +36,14 @@ document.addEventListener('selectstart', function (e) {
 		url:base_url+'task=app_version',
 		success:function(data)
 		{
-			
-			obj=JSON.parse(data);
-			console.log(obj);
-			if( parseFloat(myadv_version) < parseFloat(obj.version))
-			{
-			$("#updateapp").css('display','block');
+			try {
+				var obj = (typeof data === 'object') ? data : JSON.parse(data);
+				if(parseFloat(myadv_version) < parseFloat(obj.version))
+				{
+					$("#updateapp").css('display','block');
+				}
+			} catch(e) {
+				console.log('App version parse error:', e);
 			}
 		},
 		complete:function()
@@ -50,21 +51,31 @@ document.addEventListener('selectstart', function (e) {
 			$("#loader").hide();
 		}
 	});
-	
+
+function shot() {
+	sharenow();
+}
 
 function sharenow() {
-  if (navigator.share) {
-    navigator.share({
-      title: 'MyAdvocateAI',
-      text: 'Hi, MyAdvocateAI helps me solve all types of legal queries & search advocate records. Explore now:',
-      url: window.location.origin + '/app/'
-    })
-    .then(() => console.log('Shared successfully'))
-    .catch(error => console.error('Error sharing:', error));
-  } else {
-    console.log('Sharing not supported on this device');
-    // You can provide an alternative sharing method for devices that don't support the Web Share API
-  }
+	var shareUrl = (window.location.origin && window.location.origin !== 'null') ? (window.location.origin + basePath + '/app/') : 'https://myadv.in/app/';
+	var shareData = {
+		title: 'MyAdvocate - Legal Portal India',
+		text: 'Hi, MyAdvocate helps solve all legal queries & access advocate directories. Explore now:',
+		url: shareUrl
+	};
+	if (navigator.share) {
+		navigator.share(shareData)
+			.then(() => console.log('Shared successfully'))
+			.catch(error => console.log('Share dismissed:', error));
+	} else if (navigator.clipboard && navigator.clipboard.writeText) {
+		navigator.clipboard.writeText(shareUrl).then(function() {
+			alert('App link copied to clipboard!\n' + shareUrl);
+		}).catch(function() {
+			prompt('Share this link with colleagues:', shareUrl);
+		});
+	} else {
+		prompt('Share this link with colleagues:', shareUrl);
+	}
 }
 	
 	/*- Function  List --*/
@@ -850,7 +861,7 @@ $("#apparea").on("click",".ba_all_list", function(){
 });
 
 
-$("#univ_list").on("click", function(){
+$("#apparea").on("click", "#univ_list", function(){
 
 	$.ajax({
 		type:'POST',
@@ -1637,8 +1648,7 @@ $("#apparea").on("change","#search_state_list", function(){
 
 
 
-$("#acts_list").on("click", function(){
-
+$("#apparea").on("click", "#acts_list", function(){
 	$.ajax({
 		type:'POST',
 		url:base_url+'task=acts_info',
@@ -1649,12 +1659,21 @@ $("#acts_list").on("click", function(){
 		{
 			$("#apphead").html("<img src='img/back.png' align='left' height='25px' onclick='location.reload()'> <div style='float:right'> <img src='img/cdownload.png' height='25px' style='filter: brightness(0.5) saturate(100%);'> Acts and Rules </div>");
 			$("#appbody").html('');
-			obj =JSON.parse(data);
-			// console.log(obj);
-			for(var i=0; i< obj.count; i++)
-			{
-				var list = "<div data-toggle='collapse' class='btn btn-block bg-secondary text-light my-1' data-target='#acts_list"+i+"' > "+obj.data[i].name.slice(0,20)+"...<img src='img/plus.png' height='20px' class='float-right'></div>"+"<div id='acts_list"+i+"' class='collapse in p-2'><b>"+ obj.data[i].name+"</b> &nbsp; "+ obj.data[i].year +" <br> Download in PDF <a href='"+ obj.data[i].english+"'> English</a> and <a href='"+ obj.data[i].hindi+"'> Hindi </a>"+ ""+ "<br> More details visit <a href='"+obj.data[i].official+"'> Official Website </a></div>"; 
-				$("#appbody").append(list);
+			try {
+				var obj = (typeof data === 'object') ? data : JSON.parse(data);
+				if (obj.data && obj.data.length > 0) {
+					for(var i=0; i< obj.data.length; i++)
+					{
+						var act = obj.data[i];
+						var list = "<div data-toggle='collapse' class='btn btn-block bg-secondary text-light my-1 text-left' data-target='#acts_list"+i+"' style='font-size: 0.9rem;'> "+act.name.slice(0,30)+"...<img src='img/plus.png' height='18px' class='float-right'></div>"+"<div id='acts_list"+i+"' class='collapse p-2 bg-light border rounded mb-2'><b>"+ act.name+"</b> ("+ (act.year || 'N/A') +")<br><div class='mt-2'><a href='"+ act.english+"' target='_blank' class='btn btn-sm btn-outline-danger me-2'>English PDF</a> <a href='"+ act.hindi+"' target='_blank' class='btn btn-sm btn-outline-secondary me-2'>Hindi PDF</a> <a href='"+act.official+"' target='_blank' class='btn btn-sm btn-outline-info'>Official Link</a></div></div>"; 
+						$("#appbody").append(list);
+					}
+				} else {
+					$("#appbody").html("<div class='p-4 text-center text-muted'>No Acts Found</div>");
+				}
+			} catch(e) {
+				console.log('Acts parse error:', e);
+				$("#appbody").html("<div class='p-4 text-center text-muted'>Error loading Acts & Rules.</div>");
 			}
 		},
 		complete:function()
@@ -1664,9 +1683,7 @@ $("#acts_list").on("click", function(){
 	});
 });
 
-
-$("#notice_list").on("click", function(){
-
+$("#apparea").on("click", "#notice_list", function(){
 	$.ajax({
 		type:'POST',
 		url:base_url+'task=notice_info',
@@ -1677,12 +1694,21 @@ $("#notice_list").on("click", function(){
 		{
 			$("#apphead").html("<img src='img/back.png' align='left' height='25px' onclick='location.reload()'> <div style='float:right'> <img src='img/new.png' height='25px' style='filter: brightness(0.5) saturate(100%);'> New Notifications </div>");
 			$("#appbody").html('');
-			obj =JSON.parse(data);
-			// console.log(obj);
-			for(var i=0; i< obj.count; i++)
-			{
-				var list = "<div data-toggle='collapse' class='btn btn-block bg-secondary text-light my-1' data-target='#notice"+i+"' > "+obj.data[i].name.slice(0,20)+"...<img src='img/plus.png' height='20px' class='float-right'></div>"+"<div id='notice"+i+"' class='collapse in p-2'><b>"+ obj.data[i].name+"</b> &nbsp; "+ obj.data[i].details +" <br><a href='"+ obj.data[i].url_1+"'>Official Link</a><br><a href='"+ obj.data[i].url_2+"'>More Details</a>"+ ""+ "<br>"+obj.data[i].last_date+"</div>"; 
-				$("#appbody").append(list);
+			try {
+				var obj = (typeof data === 'object') ? data : JSON.parse(data);
+				if (obj.data && obj.data.length > 0) {
+					for(var i=0; i< obj.data.length; i++)
+					{
+						var noti = obj.data[i];
+						var list = "<div data-toggle='collapse' class='btn btn-block bg-secondary text-light my-1 text-left' data-target='#notice"+i+"' style='font-size: 0.9rem;'> "+noti.name.slice(0,30)+"...<img src='img/plus.png' height='18px' class='float-right'></div>"+"<div id='notice"+i+"' class='collapse p-2 bg-light border rounded mb-2'><b>"+ noti.name+"</b><p class='mt-1 mb-2 text-muted'>"+ (noti.details || '') +"</p><div class='mb-2'><a href='"+ noti.url_1+"' target='_blank' class='btn btn-sm btn-outline-primary me-2'>Official Link</a> <a href='"+ noti.url_2+"' target='_blank' class='btn btn-sm btn-outline-secondary'>Details</a></div><small class='text-danger'>Last Date: "+(noti.last_date || 'N/A')+"</small></div>"; 
+						$("#appbody").append(list);
+					}
+				} else {
+					$("#appbody").html("<div class='p-4 text-center text-muted'>No Notifications Found</div>");
+				}
+			} catch(e) {
+				console.log('Notice parse error:', e);
+				$("#appbody").html("<div class='p-4 text-center text-muted'>Error loading Notifications.</div>");
 			}
 		},
 		complete:function()
@@ -2103,18 +2129,24 @@ $("#apparea").on("click", "#verify_email" , function(){
 });
 
 $("#apparea").on('click',"#profile",function(){
-	var profile = "<div class='jumbotron'><h5>Welcome ! "+myadv_name+" </h5> Mobile:<b> "+myadv_mobile+" </b> <br> Update profile to get notification.</div><div class='row mx-1' ><div class='col qicon'> <img src='img/badge.png' id='update_user_p' data-id='1' height='40px'> <br> Personal Details</div><div class='col qicon'> <img src='img/mobile.png' id='verify_mobile' height='40px'> <br>Verify Mobile</div><div class='col qicon'> <img src='img/email.png' id='verify_email' height='40px'> <br>Verify Email</div></div> <div id='adv_display' style='display:none'> <div class='row mx-1' > <div class='col qicon' id='update_user_a_status'> <h6> Know Profile Status </h6></div></div> <div class='row mx-1' ><div class='col qicon'> <img src='img/bar.png' id='update_user_a' height='40px'> <br>Update Bar Council</div><div class='col qicon'> <img src='img/upload_docs.png' id='update_user_id_proof' height='40px'>  <br>Upload Docs</div><div class='col qicon'> <img src='img/visibility_settings.png' id='update_visibility' height='40px'>  <br>Visibility Settings</div></div><div class='row mx-1' ><div class='col qicon'> <img src='img/pay.png' id='new_payment1' height='40px'> <br>Pay Now</div><div class='col qicon'> <img src='img/upload.png' id='update_user_photo' height='40px'><br>Upload Photo</div> <div class='col qicon'> <img src='img/about_info.png' id='update_user_a_about' height='40px'>  <br>About Me</div></div></div><div class='row mx-1 mt-3'><div class='col qicon text-danger' id='delete_profile_btn' style='cursor:pointer;'><img src='img/delete_danger.png' height='40px'><br>Delete Profile</div></div>";
+	if (localStorage.getItem('myadv_id') == null) {
+		window.location.href = 'login.html';
+		return;
+	}
+	var u_name = localStorage.getItem('myadv_name') || 'User';
+	var u_mobile = localStorage.getItem('myadv_mobile') || '';
+	var u_type = localStorage.getItem('myadv_user_type') || '';
+	var profile = "<div class='jumbotron'><h5>Welcome ! "+u_name+" </h5> Mobile:<b> "+u_mobile+" </b> <br> Update profile to get notification.</div><div class='row mx-1' ><div class='col qicon'> <img src='img/badge.png' id='update_user_p' data-id='1' height='40px'> <br> Personal Details</div><div class='col qicon'> <img src='img/mobile.png' id='verify_mobile' height='40px'> <br>Verify Mobile</div><div class='col qicon'> <img src='img/email.png' id='verify_email' height='40px'> <br>Verify Email</div></div> <div id='adv_display' style='display:none'> <div class='row mx-1' > <div class='col qicon' id='update_user_a_status'> <h6> Know Profile Status </h6></div></div> <div class='row mx-1' ><div class='col qicon'> <img src='img/bar.png' id='update_user_a' height='40px'> <br>Update Bar Council</div><div class='col qicon'> <img src='img/upload_docs.png' id='update_user_id_proof' height='40px'>  <br>Upload Docs</div><div class='col qicon'> <img src='img/visibility_settings.png' id='update_visibility' height='40px'>  <br>Visibility Settings</div></div><div class='row mx-1' ><div class='col qicon'> <img src='img/pay.png' id='new_payment1' height='40px'> <br>Pay Now</div><div class='col qicon'> <img src='img/upload.png' id='update_user_photo' height='40px'><br>Upload Photo</div> <div class='col qicon'> <img src='img/about_info.png' id='update_user_a_about' height='40px'>  <br>About Me</div></div></div><div class='row mx-1 mt-3'><div class='col qicon text-danger' id='delete_profile_btn' style='cursor:pointer;'><img src='img/delete_danger.png' height='40px'><br>Delete Profile</div></div>";
 	
 	$("#apphead").html("My Profile <div style='float:left'> </div> <img src='img/logout.png' id='logout' height='25px'>");
 	$("#appbody").html(profile);
-	if(myadv_user_type =='advocate')
+	if(u_type =='advocate')
 	{
 		$("#adv_display").css("display","block");
 	}
 	else{
 		$("#adv_display").hide();
 	}
-	
 });
 
 $("#apparea").on("click", "#delete_profile_btn", function(){
@@ -2236,51 +2268,55 @@ $("#id_proof").on('submit',(function(e){
 }));
 
 function notice_box(){
+	var u_type = localStorage.getItem('myadv_user_type') || '';
+	var u_id = localStorage.getItem('myadv_id') || '';
 	$.ajax({
 		type:'POST',
 		url:base_url+'task=notification',
-		data:{'user_type':myadv_user_type,'id':myadv_id},
+		data:{'user_type':u_type,'id':u_id},
 		beforeSend:function(){
 			//$("#loader").show();
 		},
 		success:function(data)
 		{
-			//console.log(data);
-			myobj =JSON.parse(data);
-			if(myobj.advocate>0)
-			{
-				$("#advocate_count").html("<b>"+myobj.advocate +"</b> Advocate");
+			try {
+				var myobj = (typeof data === 'object') ? data : JSON.parse(data);
+				if(myobj.advocate>0)
+				{
+					$("#advocate_count").html("<b>"+myobj.advocate +"</b> Advocate");
+				}
+				if(myobj.exam>0)
+				{
+					$("#exam_count").html("<b>"+myobj.exam +"</b> Exam Set");
+				}
+				if(myobj.member>0)
+				{
+					$("#member_count").html("<b>"+myobj.member +"</b> Member");
+				}
+				if(myobj.notice>0)
+				{
+					$("#notice_count").html("<b>"+myobj.notice +"</b> Notification");
+				}
+				if(myobj.question>0)
+				{
+					$("#question_count").html("<b>"+myobj.question +"</b> Question");
+				}
+				if(myobj.subject>0)
+				{
+					$("#subject_count").html("<b>"+myobj.subject +"</b> Subject");
+				}
+				if(myobj.total>0)
+				{
+					$("#total_count").html(myobj.total);
+					$("#clear_all").css('display','block');
+				}
+				else{
+					$("#notice_box").html("<div class='p-3 text-center text-muted'><i class='fa fa-bell-slash mb-2' style='font-size:24px'></i><br>No New Updates</div>");
+				}
+			} catch(e) {
+				console.log('Notice parse error:', e);
+				$("#notice_box").html("<div class='p-3 text-center text-muted'>No New Updates</div>");
 			}
-			if(myobj.exam>0)
-			{
-				$("#exam_count").html("<b>"+myobj.exam +"</b> Exam Set");
-			}
-			if(myobj.member>0)
-			{
-				$("#member_count").html("<b>"+myobj.member +"</b> Member");
-			}
-			if(myobj.notice>0)
-			{
-				$("#notice_count").html("<b>"+myobj.notice +"</b> Notification");
-			}
-			if(myobj.question>0)
-			{
-				$("#question_count").html("<b>"+myobj.question +"</b> Question");
-			}
-			if(myobj.subject>0)
-			{
-				$("#subject_count").html("<b>"+myobj.subject +"</b> Subject");
-			}
-			if(myobj.total>0)
-			{
-				$("#total_count").html(myobj.total);
-				$("#clear_all").css('display','block');
-			}
-			else{
-				$("#notice_box").html("<center> No Update Found </center>");
-			}
-				
-				
 		},
 		complete:function()
 		{
