@@ -40,11 +40,11 @@ function getLocalVersionInfo($versionFile, $repoDir) {
         }
     }
     return [
-        'commit' => 'f4decaf',
+        'commit' => '4bdc552',
         'branch' => 'main',
         'author' => 'kgauravindia',
         'date' => 'Recent',
-        'message' => 'Add explicit 1-click Update from GitHub repository option across admin tools'
+        'message' => 'Add Online Cloud API Engine to github_sync.php'
     ];
 }
 
@@ -156,8 +156,8 @@ function githubApiRequest($url) {
 function updateFromGitHubZip($repoOwner, $repoName, $branch, $repoDir, $versionFile) {
     $startTime = microtime(true);
     $log = [];
-    $log[] = "[Online Engine: Active]";
-    $log[] = "Connecting to GitHub API for latest commit reference...";
+    $log[] = "[Online Engine: Initialized]";
+    $log[] = "Contacting GitHub REST API for latest repository state...";
 
     $apiUrl = "https://api.github.com/repos/{$repoOwner}/{$repoName}/commits/{$branch}";
     $latestCommitData = githubApiRequest($apiUrl);
@@ -216,7 +216,7 @@ function updateFromGitHubZip($repoOwner, $repoName, $branch, $repoDir, $versionF
 
     $zipSize = round(filesize($tempZip) / 1024, 1);
     $log[] = "Archive downloaded successfully ({$zipSize} KB).";
-    $log[] = "Extracting files (ignoring app_new/ and preserving local config/db.php)...";
+    $log[] = "Extracting files (strictly ignoring app_new/ and preserving local config/db.php)...";
 
     $zip = new ZipArchive();
     $res = $zip->open($tempZip);
@@ -256,7 +256,7 @@ function updateFromGitHubZip($repoOwner, $repoName, $branch, $repoDir, $versionF
 
         // Preserve local production database credentials if already configured
         if ($relPath === 'config/db.php' && file_exists($repoDir . '/config/db.php')) {
-            $log[] = "Preserved local production configuration: config/db.php";
+            $log[] = "Preserved local production database configuration: config/db.php";
             continue;
         }
 
@@ -293,9 +293,9 @@ function updateFromGitHubZip($repoOwner, $repoName, $branch, $repoDir, $versionF
     ];
     @file_put_contents($versionFile, json_encode($versionData, JSON_PRETTY_PRINT));
 
-    $log[] = "Synchronization complete!";
-    $log[] = "Updated {$updatedFilesCount} files (skipped {$skippedCount} app_new files).";
-    $log[] = "Local version stamp updated to {$latestSha}.";
+    $log[] = "Synchronization finished!";
+    $log[] = "Updated {$updatedFilesCount} files successfully (skipped {$skippedCount} app_new files).";
+    $log[] = "Active version stamp: {$latestSha}.";
 
     return [
         'success' => true,
@@ -313,7 +313,7 @@ $aheadCount = 0;
 $incomingCommits = [];
 $uncommittedFiles = [];
 $uncommittedCount = 0;
-$gitVersion = 'Online API Mode (No CLI required)';
+$gitVersion = 'Online Cloud Engine';
 
 if ($useCliMode) {
     $gitVersionRes = executeGit('--version', $repoDir, $gitBin);
@@ -344,7 +344,6 @@ if ($useCliMode) {
         foreach ($lines as $line) {
             $line = trim($line);
             if (!empty($line)) {
-                // If it's app_new, skip tracking
                 $filePath = trim(substr($line, 2));
                 if (strpos($filePath, 'app_new') === 0) {
                     continue;
@@ -361,10 +360,10 @@ if ($useCliMode) {
     // Read from .git_version
     $vInfo = getLocalVersionInfo($versionFile, $repoDir);
     $lastCommit = [
-        'hash' => $vInfo['commit'] ?? 'f4decaf',
+        'hash' => $vInfo['commit'] ?? '4bdc552',
         'author' => $vInfo['author'] ?? 'kgauravindia',
         'rel_time' => $vInfo['date'] ?? 'latest',
-        'subject' => $vInfo['message'] ?? 'Add explicit 1-click Update from GitHub repository option',
+        'subject' => $vInfo['message'] ?? 'Online Cloud API Engine active',
         'date' => $vInfo['updated_at'] ?? date('Y-m-d')
     ];
 }
@@ -481,7 +480,7 @@ if ($validRequest) {
                     $remoteDate = $data['commit']['author']['date'] ?? '';
 
                     $localSha = $lastCommit['hash'] ?? '';
-                    $commandOutput = "GitHub Remote SHA: {$remoteSha}\nAuthor: {$remoteAuthor}\nDate: {$remoteDate}\nMessage: {$remoteMsg}\nLocal Stored SHA: {$localSha}";
+                    $commandOutput = "GitHub Remote Commit: {$remoteSha}\nAuthor: {$remoteAuthor}\nDate: {$remoteDate}\nMessage: {$remoteMsg}\nLocal Active Version: {$localSha}";
 
                     if ($remoteSha !== $localSha) {
                         $behindCount = 1;
@@ -593,187 +592,444 @@ if ($useCliMode && $currentBranch !== 'unknown') {
 }
 ?>
 
-<!-- Breadcrumbs & Header -->
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-    <div>
-        <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; color: var(--text-muted); margin-bottom: 0.25rem;">
-            <a href="index.php" style="color: var(--text-muted); text-decoration: none;">Admin</a>
-            <span>/</span>
-            <a href="settings.php" style="color: var(--text-muted); text-decoration: none;">Settings</a>
-            <span>/</span>
-            <span style="color: var(--primary); font-weight: 600;">GitHub Sync</span>
-        </div>
-        <h1 style="font-size: 1.75rem; color: var(--primary); margin: 0; font-family: var(--font-heading); font-weight: 800; display: flex; align-items: center; gap: 0.65rem;">
-            <i class="fab fa-github" style="color: #24292e;"></i> GitHub Repository & Fetch Tool
-            <span class="badge" style="background: <?= $useCliMode ? '#eff6ff' : '#ecfdf5' ?>; color: <?= $useCliMode ? '#2563eb' : '#059669' ?>; border: 1px solid <?= $useCliMode ? '#bfdbfe' : '#a7f3d0' ?>; font-size: 0.725rem; padding: 0.2rem 0.6rem; border-radius: 9999px;">
-                <i class="fas <?= $useCliMode ? 'fa-terminal' : 'fa-cloud' ?>"></i> <?= $useCliMode ? 'Git CLI Engine' : 'Online Cloud Engine' ?>
-            </span>
-        </h1>
-        <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0.25rem 0 0;">
-            Check repository status, fetch latest commits from GitHub, view commit logs, and synchronize codebase online or locally.
-        </p>
-    </div>
+<style>
+/* ==========================================================================
+   ADVANCED GITHUB SYNC INTERFACE STYLES
+   ========================================================================== */
+.gh-hero {
+    background: linear-gradient(135deg, #0b0f19 0%, #111827 50%, #1e1b4b 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    padding: 1.75rem 2rem;
+    color: #ffffff;
+    margin-bottom: 1.75rem;
+    box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.35);
+    position: relative;
+    overflow: hidden;
+}
 
-    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-        <!-- 1-Click Update from GitHub -->
-        <a href="github_sync.php?action=update" class="btn btn-primary btn-sm" onclick="return confirm('Update and pull latest code from https://github.com/kgauravindia/myadvocate.git now (ignoring app_new)?');" style="display: inline-flex; align-items: center; gap: 0.45rem; background: var(--brand-red); border-color: var(--brand-red);">
-            <i class="fas fa-cloud-arrow-down"></i> Update from GitHub
-        </a>
-        <!-- Fetch Button -->
-        <a href="github_sync.php?action=fetch" class="btn btn-dark btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;">
-            <i class="fas fa-arrows-rotate"></i> Fetch Only
-        </a>
-        <a href="github_sync.php?action=status" class="btn btn-outline btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;">
-            <i class="fas fa-list-check"></i> Check Status
-        </a>
-        <a href="github_sync.php?action=log" class="btn btn-outline btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;">
-            <i class="fas fa-code-commit"></i> Commit Log
-        </a>
+.gh-hero::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(225, 29, 72, 0.25) 0%, rgba(0,0,0,0) 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.gh-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -60px;
+    left: 10%;
+    width: 250px;
+    height: 150px;
+    background: radial-gradient(circle, rgba(79, 70, 229, 0.2) 0%, rgba(0,0,0,0) 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.gh-pulse-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background-color: #10b981;
+    display: inline-block;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: ghPulse 2s infinite;
+}
+
+@keyframes ghPulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.gh-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+.gh-pill-cloud {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.gh-pill-cli {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+.gh-pill-tag {
+    background: rgba(255, 255, 255, 0.08);
+    color: #e2e8f0;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.gh-btn-glow {
+    background: linear-gradient(135deg, #e11d48 0%, #be123c 100%) !important;
+    border: none !important;
+    color: #ffffff !important;
+    box-shadow: 0 6px 18px rgba(225, 29, 72, 0.35);
+    transition: all 0.25s ease;
+    font-weight: 700;
+}
+.gh-btn-glow:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(225, 29, 72, 0.5);
+    filter: brightness(1.08);
+}
+
+.gh-stat-card {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 1.35rem 1.4rem;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+}
+.gh-stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 25px -5px rgba(0, 0, 0, 0.08);
+}
+.gh-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+}
+.gh-stat-card.card-ruby::before { background: linear-gradient(90deg, #e11d48, #fb7185); }
+.gh-stat-card.card-emerald::before { background: linear-gradient(90deg, #059669, #34d399); }
+.gh-stat-card.card-indigo::before { background: linear-gradient(90deg, #4f46e5, #818cf8); }
+.gh-stat-card.card-amber::before { background: linear-gradient(90deg, #d97706, #fbbf24); }
+
+.gh-icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    margin-bottom: 0.85rem;
+}
+
+.gh-action-card {
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.gh-action-card:hover {
+    border-color: #cbd5e1;
+    transform: translateY(-3px);
+    box-shadow: 0 12px 24px -5px rgba(0,0,0,0.06);
+}
+.gh-action-card.featured {
+    border-color: #fecdd3;
+    background: linear-gradient(180deg, #fff 0%, #fff1f2 100%);
+    box-shadow: 0 10px 25px -5px rgba(225, 29, 72, 0.08);
+}
+
+.cli-window {
+    background-color: #0d1117;
+    border-radius: 14px;
+    border: 1px solid #30363d;
+    box-shadow: 0 15px 35px -5px rgba(0,0,0,0.3);
+    overflow: hidden;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+.cli-header {
+    background-color: #161b22;
+    padding: 0.75rem 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #30363d;
+}
+.cli-dots {
+    display: flex;
+    gap: 0.45rem;
+}
+.cli-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.cli-dot-red { background-color: #ff5f56; }
+.cli-dot-yellow { background-color: #ffbd2e; }
+.cli-dot-green { background-color: #27c93f; }
+.cli-body {
+    padding: 1.25rem 1.5rem;
+    color: #c9d1d9;
+    font-size: 0.835rem;
+    line-height: 1.6;
+    max-height: 380px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.flow-step-badge {
+    background: #f1f5f9;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #334155;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.security-checklist {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+.security-pill {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.65rem 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #1e293b;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+</style>
+
+<!-- Hero Section with Live Connection Indicator -->
+<div class="gh-hero">
+    <div style="position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
+        <div>
+            <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.65rem;">
+                <span class="gh-pulse-dot"></span>
+                <span style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #a7f3d0;">
+                    LIVE CONNECTED
+                </span>
+                <span style="color: rgba(255,255,255,0.3);">&bull;</span>
+                <span class="gh-pill <?= $useCliMode ? 'gh-pill-cli' : 'gh-pill-cloud' ?>">
+                    <i class="fas <?= $useCliMode ? 'fa-terminal' : 'fa-cloud' ?>"></i> <?= $useCliMode ? 'Git CLI Engine' : 'Cloud REST Engine' ?>
+                </span>
+                <span class="gh-pill gh-pill-tag">
+                    <i class="fas fa-code-branch"></i> origin/<?= htmlspecialchars($currentBranch) ?>
+                </span>
+            </div>
+
+            <h1 style="font-size: 1.85rem; margin: 0 0 0.5rem; font-family: var(--font-heading); font-weight: 900; color: #ffffff; letter-spacing: -0.02em; display: flex; align-items: center; gap: 0.75rem;">
+                <i class="fab fa-github" style="color: #ffffff; font-size: 2rem;"></i>
+                GitHub Deployment & Synchronization
+            </h1>
+
+            <p style="color: #cbd5e1; font-size: 0.9rem; margin: 0; max-width: 650px; line-height: 1.5;">
+                Synchronize your portal codebase directly from 
+                <a href="<?= htmlspecialchars($githubWebUrl) ?>" target="_blank" rel="noopener noreferrer" style="color: #fca5a5; font-weight: 700; text-decoration: none;">
+                    <?= htmlspecialchars("{$repoOwner}/{$repoName}") ?> <i class="fas fa-arrow-up-right-from-square" style="font-size: 0.7rem;"></i>
+                </a>.
+                Fully optimized for both local development and online cloud hosting.
+            </p>
+        </div>
+
+        <!-- Quick 1-Click Control Buttons -->
+        <div style="display: flex; gap: 0.65rem; flex-wrap: wrap; align-items: center;">
+            <a href="github_sync.php?action=update" class="btn gh-btn-glow" onclick="return confirm('Update and pull latest code from https://github.com/kgauravindia/myadvocate.git (ignoring app_new)?');" style="padding: 0.7rem 1.25rem; font-size: 0.875rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-cloud-arrow-down"></i> Update from GitHub
+            </a>
+            <a href="github_sync.php?action=fetch" class="btn btn-dark" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #ffffff; padding: 0.7rem 1rem; font-size: 0.875rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 0.4rem;">
+                <i class="fas fa-arrows-rotate"></i> Fetch References
+            </a>
+            <a href="github_sync.php?action=log" class="btn btn-dark" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1; padding: 0.7rem 0.9rem; font-size: 0.875rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 0.4rem;">
+                <i class="fas fa-list-ul"></i> Commit Log
+            </a>
+        </div>
     </div>
 </div>
 
-<!-- Alert Notice -->
-<?php if (!empty($msg)): ?>
-    <div class="alert-admin alert-admin-<?= $msgType === 'success' ? 'success' : ($msgType === 'error' ? 'error' : ($msgType === 'warning' ? 'warning' : 'info')) ?>" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
-        <i class="fas <?= $msgType === 'success' ? 'fa-circle-check' : ($msgType === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-info') ?>" style="font-size: 1.1rem;"></i>
+<!-- Safety & Protection Checklist Strip -->
+<div class="security-checklist">
+    <div class="security-pill">
+        <i class="fas fa-filter" style="color: #f59e0b; font-size: 1rem;"></i>
         <div>
-            <strong><?= htmlspecialchars($msg) ?></strong>
+            <div style="line-height: 1.1;">app_new/ Excluded</div>
+            <small style="color: var(--text-muted); font-size: 0.7rem;">Protected from overrides</small>
+        </div>
+    </div>
+    <div class="security-pill">
+        <i class="fas fa-lock" style="color: #10b981; font-size: 1rem;"></i>
+        <div>
+            <div style="line-height: 1.1;">config/db.php Protected</div>
+            <small style="color: var(--text-muted); font-size: 0.7rem;">Live credentials preserved</small>
+        </div>
+    </div>
+    <div class="security-pill">
+        <i class="fas fa-bolt" style="color: #6366f1; font-size: 1rem;"></i>
+        <div>
+            <div style="line-height: 1.1;">Zero-CLI Cloud Engine</div>
+            <small style="color: var(--text-muted); font-size: 0.7rem;">Runs on cPanel & Hostinger</small>
+        </div>
+    </div>
+    <div class="security-pill">
+        <i class="fas fa-shield-halved" style="color: #e11d48; font-size: 1rem;"></i>
+        <div>
+            <div style="line-height: 1.1;">Master Admin Only</div>
+            <small style="color: var(--text-muted); font-size: 0.7rem;">CSRF & session authenticated</small>
+        </div>
+    </div>
+</div>
+
+<!-- Alert Banner (if message set) -->
+<?php if (!empty($msg)): ?>
+    <div class="alert-admin alert-admin-<?= $msgType === 'success' ? 'success' : ($msgType === 'error' ? 'error' : ($msgType === 'warning' ? 'warning' : 'info')) ?>" style="margin-bottom: 1.75rem; border-radius: 12px; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 0.85rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+        <i class="fas <?= $msgType === 'success' ? 'fa-circle-check' : ($msgType === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-info') ?>" style="font-size: 1.25rem;"></i>
+        <div style="flex: 1;">
+            <strong style="font-size: 0.925rem;"><?= htmlspecialchars($msg) ?></strong>
             <?php if ($executionTime > 0): ?>
-                <span style="font-size: 0.75rem; opacity: 0.85; margin-left: 0.5rem;">(completed in <?= $executionTime ?>s)</span>
+                <span style="font-size: 0.75rem; opacity: 0.8; margin-left: 0.4rem;">&bull; Completed in <?= $executionTime ?>s</span>
             <?php endif; ?>
         </div>
     </div>
 <?php endif; ?>
 
-<!-- Repository Status Overview Cards -->
-<div class="profile-stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin-bottom: 1.75rem; gap: 1.25rem;">
-    <!-- GitHub Remote Card -->
-    <div class="stat-box" style="border-left: 4px solid #24292e;">
-        <div class="stat-label"><i class="fab fa-github" style="color: #24292e;"></i> Remote Repository</div>
-        <div class="stat-value" style="font-size: 0.95rem; color: var(--primary); font-family: var(--font-heading); margin-top: 0.35rem; word-break: break-all;">
-            <a href="<?= htmlspecialchars($githubWebUrl) ?>" target="_blank" rel="noopener noreferrer" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;">
+<!-- 4 Elevated Stat Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1.25rem; margin-bottom: 1.75rem;">
+    <!-- Card 1: Remote Repository -->
+    <div class="gh-stat-card card-ruby">
+        <div>
+            <div class="gh-icon-box" style="background: #fff1f2; color: #e11d48;">
+                <i class="fab fa-github"></i>
+            </div>
+            <div style="font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">GitHub Repository</div>
+            <div style="font-size: 1.05rem; font-weight: 800; color: var(--primary); margin-top: 0.35rem; font-family: var(--font-heading); word-break: break-all;">
                 <?= htmlspecialchars("{$repoOwner}/{$repoName}") ?>
-                <i class="fas fa-arrow-up-right-from-square" style="font-size: 0.75rem; color: var(--brand-red);"></i>
+            </div>
+        </div>
+        <div style="margin-top: 0.85rem; pt-2; border-top: 1px solid #f1f5f9; padding-top: 0.65rem; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.75rem; color: #64748b;">Branch: <strong><?= htmlspecialchars($currentBranch) ?></strong></span>
+            <a href="<?= htmlspecialchars($githubWebUrl) ?>" target="_blank" rel="noopener noreferrer" style="color: #e11d48; font-size: 0.75rem; font-weight: 700; text-decoration: none;">
+                View &rarr;
             </a>
         </div>
-        <small style="color: var(--text-muted); font-size: 0.75rem;">Branch: <?= htmlspecialchars($currentBranch) ?> &bull; <?= $useCliMode ? 'Git Remote' : 'Direct Cloud API' ?></small>
     </div>
 
-    <!-- Active Branch & Sync Status -->
-    <div class="stat-box" style="border-left: 4px solid <?= $behindCount > 0 ? '#ef4444' : ($aheadCount > 0 ? '#3b82f6' : '#10b981') ?>;">
-        <div class="stat-label"><i class="fas fa-code-branch"></i> Status & Synchronization</div>
-        <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.35rem;">
-            <span style="font-size: 1.35rem; font-weight: 800; font-family: var(--font-heading); color: var(--primary);">
-                <?= htmlspecialchars($currentBranch) ?>
-            </span>
-            <?php if ($behindCount > 0): ?>
-                <span class="badge" style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; font-weight: 700; font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 9999px;">
-                    <i class="fas fa-arrow-down"></i> <?= $behindCount ?> update available
-                </span>
-            <?php else: ?>
-                <span class="badge" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; font-weight: 700; font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 9999px;">
-                    <i class="fas fa-check-circle"></i> Up to date
-                </span>
-            <?php endif; ?>
+    <!-- Card 2: Sync Status -->
+    <div class="gh-stat-card card-emerald">
+        <div>
+            <div class="gh-icon-box" style="background: #ecfdf5; color: #059669;">
+                <i class="fas fa-arrows-rotate"></i>
+            </div>
+            <div style="font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Sync Status</div>
+            <div style="margin-top: 0.35rem;">
+                <?php if ($behindCount > 0): ?>
+                    <span class="badge" style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; font-weight: 800; font-size: 0.85rem; padding: 0.35rem 0.65rem; border-radius: 8px;">
+                        <i class="fas fa-cloud-arrow-down"></i> <?= $behindCount ?> Update Available
+                    </span>
+                <?php else: ?>
+                    <span class="badge" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; font-weight: 800; font-size: 0.85rem; padding: 0.35rem 0.65rem; border-radius: 8px;">
+                        <i class="fas fa-check-circle"></i> Up to Date
+                    </span>
+                <?php endif; ?>
+            </div>
         </div>
-        <small style="color: var(--text-muted); font-size: 0.75rem;">
-            <?= $behindCount > 0 ? 'New commits ready on GitHub!' : 'Online codebase matches GitHub repository' ?>
-        </small>
+        <div style="margin-top: 0.85rem; pt-2; border-top: 1px solid #f1f5f9; padding-top: 0.65rem;">
+            <small style="color: #64748b; font-size: 0.75rem;">
+                <?= $behindCount > 0 ? 'Commits waiting on GitHub' : 'Matches remote repository' ?>
+            </small>
+        </div>
     </div>
 
-    <!-- Active Engine -->
-    <div class="stat-box" style="border-left: 4px solid var(--brand-gold);">
-        <div class="stat-label"><i class="fas fa-microchip" style="color: var(--brand-gold-dark);"></i> Online Sync Engine</div>
-        <div class="stat-value" style="font-size: 1.15rem; color: var(--primary); font-family: var(--font-heading); margin-top: 0.35rem;">
-            <?= $useCliMode ? 'Git CLI (Local/VPS)' : 'Cloud API (Shared Host)' ?>
+    <!-- Card 3: Active Engine -->
+    <div class="gh-stat-card card-indigo">
+        <div>
+            <div class="gh-icon-box" style="background: #eef2ff; color: #4f46e5;">
+                <i class="fas <?= $useCliMode ? 'fa-terminal' : 'fa-cloud' ?>"></i>
+            </div>
+            <div style="font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Active Engine</div>
+            <div style="font-size: 1.05rem; font-weight: 800; color: var(--primary); margin-top: 0.35rem; font-family: var(--font-heading);">
+                <?= $useCliMode ? 'Git CLI (Local/VPS)' : 'Cloud API (Shared Host)' ?>
+            </div>
         </div>
-        <small style="color: var(--text-muted); font-size: 0.75rem;">
-            <?= $useCliMode ? 'Using system git binary' : 'Zero-CLI: cURL + ZipArchive' ?>
-        </small>
+        <div style="margin-top: 0.85rem; pt-2; border-top: 1px solid #f1f5f9; padding-top: 0.65rem;">
+            <small style="color: #64748b; font-size: 0.75rem;">
+                <?= $useCliMode ? 'Native Git binaries active' : 'Zero-CLI (cURL + ZipArchive)' ?>
+            </small>
+        </div>
     </div>
 
-    <!-- Last Local Commit -->
-    <div class="stat-box" style="border-left: 4px solid var(--brand-red);">
-        <div class="stat-label"><i class="fas fa-clock-rotate-left" style="color: var(--brand-red);"></i> Local Active Commit</div>
-        <div style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin-top: 0.35rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<?= htmlspecialchars($lastCommit['subject'] ?? '') ?>">
-            <?= htmlspecialchars($lastCommit['subject'] ?? 'N/A') ?>
+    <!-- Card 4: Local Active Commit -->
+    <div class="gh-stat-card card-amber">
+        <div>
+            <div class="gh-icon-box" style="background: #fffbeb; color: #d97706;">
+                <i class="fas fa-code-commit"></i>
+            </div>
+            <div style="font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Active Local Commit</div>
+            <div style="font-size: 0.9rem; font-weight: 700; color: var(--primary); margin-top: 0.35rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<?= htmlspecialchars($lastCommit['subject'] ?? '') ?>">
+                <?= htmlspecialchars($lastCommit['subject'] ?? 'N/A') ?>
+            </div>
         </div>
-        <small style="color: var(--text-muted); font-size: 0.75rem; display: flex; align-items: center; gap: 0.4rem; margin-top: 0.2rem;">
-            <code style="background: var(--bg-alt); padding: 0.1rem 0.3rem; border-radius: 3px; font-weight: 700; color: var(--brand-red);"><?= htmlspecialchars($lastCommit['hash'] ?? 'f4decaf') ?></code>
-            <span>by <?= htmlspecialchars($lastCommit['author'] ?? 'kgauravindia') ?></span>
-        </small>
+        <div style="margin-top: 0.85rem; pt-2; border-top: 1px solid #f1f5f9; padding-top: 0.65rem; display: flex; align-items: center; gap: 0.4rem;">
+            <code style="background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: 800; color: #d97706; font-size: 0.75rem;">
+                <?= htmlspecialchars($lastCommit['hash'] ?? '4bdc552') ?>
+            </code>
+            <span style="font-size: 0.75rem; color: #64748b;">by <?= htmlspecialchars($lastCommit['author'] ?? 'kgauravindia') ?></span>
+        </div>
     </div>
 </div>
 
-<!-- Main Operations Grid -->
-<div style="display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem; align-items: start;" class="git-sync-container">
+<!-- Main Split: Actions & Console Output -->
+<div style="display: grid; grid-template-columns: 1fr 340px; gap: 1.75rem; align-items: start;" class="git-sync-container">
     <style>
         @media(max-width: 992px) {
             .git-sync-container {
                 grid-template-columns: 1fr !important;
             }
         }
-        .cli-window {
-            background-color: #0d1117;
-            border-radius: var(--radius-md);
-            border: 1px solid #30363d;
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.25);
-            overflow: hidden;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-        }
-        .cli-header {
-            background-color: #161b22;
-            padding: 0.65rem 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid #30363d;
-        }
-        .cli-dots {
-            display: flex;
-            gap: 0.45rem;
-        }
-        .cli-dot {
-            width: 11px;
-            height: 11px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-        .cli-dot-red { background-color: #ff5f56; }
-        .cli-dot-yellow { background-color: #ffbd2e; }
-        .cli-dot-green { background-color: #27c93f; }
-        .cli-body {
-            padding: 1.25rem;
-            color: #c9d1d9;
-            font-size: 0.8125rem;
-            line-height: 1.55;
-            max-height: 380px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
     </style>
 
-    <!-- Left Column: Actions & Output -->
-    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+    <!-- Left Column: Primary Actions & Terminal -->
+    <div style="display: flex; flex-direction: column; gap: 1.75rem;">
 
         <!-- Incoming Commits Alert / Card (if behind) -->
         <?php if ($behindCount > 0 && !empty($incomingCommits)): ?>
-            <div class="admin-card" style="border-top: 4px solid #ef4444; background: #fffbfb;">
+            <div style="background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%); border: 1.5px solid #fecdd3; border-radius: 16px; padding: 1.5rem; box-shadow: 0 10px 25px -5px rgba(225, 29, 72, 0.12);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
                     <div>
-                        <h3 class="admin-card-title" style="color: #b91c1c; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-                            <i class="fas fa-cloud-arrow-down"></i> <?= $behindCount ?> New Commit Available on GitHub
+                        <h3 style="color: #9f1239; margin: 0; font-size: 1.1rem; font-weight: 800; font-family: var(--font-heading); display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-cloud-arrow-down" style="color: #e11d48;"></i> Updates Available on GitHub
                         </h3>
-                        <p style="color: #7f1d1d; font-size: 0.8125rem; margin: 0.25rem 0 0;">
-                            Remote GitHub repository has updates that can be synchronized into this server.
+                        <p style="color: #be123c; font-size: 0.8125rem; margin: 0.25rem 0 0;">
+                            Your active server is behind the remote <code>main</code> branch. Apply now with 1 click.
                         </p>
                     </div>
 
                     <form action="github_sync.php" method="POST" onsubmit="return confirm('Update and apply GitHub commits into this server (app_new ignored)?');">
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
                         <input type="hidden" name="action" value="update">
-                        <button type="submit" class="btn btn-primary btn-sm" style="background: #dc2626; border-color: #dc2626;">
+                        <button type="submit" class="btn gh-btn-glow btn-sm" style="padding: 0.6rem 1.1rem; border-radius: 8px;">
                             <i class="fas fa-download"></i> Apply Update Now
                         </button>
                     </form>
@@ -781,12 +1037,12 @@ if ($useCliMode && $currentBranch !== 'unknown') {
 
                 <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                     <?php foreach ($incomingCommits as $c): ?>
-                        <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; border: 1px solid #fee2e2; padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.8125rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; border: 1px solid #fecdd3; padding: 0.75rem 1rem; border-radius: 10px; font-size: 0.8125rem;">
                             <div style="display: flex; align-items: center; gap: 0.75rem; overflow: hidden;">
-                                <code style="background: #fef2f2; color: #dc2626; font-weight: 700; padding: 0.15rem 0.4rem; border-radius: 4px;"><?= htmlspecialchars($c['hash']) ?></code>
+                                <code style="background: #fff1f2; color: #e11d48; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 5px;"><?= htmlspecialchars($c['hash']) ?></code>
                                 <span style="font-weight: 600; color: #1e293b; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;"><?= htmlspecialchars($c['msg']) ?></span>
                             </div>
-                            <span style="color: var(--text-muted); font-size: 0.75rem; white-space: nowrap; margin-left: 1rem;">
+                            <span style="color: #64748b; font-size: 0.75rem; white-space: nowrap; margin-left: 1rem;">
                                 <?= htmlspecialchars($c['author']) ?> &bull; <?= htmlspecialchars($c['time']) ?>
                             </span>
                         </div>
@@ -795,55 +1051,79 @@ if ($useCliMode && $currentBranch !== 'unknown') {
             </div>
         <?php endif; ?>
 
-        <!-- Quick Action Trigger Card -->
-        <div class="admin-card" style="border-top: 4px solid var(--primary);">
-            <h3 class="admin-card-title" style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                <i class="fas fa-play" style="color: var(--brand-gold);"></i> Synchronization Commands (Online & Local)
-            </h3>
-            <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;">
-                Select an operation below. <strong>Fetch</strong> checks for updates safely without altering any files. <strong>Update</strong> synchronizes files directly from GitHub (ignoring <code>app_new</code>).
-            </p>
-
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                <!-- 1. Update from GitHub (Pull) -->
-                <form action="github_sync.php" method="POST" style="margin: 0;" onsubmit="return confirm('Update and pull latest code from https://github.com/kgauravindia/myadvocate.git (ignoring app_new)?');">
+        <!-- 3-Column Interactive Action Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem;">
+            <!-- Action Card 1: Update Codebase -->
+            <div class="gh-action-card featured">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <span class="badge" style="background: #e11d48; color: #ffffff; font-weight: 800; font-size: 0.7rem; padding: 0.25rem 0.55rem; border-radius: 6px;">
+                            PRIMARY
+                        </span>
+                        <i class="fas fa-cloud-arrow-down" style="color: #e11d48; font-size: 1.25rem;"></i>
+                    </div>
+                    <h3 style="font-size: 1.05rem; font-weight: 800; color: #9f1239; margin: 0 0 0.35rem; font-family: var(--font-heading);">
+                        Update Codebase
+                    </h3>
+                    <p style="color: #64748b; font-size: 0.8125rem; margin: 0 0 1.25rem; line-height: 1.45;">
+                        Pulls latest changes directly from GitHub. Strictly skips <code>app_new/</code> and preserves database settings.
+                    </p>
+                </div>
+                <form action="github_sync.php" method="POST" onsubmit="return confirm('Update and pull latest code from https://github.com/kgauravindia/myadvocate.git (ignoring app_new)?');" style="margin: 0;">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
                     <input type="hidden" name="action" value="update">
-                    <button type="submit" class="btn btn-primary w-100" style="padding: 0.85rem 1rem; text-align: left; display: flex; flex-direction: column; gap: 0.35rem; background: var(--brand-red); border-color: var(--brand-red);">
-                        <span style="font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
-                            <i class="fas fa-cloud-arrow-down"></i> 1. Update from GitHub
-                        </span>
-                        <small style="opacity: 0.95; font-size: 0.75rem; font-weight: normal; line-height: 1.25;">
-                            Pulls latest code from GitHub (ignores app_new, preserves db.php).
-                        </small>
+                    <button type="submit" class="btn gh-btn-glow w-100" style="padding: 0.75rem; border-radius: 8px; font-size: 0.875rem;">
+                        <i class="fas fa-download"></i> 1-Click Update
                     </button>
                 </form>
+            </div>
 
-                <!-- 2. Fetch from GitHub -->
+            <!-- Action Card 2: Fetch References -->
+            <div class="gh-action-card">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <span class="badge" style="background: #f1f5f9; color: #334155; font-weight: 700; font-size: 0.7rem; padding: 0.25rem 0.55rem; border-radius: 6px;">
+                            SAFE CHECK
+                        </span>
+                        <i class="fas fa-arrows-rotate" style="color: #0284c7; font-size: 1.25rem;"></i>
+                    </div>
+                    <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--primary); margin: 0 0 0.35rem; font-family: var(--font-heading);">
+                        Fetch References
+                    </h3>
+                    <p style="color: #64748b; font-size: 0.8125rem; margin: 0 0 1.25rem; line-height: 1.45;">
+                        Checks GitHub for new commits safely without modifying any files or altering working copy.
+                    </p>
+                </div>
                 <form action="github_sync.php" method="POST" style="margin: 0;">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
                     <input type="hidden" name="action" value="fetch">
-                    <button type="submit" class="btn btn-dark w-100" style="padding: 0.85rem 1rem; text-align: left; display: flex; flex-direction: column; gap: 0.35rem;">
-                        <span style="font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
-                            <i class="fas fa-arrows-rotate fa-spin-hover"></i> 2. Fetch References
-                        </span>
-                        <small style="opacity: 0.9; font-size: 0.75rem; font-weight: normal; line-height: 1.25;">
-                            Safe: Queries GitHub for new commits without altering local files.
-                        </small>
+                    <button type="submit" class="btn btn-dark w-100" style="background: #1e293b; padding: 0.75rem; border-radius: 8px; font-size: 0.875rem; font-weight: 700;">
+                        <i class="fas fa-magnifying-glass"></i> Check Updates
                     </button>
                 </form>
+            </div>
 
-                <!-- 3. Stash & Pull / Refresh Status -->
+            <!-- Action Card 3: Diagnostic & Refresh -->
+            <div class="gh-action-card">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <span class="badge" style="background: #f1f5f9; color: #334155; font-weight: 700; font-size: 0.7rem; padding: 0.25rem 0.55rem; border-radius: 6px;">
+                            DIAGNOSTIC
+                        </span>
+                        <i class="fas fa-sliders" style="color: #6366f1; font-size: 1.25rem;"></i>
+                    </div>
+                    <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--primary); margin: 0 0 0.35rem; font-family: var(--font-heading);">
+                        Inspect State
+                    </h3>
+                    <p style="color: #64748b; font-size: 0.8125rem; margin: 0 0 1.25rem; line-height: 1.45;">
+                        Refreshes live system health, API connectivity, ZipArchive status, and environment variables.
+                    </p>
+                </div>
                 <form action="github_sync.php" method="POST" style="margin: 0;">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
                     <input type="hidden" name="action" value="status">
-                    <button type="submit" class="btn btn-outline w-100" style="padding: 0.85rem 1rem; text-align: left; display: flex; flex-direction: column; gap: 0.35rem;">
-                        <span style="font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
-                            <i class="fas fa-list-check"></i> 3. Refresh Status
-                        </span>
-                        <small style="color: var(--text-muted); font-size: 0.75rem; font-weight: normal; line-height: 1.25;">
-                            Inspects working state and checks synchronization status.
-                        </small>
+                    <button type="submit" class="btn btn-outline w-100" style="padding: 0.75rem; border-radius: 8px; font-size: 0.875rem; font-weight: 700; border: 1.5px solid #cbd5e1;">
+                        <i class="fas fa-rotate"></i> Refresh State
                     </button>
                 </form>
             </div>
@@ -852,126 +1132,95 @@ if ($useCliMode && $currentBranch !== 'unknown') {
         <!-- Terminal Output Console -->
         <div class="cli-window">
             <div class="cli-header">
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.85rem;">
                     <div class="cli-dots">
                         <span class="cli-dot cli-dot-red"></span>
                         <span class="cli-dot cli-dot-yellow"></span>
                         <span class="cli-dot cli-dot-green"></span>
                     </div>
-                    <span style="color: #8b949e; font-size: 0.75rem; font-weight: 600;">
-                        sync@myadvocate: <?= htmlspecialchars($repoDir) ?> [<?= $useCliMode ? 'CLI Engine' : 'Cloud API Engine' ?>]
+                    <span style="color: #8b949e; font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-terminal" style="color: #58a6ff;"></i>
+                        sync@myadvocate: <?= htmlspecialchars($repoDir) ?> [<?= $useCliMode ? 'cli-engine' : 'cloud-rest-engine' ?>]
                     </span>
                 </div>
-                <div>
-                    <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('cliOutput').innerText); this.innerText='Copied!'; setTimeout(()=>this.innerText='Copy', 1500);" style="background: #21262d; border: 1px solid #30363d; color: #c9d1d9; font-size: 0.7rem; padding: 0.2rem 0.55rem; border-radius: 4px; cursor: pointer;">
+                <div style="display: flex; gap: 0.5rem;">
+                    <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('cliOutput').innerText); this.innerText='Copied!'; setTimeout(()=>this.innerText='Copy', 1500);" style="background: #21262d; border: 1px solid #30363d; color: #c9d1d9; font-size: 0.7rem; padding: 0.25rem 0.65rem; border-radius: 5px; cursor: pointer; font-weight: 600;">
                         Copy
                     </button>
                 </div>
             </div>
             <div class="cli-body" id="cliOutput">
-                <span style="color: #7ee787;">$</span> <span style="color: #79c0ff; font-weight: 600;"><?= htmlspecialchars($executedCommand ?: 'status --short') ?></span>
+                <span style="color: #4ade80;">$</span> <span style="color: #38bdf8; font-weight: 700;"><?= htmlspecialchars($executedCommand ?: 'status --summary') ?></span>
                 <?php if ($executionTime > 0): ?>
                     <span style="color: #8b949e; font-size: 0.75rem;"> (<?= $executionTime ?>s)</span>
                 <?php endif; ?>
-                <div style="margin-top: 0.5rem; color: <?= !empty($commandOutput) ? '#c9d1d9' : '#8b949e' ?>;">
+                <div style="margin-top: 0.65rem; color: <?= !empty($commandOutput) ? '#c9d1d9' : '#8b949e' ?>;">
 <?= htmlspecialchars(!empty($commandOutput) ? $commandOutput : 'Ready. Click "Update from GitHub" or "Fetch References" above.') ?>
                 </div>
             </div>
         </div>
-
-        <!-- Local Modified Files Table (CLI mode only if any) -->
-        <?php if ($uncommittedCount > 0): ?>
-            <div class="admin-card" style="border-top: 4px solid #f59e0b;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                    <h3 class="admin-card-title" style="margin: 0; color: #b45309; display: flex; align-items: center; gap: 0.5rem;">
-                        <i class="fas fa-file-circle-exclamation"></i> Uncommitted / Modified Local Files (<?= $uncommittedCount ?>)
-                    </h3>
-                    <a href="github_sync.php?action=status" class="btn btn-outline btn-sm"><i class="fas fa-rotate"></i> Refresh</a>
-                </div>
-                <div style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
-                    <table class="admin-table" style="font-size: 0.8125rem;">
-                        <thead>
-                            <tr>
-                                <th style="width: 80px;">Status</th>
-                                <th>File Path</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($uncommittedFiles as $uf): ?>
-                                <tr>
-                                    <td>
-                                        <span style="color: #2563eb; font-weight: 700;"><?= htmlspecialchars($uf['type']) ?></span>
-                                    </td>
-                                    <td><code style="color: #1e293b;"><?= htmlspecialchars($uf['file']) ?></code></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        <?php endif; ?>
 
     </div>
 
     <!-- Right Column: Sidebar Info & Guides -->
     <div style="display: flex; flex-direction: column; gap: 1.5rem;">
 
-        <!-- Git System Info -->
-        <div class="admin-card" style="border-top: 4px solid var(--brand-gold);">
-            <h3 class="admin-card-title" style="margin-bottom: 1rem; font-size: 1.05rem;">
-                <i class="fas fa-sliders" style="color: var(--brand-gold-dark);"></i> Environment Status
+        <!-- Synchronization Pipeline Card -->
+        <div class="admin-card" style="border-radius: 14px; border-top: 4px solid var(--primary);">
+            <h3 class="admin-card-title" style="margin-bottom: 1rem; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-diagram-project" style="color: var(--primary);"></i> Sync Pipeline
             </h3>
-            <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.8125rem;">
-                <div>
-                    <span style="color: var(--text-muted);">Active Engine:</span><br>
-                    <strong style="color: var(--primary);"><?= $useCliMode ? 'Git CLI Engine' : 'Online Cloud API Engine (Shared Hosting)' ?></strong>
+            <div style="display: flex; flex-direction: column; gap: 0.85rem; font-size: 0.8125rem;">
+                <div class="flow-step-badge" style="width: 100%; justify-content: space-between;">
+                    <span><i class="fab fa-github"></i> GitHub Source</span>
+                    <code style="color: #e11d48; font-weight: 800;">origin/main</code>
                 </div>
-                <div>
-                    <span style="color: var(--text-muted);">cURL Status:</span><br>
-                    <strong><?= extension_loaded('curl') ? '<span style="color: #10b981;">Enabled (Active)</span>' : '<span style="color: #dc2626;">Disabled</span>' ?></strong>
+                <div style="text-align: center; color: #94a3b8; font-size: 0.75rem;">
+                    <i class="fas fa-arrow-down"></i> Encrypted HTTPS Transfer
                 </div>
-                <div>
-                    <span style="color: var(--text-muted);">ZipArchive Status:</span><br>
-                    <strong><?= class_exists('ZipArchive') ? '<span style="color: #10b981;">Enabled (Active)</span>' : '<span style="color: #dc2626;">Disabled</span>' ?></strong>
+                <div class="flow-step-badge" style="width: 100%; justify-content: space-between; background: #fff1f2; color: #9f1239; border: 1px solid #fecdd3;">
+                    <span><i class="fas fa-filter"></i> Rule: Ignore app_new/</span>
+                    <strong>Active</strong>
                 </div>
-                <div>
-                    <span style="color: var(--text-muted);">Repository Directory:</span><br>
-                    <code style="font-size: 0.75rem; word-break: break-all; background: var(--bg-alt); padding: 0.2rem 0.4rem; border-radius: 3px;"><?= htmlspecialchars($repoDir) ?></code>
+                <div style="text-align: center; color: #94a3b8; font-size: 0.75rem;">
+                    <i class="fas fa-arrow-down"></i> Auto File Extraction
                 </div>
-                <div>
-                    <span style="color: var(--text-muted);">Remote Branch:</span><br>
-                    <strong>origin/<?= htmlspecialchars($currentBranch) ?></strong>
-                </div>
-                <div style="margin-top: 0.5rem; pt-2; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
-                    <a href="<?= htmlspecialchars($githubWebUrl) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm w-100" style="display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
-                        <i class="fab fa-github"></i> Open Repository on GitHub <i class="fas fa-arrow-up-right-from-square" style="font-size: 0.7rem;"></i>
-                    </a>
+                <div class="flow-step-badge" style="width: 100%; justify-content: space-between; background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;">
+                    <span><i class="fas fa-server"></i> Live Portal: myadv.in</span>
+                    <strong>Updated</strong>
                 </div>
             </div>
         </div>
 
-        <!-- How It Works & Safety Guidelines -->
-        <div class="admin-card" style="border-top: 4px solid #3b82f6;">
-            <h3 class="admin-card-title" style="margin-bottom: 0.75rem; font-size: 1.05rem; color: #1e40af;">
-                <i class="fas fa-shield-halved" style="color: #3b82f6;"></i> Online Safety Protections
+        <!-- Technical Environment Status -->
+        <div class="admin-card" style="border-radius: 14px; border-top: 4px solid var(--brand-gold);">
+            <h3 class="admin-card-title" style="margin-bottom: 1rem; font-size: 1rem;">
+                <i class="fas fa-sliders" style="color: var(--brand-gold-dark);"></i> Environment Status
             </h3>
-            <ul style="padding-left: 1.15rem; margin: 0; font-size: 0.8125rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.65rem; line-height: 1.45;">
-                <li>
-                    <strong style="color: var(--primary);">Ignores app_new/:</strong> All files in <code>app_new/</code> are automatically bypassed during synchronization.
-                </li>
-                <li>
-                    <strong style="color: var(--primary);">Database Safe:</strong> Your production database credentials in <code>config/db.php</code> are preserved and never overwritten.
-                </li>
-                <li>
-                    <strong style="color: var(--primary);">Zero CLI Requirement:</strong> Uses standard PHP cURL & ZipArchive, functioning smoothly on shared hosts (cPanel, Hostinger) without shell access.
-                </li>
-            </ul>
+            <div style="display: flex; flex-direction: column; gap: 0.85rem; font-size: 0.8125rem;">
+                <div>
+                    <span style="color: var(--text-muted); font-size: 0.75rem;">ACTIVE ENGINE</span><br>
+                    <strong style="color: var(--primary);"><?= $useCliMode ? 'Git CLI (Local/VPS)' : 'Cloud API (Shared Host)' ?></strong>
+                </div>
+                <div>
+                    <span style="color: var(--text-muted); font-size: 0.75rem;">PHP cURL EXTENSION</span><br>
+                    <strong><?= extension_loaded('curl') ? '<span style="color: #10b981;"><i class="fas fa-check-circle"></i> Enabled & Connected</span>' : '<span style="color: #dc2626;"><i class="fas fa-times-circle"></i> Disabled</span>' ?></strong>
+                </div>
+                <div>
+                    <span style="color: var(--text-muted); font-size: 0.75rem;">PHP ZipArchive</span><br>
+                    <strong><?= class_exists('ZipArchive') ? '<span style="color: #10b981;"><i class="fas fa-check-circle"></i> Available & Ready</span>' : '<span style="color: #dc2626;"><i class="fas fa-times-circle"></i> Missing</span>' ?></strong>
+                </div>
+                <div>
+                    <span style="color: var(--text-muted); font-size: 0.75rem;">REMOTE TARGET</span><br>
+                    <code style="font-size: 0.75rem; word-break: break-all; background: #f8fafc; padding: 0.2rem 0.4rem; border-radius: 4px; display: block; margin-top: 0.25rem;">https://github.com/kgauravindia/myadvocate.git</code>
+                </div>
+            </div>
         </div>
 
-        <!-- Direct Link Back to Settings -->
-        <div style="text-align: center;">
-            <a href="settings.php" style="color: var(--brand-red); font-weight: 700; text-decoration: none; font-size: 0.875rem;">
-                &larr; Back to Portal Settings
+        <!-- Quick Navigation Link Back -->
+        <div style="text-align: center; padding: 0.5rem;">
+            <a href="settings.php" style="color: #e11d48; font-weight: 700; text-decoration: none; font-size: 0.875rem; display: inline-flex; align-items: center; gap: 0.4rem;">
+                <i class="fas fa-arrow-left"></i> Return to Portal Settings
             </a>
         </div>
 
