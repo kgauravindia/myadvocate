@@ -1,8 +1,8 @@
 {
-  "commit": "6ad12bb",
+  "commit": "preview",
   "branch": "main",
   "author": "kgauravindia",
-  "date": "2026-10-17 12:35:15",
-  "message": "Render advocate ID proof image directly in page in advocate_edit.php and open in new tab",
-  "updated_at": "2026-10-17 12:35:15"
+  "date": "2026-10-17 13:06:00",
+  "message": "Add View ID Proof modal and buttons in advocates.php and dashboard.php",
+  "updated_at": "2026-10-17 13:06:00"
 }

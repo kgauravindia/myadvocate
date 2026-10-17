@@ -240,13 +240,29 @@ try {
                             </td>
                             <td>
                                 <strong><?= sanitize($adv['e_no'] ?: '—') ?></strong><?= $adv['e_year'] ? '/' . sanitize($adv['e_year']) : '' ?>
-                                <?php if (!empty($adv['bc_verify_url'])): ?>
-                                    <div style="margin-top: 3px;">
+                                <div style="margin-top: 3px; display: flex; flex-direction: column; gap: 3px; align-items: flex-start;">
+                                    <?php if (!empty($adv['bc_verify_url'])): ?>
                                         <a href="<?= sanitize($adv['bc_verify_url']) ?>" target="_blank" rel="noopener noreferrer" class="badge" style="background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; font-size: 0.68rem; text-decoration: none; padding: 2px 5px; display: inline-flex; align-items: center; gap: 3px; font-weight: 700;" title="Verify on <?= sanitize($adv['bc_code'] ?? 'Bar Council') ?> Official Portal (opens in new tab)">
                                             <i class="fas fa-shield-halved"></i> Verify BC <i class="fas fa-arrow-up-right-from-square" style="font-size: 0.55rem;"></i>
                                         </a>
-                                    </div>
-                                <?php endif; ?>
+                                    <?php endif; ?>
+                                    <?php 
+                                    $rawProof = trim((string)($adv['id_proof'] ?? ''));
+                                    if (!empty($rawProof) && $rawProof !== '0' && strtolower($rawProof) !== 'null'): 
+                                        $proofUrl = getAdvocateIdProofUrl($rawProof);
+                                        $fullProofUrl = (strpos($proofUrl, 'http') === 0) ? $proofUrl : '../' . ltrim($proofUrl, '/');
+                                        $isPdf = (bool)preg_match('/\.pdf$/i', $rawProof);
+                                    ?>
+                                        <div style="display: inline-flex; align-items: center; gap: 3px;">
+                                            <button type="button" class="badge" onclick="openProofModal('<?= sanitize($fullProofUrl) ?>', '<?= sanitize(addslashes($adv['name'] ?: 'Advocate')) ?>', '<?= sanitize(addslashes($adv['e_no'] ?: '')) ?><?= $adv['e_year'] ? '/' . sanitize($adv['e_year']) : '' ?>', <?= $isPdf ? 'true' : 'false' ?>)" style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; font-size: 0.68rem; padding: 2px 5px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; font-weight: 700;" title="Quick View ID Proof / Certificate">
+                                                <i class="fas <?= $isPdf ? 'fa-file-pdf' : 'fa-id-card' ?>"></i> View ID Proof
+                                            </button>
+                                            <a href="<?= sanitize($fullProofUrl) ?>" target="_blank" rel="noopener noreferrer" style="color: #047857; font-size: 0.65rem;" title="Open in new tab">
+                                                <i class="fas fa-arrow-up-right-from-square"></i>
+                                            </a>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
                             </td>
                             <td>
                                 <?= sanitize(getDistrictName($adv['district_code'] ?? '')) ?><br>
@@ -286,12 +302,85 @@ try {
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <tr><td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-muted);">No advocates match your search.</td></tr>
+                    <tr><td colspan="8" style="text-align: center; padding: 3rem; color: var(--text-muted);">No advocates match your search.</td></tr>
                 <?php endif; ?>
             </tbody>
         </table>
     </div>
 </div>
+
+<!-- ID Proof Lightbox Modal -->
+<div id="proofModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.78); z-index: 9999; align-items: center; justify-content: center; padding: 1rem;">
+    <div style="background: white; border-radius: 12px; max-width: 720px; width: 100%; max-height: 92vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.35);">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
+            <div>
+                <h4 id="proofModalTitle" style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--primary);">Advocate ID Proof</h4>
+                <div id="proofModalSubtitle" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;"></div>
+            </div>
+            <button type="button" onclick="closeProofModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b; padding: 0.25rem; line-height: 1;">&times;</button>
+        </div>
+        <div id="proofModalBody" style="padding: 1rem; overflow: auto; text-align: center; flex: 1; background: #0f172a; display: flex; align-items: center; justify-content: center; min-height: 300px;">
+            <img id="proofModalImg" src="" alt="ID Proof" style="max-width: 100%; max-height: 65vh; object-fit: contain; border-radius: 6px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5);">
+            <div id="proofModalPdf" style="display: none; color: #fff; padding: 2rem;">
+                <i class="fas fa-file-pdf" style="font-size: 3.5rem; color: #ef4444; margin-bottom: 1rem;"></i>
+                <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 1rem;">PDF Document Uploaded</div>
+                <a id="proofModalPdfLink" href="#" target="_blank" class="btn btn-danger btn-sm">
+                    <i class="fas fa-arrow-up-right-from-square me-1"></i> Open PDF in New Tab
+                </a>
+            </div>
+        </div>
+        <div style="padding: 0.75rem 1.25rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+            <a id="proofModalOpenBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">
+                <i class="fas fa-arrow-up-right-from-square me-1"></i> Open Full Image (New Tab)
+            </a>
+            <button type="button" onclick="closeProofModal()" class="btn btn-outline btn-sm">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function openProofModal(url, name, eno, isPdf) {
+    var modal = document.getElementById('proofModal');
+    var img = document.getElementById('proofModalImg');
+    var pdfBox = document.getElementById('proofModalPdf');
+    var pdfLink = document.getElementById('proofModalPdfLink');
+    var openBtn = document.getElementById('proofModalOpenBtn');
+    
+    document.getElementById('proofModalTitle').innerText = name || 'Advocate ID Proof';
+    document.getElementById('proofModalSubtitle').innerText = eno ? 'Enrollment: ' + eno : '';
+    openBtn.href = url;
+
+    if (isPdf) {
+        img.style.display = 'none';
+        pdfBox.style.display = 'block';
+        pdfLink.href = url;
+    } else {
+        pdfBox.style.display = 'none';
+        img.style.display = 'block';
+        img.src = url;
+    }
+
+    modal.style.display = 'flex';
+}
+
+function closeProofModal() {
+    var modal = document.getElementById('proofModal');
+    var img = document.getElementById('proofModalImg');
+    modal.style.display = 'none';
+    img.src = '';
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeProofModal();
+    }
+});
+document.getElementById('proofModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeProofModal();
+    }
+});
+</script>
 
 <!-- Pagination -->
 <?= renderPagination($page, $totalPages, 'advocates.php', $_GET) ?>

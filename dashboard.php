@@ -684,10 +684,16 @@ require_once INCLUDES_PATH . '/header.php';
                             <?php 
                             $dashIdUrl = getAdvocateIdProofUrl($advocate['id_proof'] ?? '');
                             if ($dashIdUrl): 
+                                $dashIsPdf = (bool)preg_match('/\.pdf$/i', $dashIdUrl);
                             ?>
-                                <div style="margin-bottom: 0.75rem;">
-                                    <a href="<?= sanitize($dashIdUrl) ?>" target="_blank" class="btn btn-outline-success btn-sm" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; width: 100%; justify-content: center;">
-                                        <i class="fas fa-file-circle-check me-1"></i> View Uploaded ID Document
+                                <div style="margin-bottom: 0.75rem; text-align: center;">
+                                    <?php if (!$dashIsPdf): ?>
+                                        <a href="<?= sanitize($dashIdUrl) ?>" target="_blank" rel="noopener noreferrer" title="Click to view full image in new tab">
+                                            <img src="<?= sanitize($dashIdUrl) ?>" alt="ID Proof" style="max-width: 100%; max-height: 180px; object-fit: contain; border-radius: 6px; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0,0,0,0.1); background: #fff; margin-bottom: 0.5rem; display: block; margin-left: auto; margin-right: auto;">
+                                        </a>
+                                    <?php endif; ?>
+                                    <a href="<?= sanitize($dashIdUrl) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-outline-success btn-sm" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; width: 100%; justify-content: center;">
+                                        <i class="fas <?= $dashIsPdf ? 'fa-file-pdf' : 'fa-arrow-up-right-from-square' ?> me-1"></i> View Uploaded ID Document
                                     </a>
                                 </div>
                             <?php else: ?>
