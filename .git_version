@@ -1,8 +1,8 @@
 {
-  "commit": "470e1b1",
+  "commit": "1601534",
   "branch": "main",
   "author": "kgauravindia",
-  "date": "2026-10-17 13:46:04",
-  "message": "Add Bulk Action to update status and send SMS for pending advocates in admin",
-  "updated_at": "2026-10-17 13:46:04"
+  "date": "2026-10-17 14:26:00",
+  "message": "Update admin dashboard to show Pending and Active advocates with interactive hub and improved UI",
+  "updated_at": "2026-10-17 14:26:00"
 }
