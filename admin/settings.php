@@ -97,12 +97,35 @@ $youtube = getAdminConfig('youtube', 'https://youtube.com/@MyAdvocateAI');
 $whatsapp = getAdminConfig('whatsapp', 'https://whatsapp.com/channel/0029VaA5aAnL7UVOohTGS31P');
 $olawApiKey = getAdminConfig('olaw_api_key', OLAW_API_KEY);
 $olawApiUrl = getAdminConfig('olaw_api_url', OLAW_API_URL);
+
+// Git status preview
+$gitBranch = 'main';
+$gitCommit = '';
+$repoRoot = dirname(__DIR__);
+if (is_dir($repoRoot . '/.git')) {
+    $gb = @shell_exec('git -C ' . escapeshellarg($repoRoot) . ' rev-parse --abbrev-ref HEAD 2>&1');
+    if ($gb && strpos($gb, 'fatal:') === false) {
+        $gitBranch = trim($gb);
+    }
+    $gc = @shell_exec('git -C ' . escapeshellarg($repoRoot) . ' log -1 --format="%h (%ar)" 2>&1');
+    if ($gc && strpos($gc, 'fatal:') === false) {
+        $gitCommit = trim($gc);
+    }
+}
 ?>
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <div>
         <h1 style="font-size: 1.75rem; color: var(--primary); margin: 0; font-family: var(--font-heading); font-weight: 800;">Portal Settings & Configuration</h1>
         <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0;">Configure platform branding, official social media handles, contact details, and disclaimers.</p>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+        <a href="github_sync.php?action=fetch" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+            <i class="fab fa-github"></i> Fetch from GitHub
+        </a>
+        <a href="github_sync.php" class="btn btn-dark btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+            <i class="fas fa-code-branch"></i> Git Console
+        </a>
     </div>
 </div>
 
@@ -235,8 +258,41 @@ $olawApiUrl = getAdminConfig('olaw_api_url', OLAW_API_URL);
             <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Configuration</button>
         </div>
 
-        <!-- System Information -->
+        <!-- System Information & Git -->
         <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- GitHub Repository & Updates Card -->
+            <div class="admin-card" style="border-top: 4px solid #24292e;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                    <h3 class="admin-card-title" style="margin: 0; font-size: 1.05rem;">
+                        <i class="fab fa-github" style="color: #24292e;"></i> GitHub Repository
+                    </h3>
+                    <span class="badge" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; font-weight: 700; font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 9999px;">
+                        <i class="fas fa-code-branch"></i> <?= htmlspecialchars($gitBranch) ?>
+                    </span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.85rem; margin-bottom: 1.25rem;">
+                    <div>
+                        <span style="color: var(--text-muted); font-size: 0.75rem;">Repository:</span><br>
+                        <strong>kgauravindia/myadvocate</strong>
+                    </div>
+                    <?php if ($gitCommit): ?>
+                        <div>
+                            <span style="color: var(--text-muted); font-size: 0.75rem;">Current Local Commit:</span><br>
+                            <code style="font-size: 0.75rem; background: var(--bg-alt); padding: 0.15rem 0.4rem; border-radius: 3px; color: var(--brand-red); font-weight: 700;"><?= htmlspecialchars($gitCommit) ?></code>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <a href="github_sync.php?action=fetch" class="btn btn-primary btn-sm w-100" style="display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
+                        <i class="fas fa-arrows-rotate"></i> Fetch from GitHub
+                    </a>
+                    <a href="github_sync.php" class="btn btn-outline btn-sm w-100" style="display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
+                        <i class="fab fa-github"></i> Open Git Sync Console
+                    </a>
+                </div>
+            </div>
+
             <div class="admin-card" style="border-top: 4px solid var(--brand-gold);">
                 <h3 class="admin-card-title" style="margin-bottom: 1rem;"><i class="fas fa-server"></i> System Information</h3>
                 <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.875rem;">

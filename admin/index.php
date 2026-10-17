@@ -103,6 +103,7 @@ try {
             <a href="acts.php?action=add" class="btn btn-gold btn-sm"><i class="fas fa-plus-circle"></i> Add Bare Act</a>
             <a href="notices.php?action=add" class="btn btn-dark btn-sm"><i class="fas fa-bullhorn"></i> Post Notice</a>
             <a href="colleges.php?action=add" class="btn btn-outline btn-sm"><i class="fas fa-graduation-cap"></i> Add College</a>
+            <a href="github_sync.php?action=fetch" class="btn btn-outline btn-sm" style="border-color: #24292e; color: #24292e;"><i class="fab fa-github"></i> Fetch from GitHub</a>
         </div>
     </div>
 
@@ -179,6 +180,13 @@ try {
                 <div>
                     <div style="font-weight: 700; font-size: 0.8rem; line-height: 1.1;">XML Sitemaps</div>
                     <small style="font-size: 0.7rem; color: var(--text-muted);">Search Engine SEO</small>
+                </div>
+            </a>
+            <a href="github_sync.php" class="btn btn-outline btn-sm" style="display: flex; align-items: center; justify-content: flex-start; gap: 0.5rem; text-align: left; padding: 0.6rem 0.75rem;">
+                <i class="fab fa-github text-dark"></i>
+                <div>
+                    <div style="font-weight: 700; font-size: 0.8rem; line-height: 1.1;">GitHub Sync</div>
+                    <small style="font-size: 0.7rem; color: var(--text-muted);">Fetch & Pull Code</small>
                 </div>
             </a>
         </div>

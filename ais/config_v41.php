@@ -10,24 +10,24 @@ if(isset($_SESSION['user_id']))
 	$user_id = $_SESSION['user_id'];
 }
 
-$inst_name ="MyAdv India ";
+$inst_name ="My Advocate";
 $inst_tag ="Accurate Advice Authentic Advocate ";
 $inst_address1 ="OfferPlant Technologies Private Limited ";
 $inst_address2 ="Chapra, Bihar 841301";
 $inst_contact ="+91 9430 55 2117";
 $inst_support ="8102930609";
 $inst_email ="help@myadv.in";
-$inst_logo ="/ais/assets/images/logo.png";
-$white_logo ="/ais/assets/images/logo_100.png";
+$inst_logo ="/assets/images/logo_circle.png";
+$white_logo ="/assets/images/logo_circle-bw.png";
 $inst_url ="http://myadv.in";
 $inst_domain ="myadv.in";
 $inst_type ="Organization";
 
-$inst_facebook ='http://facebook.com/myadvindia';
-$inst_twitter ='http://twitter.com/myadvindia';
-$inst_instagram ='http://instagram.com/myadvindia';
-$inst_youtube ='https://www.youtube.com/myadvindia';
-$inst_blog ='https://myadvindia.blogspot.in';
+$inst_facebook ='http://facebook.com/myadvocateai';
+$inst_twitter ='http://twitter.com/myadvocateai';
+$inst_instagram ='http://instagram.com/myadvocateai';
+$inst_youtube ='https://www.youtube.com/myadvocateai';
+$inst_blog ='https://myadvocateai.blogspot.in';
 $inst_app='https://play.google.com/store/apps/details?id=com.offerplant.myadvindia'; 
 $sender_id ="EMYADV"; #EMYADV
 $noreply_email ="noreply@myadv.in";

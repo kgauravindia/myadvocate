@@ -478,6 +478,11 @@ try {
             <div class="admin-nav-section-title">SEO & System</div>
             <ul class="admin-nav">
                 <li>
+                    <a href="github_sync.php" class="admin-nav-link <?= $currentAdminPage === 'github_sync' ? 'active' : '' ?>">
+                        <span class="admin-nav-link-content"><i class="fab fa-github"></i> GitHub Sync & Fetch</span>
+                    </a>
+                </li>
+                <li>
                     <a href="api_tools.php" class="admin-nav-link <?= $currentAdminPage === 'api_tools' ? 'active' : '' ?>">
                         <span class="admin-nav-link-content"><i class="fas fa-network-wired"></i> Legal & Bank APIs</span>
                     </a>
