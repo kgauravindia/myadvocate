@@ -1,8 +1,8 @@
 {
-  "commit": "8ac1117",
+  "commit": "470e1b1",
   "branch": "main",
   "author": "kgauravindia",
-  "date": "2026-10-17 13:29:05",
-  "message": "Clean advocate_edit.php single-place layout, fix State/District cascade, and change SMS to ACTIVE update it in myadv.in",
-  "updated_at": "2026-10-17 13:29:05"
+  "date": "2026-10-17 13:46:04",
+  "message": "Add Bulk Action to update status and send SMS for pending advocates in admin",
+  "updated_at": "2026-10-17 13:46:04"
 }
