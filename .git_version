@@ -1,8 +1,8 @@
 {
-  "commit": "f4decaf",
+  "commit": "e289151",
   "branch": "main",
   "author": "kgauravindia",
-  "date": "2026-10-17 09:29:24",
-  "message": "Add explicit 1-click Update from GitHub repository option across admin tools",
-  "updated_at": "2026-10-17 09:37:00"
+  "date": "2026-10-17 09:58:00",
+  "message": "Fix admin/settings.php fatal error when shell_exec is disabled on online hosting",
+  "updated_at": "2026-10-17 09:58:00"
 }
