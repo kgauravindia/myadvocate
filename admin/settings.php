@@ -406,6 +406,37 @@ if ($canShellExec && is_dir($repoRoot . '/.git')) {
                 </div>
             </div>
 
+            <!-- TRAI DLT & SMS Gateway Configuration -->
+            <div class="admin-card" style="border-top: 4px solid var(--brand-red);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <h3 class="admin-card-title" style="margin: 0;"><i class="fas fa-comment-sms" style="color: var(--brand-red);"></i> DLT SMS Templates</h3>
+                    <span class="badge" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; font-size: 0.75rem;">Active</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.65rem; font-size: 0.825rem;">
+                    <div>
+                        <span style="color: var(--text-muted); font-size: 0.75rem;">Sender ID / Header:</span><br>
+                        <strong><?= defined('SMS_SENDER_ID') ? SMS_SENDER_ID : 'EMYADV' ?></strong>
+                    </div>
+                    <div>
+                        <span style="color: var(--text-muted); font-size: 0.75rem;">DLT Entity ID:</span><br>
+                        <code style="font-size: 0.75rem; background: var(--bg-alt); padding: 0.1rem 0.35rem; border-radius: 3px;">1201159196556488345</code>
+                    </div>
+                    <div style="background: var(--bg-alt); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                        <strong style="color: var(--primary); display: block; margin-bottom: 0.2rem;">1. EMYADV_NEW (OTP / EVC)</strong>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">TE ID: <code><?= defined('SMS_DLT_TE_ID_OTP') ? SMS_DLT_TE_ID_OTP : '1277179178459910610' ?></code></div>
+                        <div style="font-size: 0.7rem; color: #475569; font-style: italic; background: #fff; padding: 0.35rem; border-radius: 4px; border: 1px dashed #cbd5e1;">Dear {#alphanumeric#} , <br> Your EVC / OTP / Password {#alphanumeric#} <br>  <br> Regards <br> EMYADV<br> OfferPlant</div>
+                    </div>
+                    <div style="background: var(--bg-alt); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                        <strong style="color: var(--primary); display: block; margin-bottom: 0.2rem;">2. EMYADV_PLAN (Plan &amp; Verification)</strong>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">TE ID: <code><?= defined('SMS_DLT_TE_ID_PLAN') ? SMS_DLT_TE_ID_PLAN : '1277179181681832015' ?></code></div>
+                        <div style="font-size: 0.7rem; color: #475569; font-style: italic; background: #fff; padding: 0.35rem; border-radius: 4px; border: 1px dashed #cbd5e1;">Dear {#alphanumeric#},<br>Your plan {#alphanumeric#} is {#alphanumeric#} <br>Regards<br>EMYADV<br>OfferPlant</div>
+                        <small style="color: #64748b; font-size: 0.7rem; display: block; margin-top: 0.25rem;">
+                            Status param: <strong>Active</strong> (Approved) or <strong>Not ACTIVE</strong> (Unverified)
+                        </small>
+                    </div>
+                </div>
+            </div>
+
             <div class="admin-card" style="border-top: 4px solid var(--brand-gold);">
                 <h3 class="admin-card-title" style="margin-bottom: 1rem;"><i class="fas fa-server"></i> System Information</h3>
                 <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.875rem;">

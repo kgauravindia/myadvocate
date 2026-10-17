@@ -1,8 +1,8 @@
 {
-  "commit": "0078482",
+  "commit": "8124def",
   "branch": "main",
   "author": "kgauravindia",
-  "date": "2026-10-17 10:27:00",
-  "message": "Set advocate.type to PENDING on registration and add manual verification workflow in Admin",
-  "updated_at": "2026-10-17 10:27:00"
+  "date": "2026-10-17 11:18:00",
+  "message": "Update DLT templates to EMYADV_NEW and EMYADV_PLAN, support Active and Not ACTIVE status SMS",
+  "updated_at": "2026-10-17 11:18:00"
 }

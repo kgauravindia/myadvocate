@@ -29,12 +29,18 @@ if ($actId > 0 && ($action === 'verify' || $action === 'block' || $action === 'r
             $up = $db->prepare("UPDATE advocate SET type = 'BLOCK', status = 'BLOCKED', updated_at = NOW() WHERE id = ?");
             $up->execute([$actId]);
             recordAdvocateProfileUpdate($actId, ['type' => 'Manually blocked via admin directory'], 'admin');
-            $msg = "Advocate #{$actId} has been blocked.";
+            if (function_exists('sendAdvocateProfileNotActiveSMS')) {
+                @sendAdvocateProfileNotActiveSMS($actId);
+            }
+            $msg = "Advocate #{$actId} has been blocked. (DLT SMS: Not ACTIVE sent)";
         } elseif ($action === 'reset_pending') {
             $up = $db->prepare("UPDATE advocate SET type = 'PENDING', updated_at = NOW() WHERE id = ?");
             $up->execute([$actId]);
             recordAdvocateProfileUpdate($actId, ['type' => 'Reset to pending verification'], 'admin');
-            $msg = "Advocate #{$actId} set to pending verification.";
+            if (function_exists('sendAdvocateProfileNotActiveSMS')) {
+                @sendAdvocateProfileNotActiveSMS($actId);
+            }
+            $msg = "Advocate #{$actId} set to pending verification. (DLT SMS: Not ACTIVE sent)";
         }
     } catch (Exception $e) {
         $err = "Action failed: " . $e->getMessage();

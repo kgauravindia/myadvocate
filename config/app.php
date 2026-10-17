@@ -38,7 +38,9 @@ define('OLAW_API_URL', 'https://olaw.in/api.php');
 define('SMS_SENDER_ID', 'EMYADV');
 define('SMS_AUTH_KEY_MSG', 'b0e99bea1fa7d15e27e1c5fd8e3c868');
 define('SMS_AUTH_KEY_SMS', '180367At8cchpCRSTV59ed9c10');
-define('SMS_DLT_TE_ID', '1207173652433489449');
+define('SMS_DLT_TE_ID_OTP', '1277179178459910610');   // EMYADV_NEW (OTP / EVC / Password)
+define('SMS_DLT_TE_ID_PLAN', '1277179181681832015');  // EMYADV_PLAN (Plan / Account status)
+define('SMS_DLT_TE_ID', '1277179178459910610');       // Default DLT TE ID
 
 // Path Constants
 define('ROOT_PATH', dirname(__DIR__));

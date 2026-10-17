@@ -287,8 +287,7 @@ if($token == $api_key)
 					{
 						//$sms = "Dear ". $name .", thanks for joining MyAdvIndia \nYour Password: $passsword \nRegards \nMyAdvIndia \nwww.myadv.in";
                         //$sms="Dear ".$name.", Your mobile verification code / Password is ". $password ." \nRegards \n https://myadv.in | MyAdv India \nOfferPlant"; 	// From 04 Dec 2024 
-                        $sms="Dear ".$name.", \n Your MyAdv India OTP / EVC / Password is: ". $password ." \nVisit https://myadv.in \nRegards \nEMYADV \nOfferPlant";	// From 05 mar 2025 
-						//Dear {#var#} , thanks for joining MyAdvIndia Your Password: {#var#} Regards MyAdvIndia www.myadv.in
+                        $sms="Dear ".$name." , \n Your EVC / OTP / Password ". $password ." \n  \n Regards \n EMYADV\n OfferPlant"; // EMYADV_NEW (1277179178459910610)
 						bulk_msg($mobile, $sms);
 						rtfmail($email, 'Congrats for joining ' .$name , $sms);
 					}
@@ -373,8 +372,7 @@ if($token == $api_key)
 				
 				//$sms = "Dear ".$name.", Your mobile verification code is ".$otp."\nRegards \nMyAdv India \nwww.myadv.in";
                 //$sms="Dear ".$name.", Your mobile verification code / Password is ". $otp ." \nRegards \n https://myadv.in | MyAdv India \nOfferPlant"; 	// From 04 Dec 2024 
-                $sms="Dear ".$name.", \n Your MyAdv India OTP / EVC / Password is: ". $otp ." \nVisit https://myadv.in \nRegards \nEMYADV \nOfferPlant";	// From 05 mar 2025 
-				
+                $sms="Dear ".$name." , \n Your EVC / OTP / Password ". $otp ." \n  \n Regards \n EMYADV\n OfferPlant"; // EMYADV_NEW (1277179178459910610)
 				bulk_msg($mobile, $sms);
 				$res =array('status'=>'success','msg'=>'OTP Sent Successfully','otp'=>$otp);
 				}
@@ -420,7 +418,7 @@ if($token == $api_key)
 					{
 						// $sms = "Dear ". $name ." Your new \nPassword: $passsword \n\nRegards \n$inst_name \nwww.myadv.in";
                         //$sms="Dear ".$name.", Your mobile verification code / Password is ". $passsword ." \nRegards \n https://myadv.in | MyAdv India \nOfferPlant"; 	// From 04 Dec 2024 
-                        $sms="Dear ".$name.", \n Your MyAdv India OTP / EVC / Password is: ". $passsword ." \nVisit https://myadv.in \nRegards \nEMYADV \nOfferPlant";	// From 05 mar 2025 					
+                        $sms="Dear ".$name." , \n Your EVC / OTP / Password ". $passsword ." \n  \n Regards \n EMYADV\n OfferPlant"; // EMYADV_NEW (1277179178459910610)
 						bulk_msg($mobile, $sms);
 						rtfmail($email, $name. ' your MyAdv India profile updated on ' .$updated_on , $sms);
 						

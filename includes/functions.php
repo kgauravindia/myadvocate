@@ -1081,14 +1081,14 @@ function sendSMSMessage(string $mobile, string $message, ?string $dltTeId = null
 
     $authKeyMsg = defined('SMS_AUTH_KEY_MSG') ? SMS_AUTH_KEY_MSG : 'b0e99bea1fa7d15e27e1c5fd8e3c868';
     $senderId   = defined('SMS_SENDER_ID') ? SMS_SENDER_ID : 'EMYADV';
-    $dltTeId    = $dltTeId ?: (defined('SMS_DLT_TE_ID') ? SMS_DLT_TE_ID : '1207173652433489449');
+    $dltTeId    = $dltTeId ?: (defined('SMS_DLT_TE_ID') ? SMS_DLT_TE_ID : '1277179178459910610');
     $authKeySms = defined('SMS_AUTH_KEY_SMS') ? SMS_AUTH_KEY_SMS : '180367At8cchpCRSTV59ed9c10';
 
     $msgEncoded = substr(urlencode($message), 0, 340);
     $mobileWithCountry = '91' . urlencode($mobileClean);
 
     // Primary Gateway: MSG Club (Direct HTTP GET)
-    $urlMsg = "http://msg.morg.in/rest/services/sendSMS/sendGroupSms?AUTH_KEY={$authKeyMsg}&message={$msgEncoded}&senderId={$senderId}&routeId=1&mobileNos={$mobileWithCountry}&smsContentType=english";
+    $urlMsg = "http://msg.morg.in/rest/services/sendSMS/sendGroupSms?AUTH_KEY={$authKeyMsg}&message={$msgEncoded}&senderId={$senderId}&routeId=1&mobileNos={$mobileWithCountry}&smsContentType=english&dltEntityId=1201159196556488345&dltTemplateId={$dltTeId}";
     
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $urlMsg);
@@ -1130,22 +1130,52 @@ function sendSMSMessage(string $mobile, string $message, ?string $dltTeId = null
 }
 
 /**
- * Send OTP SMS using approved DLT template from myadvindia
+ * Send OTP SMS using approved DLT template EMYADV_NEW (1277179178459910610)
  */
 function sendOTPSMS(string $mobile, string $otp, string $name = 'User'): array {
-    $displayName = trim($name) !== '' ? $name : 'User';
-    // Exact DLT template format approved in myadvindia
-    $smsText = "Dear " . $displayName . ", \nYour MyAdv India OTP / EVC / Password is: " . $otp . " \nVisit https://myadv.in \nRegards \nEMYADV \nOfferPlant";
-    return sendSMSMessage($mobile, $smsText);
+    $displayName = trim($name) !== '' ? preg_replace('/[^a-zA-Z0-9 ]/', '', $name) : 'User';
+    if (empty($displayName)) {
+        $displayName = 'User';
+    }
+    // Approved DLT template: EMYADV_NEW (1277179178459910610)
+    // "Dear {#alphanumeric#} , \n Your EVC / OTP / Password {#alphanumeric#} \n  \n Regards \n EMYADV\n OfferPlant"
+    $smsText = "Dear " . $displayName . " , \n Your EVC / OTP / Password " . $otp . " \n  \n Regards \n EMYADV\n OfferPlant";
+    return sendSMSMessage($mobile, $smsText, '1277179178459910610');
 }
 
 /**
- * Send Profile Approval SMS notification to advocate
+ * Send Plan Activation / Profile Approval SMS using approved DLT template EMYADV_PLAN (1277179181681832015)
+ * Template:
+ * "Dear {#alphanumeric#},
+ * Your plan {#alphanumeric#} is {#alphanumeric#} 
+ * Regards
+ * EMYADV
+ * OfferPlant"
  */
-function sendAdvocateProfileApprovedSMS($advocate): array {
+function sendPlanSMS(string $mobile, string $planName = 'Verified', string $status = 'Active', string $name = 'Advocate'): array {
+    $displayName = trim($name) !== '' ? preg_replace('/[^a-zA-Z0-9 ]/', '', $name) : 'Advocate';
+    if (empty($displayName)) {
+        $displayName = 'Advocate';
+    }
+    $cleanPlan = preg_replace('/[^a-zA-Z0-9 ]/', '', $planName) ?: 'Verified';
+    $cleanStatus = preg_replace('/[^a-zA-Z0-9 ]/', '', $status) ?: 'Active';
+
+    // Approved DLT template: EMYADV_PLAN (1277179181681832015)
+    // "Dear {#alphanumeric#},\nYour plan {#alphanumeric#} is {#alphanumeric#} \nRegards\nEMYADV\nOfferPlant"
+    $smsText = "Dear " . $displayName . ",\nYour plan " . $cleanPlan . " is " . $cleanStatus . " \nRegards\nEMYADV\nOfferPlant";
+    $teId = defined('SMS_DLT_TE_ID_PLAN') ? SMS_DLT_TE_ID_PLAN : '1277179181681832015';
+    return sendSMSMessage($mobile, $smsText, $teId);
+}
+
+/**
+ * Send Advocate Plan / Status notification SMS using EMYADV_PLAN
+ * @param int|array $advocate Advocate record or ID
+ * @param string $status e.g. 'Active' or 'Not ACTIVE'
+ */
+function sendAdvocatePlanSMS($advocate, string $status = 'Active'): array {
     $db = getDB();
     if (is_numeric($advocate)) {
-        $stmt = $db->prepare("SELECT id, name, mobile, public_url FROM advocate WHERE id = ? LIMIT 1");
+        $stmt = $db->prepare("SELECT id, name, mobile, plan_type, type, status FROM advocate WHERE id = ? LIMIT 1");
         $stmt->execute([(int)$advocate]);
         $advocate = $stmt->fetch(PDO::FETCH_ASSOC);
     }
@@ -1155,11 +1185,23 @@ function sendAdvocateProfileApprovedSMS($advocate): array {
 
     $mobile = trim((string)$advocate['mobile']);
     $displayName = trim((string)($advocate['name'] ?? '')) ?: 'Advocate';
-    $profileUrl = !empty($advocate['public_url']) ? APP_URL . '/' . ltrim($advocate['public_url'], '/') : APP_URL;
+    $planName = !empty($advocate['plan_type']) ? ucfirst($advocate['plan_type']) : 'Verified';
 
-    $smsText = "Dear " . $displayName . ", \nYour Advocate Profile has been approved & verified on My Advocate. \nView Profile: " . $profileUrl . " \nRegards \nEMYADV \nOfferPlant";
+    return sendPlanSMS($mobile, $planName, $status, $displayName);
+}
 
-    return sendSMSMessage($mobile, $smsText);
+/**
+ * Send Profile Approval SMS notification to advocate (Active)
+ */
+function sendAdvocateProfileApprovedSMS($advocate): array {
+    return sendAdvocatePlanSMS($advocate, 'Active');
+}
+
+/**
+ * Send Not Verified / Not Active SMS notification to advocate (Not ACTIVE)
+ */
+function sendAdvocateProfileNotActiveSMS($advocate): array {
+    return sendAdvocatePlanSMS($advocate, 'Not ACTIVE');
 }
 
 /**
