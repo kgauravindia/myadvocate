@@ -1,8 +1,8 @@
 {
-  "commit": "e289151",
+  "commit": "047953d",
   "branch": "main",
   "author": "kgauravindia",
-  "date": "2026-10-17 09:58:00",
-  "message": "Fix admin/settings.php fatal error when shell_exec is disabled on online hosting",
-  "updated_at": "2026-10-17 09:58:00"
+  "date": "2026-10-17 10:07:00",
+  "message": "Add dynamic Google AdSense, Analytics, and ads.txt management in Admin Settings",
+  "updated_at": "2026-10-17 10:07:00"
 }
