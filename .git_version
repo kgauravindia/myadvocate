@@ -1,8 +1,8 @@
 {
-  "commit": "preview",
+  "commit": "8ac1117",
   "branch": "main",
   "author": "kgauravindia",
-  "date": "2026-10-17 13:28:00",
+  "date": "2026-10-17 13:29:05",
   "message": "Clean advocate_edit.php single-place layout, fix State/District cascade, and change SMS to ACTIVE update it in myadv.in",
-  "updated_at": "2026-10-17 13:28:00"
+  "updated_at": "2026-10-17 13:29:05"
 }
