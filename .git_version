@@ -1,8 +1,8 @@
 {
-  "commit": "047953d",
+  "commit": "0078482",
   "branch": "main",
   "author": "kgauravindia",
-  "date": "2026-10-17 10:07:00",
-  "message": "Add dynamic Google AdSense, Analytics, and ads.txt management in Admin Settings",
-  "updated_at": "2026-10-17 10:07:00"
+  "date": "2026-10-17 10:27:00",
+  "message": "Set advocate.type to PENDING on registration and add manual verification workflow in Admin",
+  "updated_at": "2026-10-17 10:27:00"
 }
