@@ -52,15 +52,22 @@ if ($headerAdvocate) {
     $headerEmail = '';
 }
 
+// Google AdSense & Analytics configuration
+$googleAdsEnabled = function_exists('getSiteConfig') ? getSiteConfig('google_ads_enabled', 'ACTIVE') : 'ACTIVE';
+$googleAdsenseClient = function_exists('getSiteConfig') ? getSiteConfig('google_adsense_client', 'ca-pub-1272970612043134') : 'ca-pub-1272970612043134';
+$googleAnalyticsId = function_exists('getSiteConfig') ? getSiteConfig('google_analytics_id', 'G-4BTK0TMSTG') : 'G-4BTK0TMSTG';
+
 // Determine whether Google AdSense should be loaded
-// Exclude logged-in users (advocates & members), authentication/portal pages, or if $showAds = false
+// Exclude logged-in users (advocates & members), authentication/portal pages, or if $showAds = false or ads disabled
 $adExcludedPages = [
     'login', 'register', 'signin', 'signup',
     'change-password', 'reset-password', 'logout', 'signout',
     'dashboard', 'my-profile', 'member-profile', 'claim-profile'
 ];
 $shouldShowAds = true;
-if (isset($showAds) && $showAds === false) {
+if ($googleAdsEnabled === 'INACTIVE' || $googleAdsEnabled === '0' || $googleAdsEnabled === 'NO') {
+    $shouldShowAds = false;
+} elseif (isset($showAds) && $showAds === false) {
     $shouldShowAds = false;
 } elseif (!empty($_SESSION['advocate_id']) || !empty($_SESSION['member_id'])) {
     $shouldShowAds = false;
@@ -86,18 +93,20 @@ if (isset($showAds) && $showAds === false) {
     <base href="<?= htmlspecialchars($pageBaseUrl) ?>">
     <?php endif; ?>
 
+    <?php if (!empty($googleAnalyticsId)): ?>
     <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4BTK0TMSTG"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=<?= htmlspecialchars($googleAnalyticsId) ?>"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag("js", new Date());
-      gtag("config", "G-4BTK0TMSTG");
+      gtag("config", "<?= htmlspecialchars($googleAnalyticsId) ?>");
     </script>
+    <?php endif; ?>
 
-    <?php if ($shouldShowAds): ?>
+    <?php if ($shouldShowAds && !empty($googleAdsenseClient)): ?>
     <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1272970612043134" crossorigin="anonymous"></script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=<?= htmlspecialchars($googleAdsenseClient) ?>" crossorigin="anonymous"></script>
     <?php endif; ?>
 
     <!-- Open Graph / Facebook -->

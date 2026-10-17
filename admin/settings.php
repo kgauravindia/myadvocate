@@ -69,6 +69,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $olawApiKey = sanitize($_POST['olaw_api_key'] ?? $defaultOlawKey);
     $olawApiUrl = sanitize($_POST['olaw_api_url'] ?? $defaultOlawUrl);
 
+    // Google AdSense & Analytics
+    $googleAdsEnabled = sanitize($_POST['google_ads_enabled'] ?? 'ACTIVE');
+    $googleAdsenseClient = sanitize($_POST['google_adsense_client'] ?? 'ca-pub-1272970612043134');
+    $googleAnalyticsId = sanitize($_POST['google_analytics_id'] ?? 'G-4BTK0TMSTG');
+    $adsTxtContent = $_POST['ads_txt_content'] ?? '';
+
     try {
         setAdminConfig('inst_name', $siteName);
         setAdminConfig('inst_contact', $sitePhone);
@@ -89,7 +95,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         setAdminConfig('olaw_api_key', $olawApiKey);
         setAdminConfig('olaw_api_url', $olawApiUrl);
 
-        $msg = "Portal settings, API configurations, and social media URLs updated successfully.";
+        // Save Google Ads & Analytics
+        setAdminConfig('google_ads_enabled', $googleAdsEnabled);
+        setAdminConfig('google_adsense_client', $googleAdsenseClient);
+        setAdminConfig('google_analytics_id', $googleAnalyticsId);
+
+        // Update ads.txt if provided
+        if ($adsTxtContent !== '') {
+            $adsTxtFile = dirname(__DIR__) . '/ads.txt';
+            @file_put_contents($adsTxtFile, trim($adsTxtContent));
+        }
+
+        $msg = "Portal settings, Google Ads, Analytics, and social media URLs updated successfully.";
     } catch (Throwable $e) {
         $err = "Error updating settings: " . $e->getMessage();
     }
@@ -112,6 +129,14 @@ $youtube = getAdminConfig('youtube', 'https://youtube.com/@MyAdvocateAI');
 $whatsapp = getAdminConfig('whatsapp', 'https://whatsapp.com/channel/0029VaA5aAnL7UVOohTGS31P');
 $olawApiKey = getAdminConfig('olaw_api_key', $defaultOlawKey);
 $olawApiUrl = getAdminConfig('olaw_api_url', $defaultOlawUrl);
+
+// Google AdSense & Analytics Settings
+$googleAdsEnabled = getAdminConfig('google_ads_enabled', 'ACTIVE');
+$googleAdsenseClient = getAdminConfig('google_adsense_client', 'ca-pub-1272970612043134');
+$googleAnalyticsId = getAdminConfig('google_analytics_id', 'G-4BTK0TMSTG');
+
+$adsTxtFile = dirname(__DIR__) . '/ads.txt';
+$adsTxtContent = file_exists($adsTxtFile) ? @file_get_contents($adsTxtFile) : "google.com, pub-1272970612043134, DIRECT, f08c47fec0942fa0";
 
 // Git & Deployment Version Preview (Safe for both CLI & Cloud Online Hosting)
 $gitBranch = 'main';
@@ -276,6 +301,49 @@ if ($canShellExec && is_dir($repoRoot . '/.git')) {
                     Used for Bank IFSC, Postal PIN Codes, Bare Acts, and NIC lookups. 
                     <a href="api_tools.php" style="color: var(--brand-red); font-weight: 700; text-decoration: none;">Open Live API Tools &rsaquo;</a>
                 </small>
+            </div>
+
+            <hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid var(--border-color);">
+
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem;">
+                <h3 class="admin-card-title" style="margin: 0;">
+                    <i class="fab fa-google" style="color: #4285f4;"></i> Google AdSense, Analytics & Monetization
+                </h3>
+                <span class="badge" style="background: <?= $googleAdsEnabled === 'ACTIVE' ? '#ecfdf5' : '#fef2f2' ?>; color: <?= $googleAdsEnabled === 'ACTIVE' ? '#059669' : '#dc2626' ?>; border: 1px solid <?= $googleAdsEnabled === 'ACTIVE' ? '#a7f3d0' : '#fecaca' ?>; font-weight: 700; font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 9999px;">
+                    <i class="fas fa-circle" style="font-size: 0.5rem; vertical-align: middle;"></i> <?= $googleAdsEnabled === 'ACTIVE' ? 'Ads Active' : 'Ads Paused' ?>
+                </span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="filter-group">
+                    <label class="filter-label">Google AdSense Status</label>
+                    <select name="google_ads_enabled" class="filter-input">
+                        <option value="ACTIVE" <?= $googleAdsEnabled === 'ACTIVE' ? 'selected' : '' ?>>Enabled (Active on all eligible public pages)</option>
+                        <option value="INACTIVE" <?= $googleAdsEnabled === 'INACTIVE' ? 'selected' : '' ?>>Disabled / Paused (No ads displayed)</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Google AdSense Publisher / Client ID</label>
+                    <input type="text" name="google_adsense_client" class="filter-input" value="<?= sanitize($googleAdsenseClient) ?>" placeholder="ca-pub-1272970612043134" required>
+                    <small style="color: var(--text-muted); font-size: 0.75rem;">Client ID format: <code>ca-pub-XXXXXXXXXXXXXXXX</code></small>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Google Analytics (GA4) Measurement ID</label>
+                <input type="text" name="google_analytics_id" class="filter-input" value="<?= sanitize($googleAnalyticsId) ?>" placeholder="G-4BTK0TMSTG">
+                <small style="color: var(--text-muted); font-size: 0.75rem;">Your Google Analytics 4 stream or Google Tag Manager ID (e.g., <code>G-4BTK0TMSTG</code>)</small>
+            </div>
+
+            <div class="filter-group">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <label class="filter-label" style="margin: 0;">Authorized Digital Sellers File (<code>ads.txt</code>)</label>
+                    <a href="../ads.txt" target="_blank" style="font-size: 0.75rem; color: var(--brand-red); font-weight: 600; text-decoration: none;">
+                        <i class="fas fa-arrow-up-right-from-square"></i> Open Live /ads.txt
+                    </a>
+                </div>
+                <textarea name="ads_txt_content" class="filter-input" rows="3" style="font-family: monospace; font-size: 0.85rem;"><?= htmlspecialchars($adsTxtContent) ?></textarea>
+                <small style="color: var(--text-muted); font-size: 0.75rem;">Required for Google AdSense verification. Declares authorized sellers of your ad inventory.</small>
             </div>
 
             <hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid var(--border-color);">
