@@ -11,11 +11,14 @@ $err = '';
 function getAdminConfig($name, $default = '') {
     global $db;
     try {
+        if (!$db) {
+            $db = getDB();
+        }
         $st = $db->prepare("SELECT option_value FROM op_config WHERE option_name = ? LIMIT 1");
         $st->execute([$name]);
         $val = $st->fetchColumn();
-        return $val !== false ? $val : $default;
-    } catch (Exception $e) {
+        return ($val !== false && $val !== null) ? $val : $default;
+    } catch (Throwable $e) {
         return $default;
     }
 }
@@ -23,16 +26,28 @@ function getAdminConfig($name, $default = '') {
 // Helper to set config value
 function setAdminConfig($name, $value) {
     global $db;
-    $st = $db->prepare("SELECT id FROM op_config WHERE option_name = ? LIMIT 1");
-    $st->execute([$name]);
-    if ($st->fetchColumn()) {
-        $up = $db->prepare("UPDATE op_config SET option_value = ?, allow_edit = 'YES', updated_at = NOW() WHERE option_name = ?");
-        $up->execute([$value, $name]);
-    } else {
-        $ins = $db->prepare("INSERT INTO op_config (option_name, option_value, default_value, option_type, status, allow_edit, created_at) VALUES (?, ?, ?, 'SINGLE', 'ACTIVE', 'YES', NOW())");
-        $ins->execute([$name, $value, $value]);
+    try {
+        if (!$db) {
+            $db = getDB();
+        }
+        $st = $db->prepare("SELECT id FROM op_config WHERE option_name = ? LIMIT 1");
+        $st->execute([$name]);
+        if ($st->fetchColumn()) {
+            $up = $db->prepare("UPDATE op_config SET option_value = ?, allow_edit = 'YES', updated_at = NOW() WHERE option_name = ?");
+            $up->execute([$value, $name]);
+        } else {
+            $ins = $db->prepare("INSERT INTO op_config (option_name, option_value, default_value, option_type, status, allow_edit, created_at) VALUES (?, ?, ?, 'SINGLE', 'ACTIVE', 'YES', NOW()) ON DUPLICATE KEY UPDATE option_value = VALUES(option_value), allow_edit = 'YES', updated_at = NOW()");
+            $ins->execute([$name, $value, $value]);
+        }
+    } catch (Throwable $e) {
+        error_log("setAdminConfig error for {$name}: " . $e->getMessage());
+        throw $e;
     }
 }
+
+// Fallback defaults for external API
+$defaultOlawKey = defined('OLAW_API_KEY') ? OLAW_API_KEY : 'OLAW_D776A66967200383A932';
+$defaultOlawUrl = defined('OLAW_API_URL') ? OLAW_API_URL : 'https://olaw.in/api.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $siteName = sanitize($_POST['site_name'] ?? 'MY ADVOCATE');
@@ -51,8 +66,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $telegram = sanitize($_POST['telegram'] ?? '');
     $youtube = sanitize($_POST['youtube'] ?? '');
     $whatsapp = sanitize($_POST['whatsapp'] ?? '');
-    $olawApiKey = sanitize($_POST['olaw_api_key'] ?? OLAW_API_KEY);
-    $olawApiUrl = sanitize($_POST['olaw_api_url'] ?? OLAW_API_URL);
+    $olawApiKey = sanitize($_POST['olaw_api_key'] ?? $defaultOlawKey);
+    $olawApiUrl = sanitize($_POST['olaw_api_url'] ?? $defaultOlawUrl);
 
     try {
         setAdminConfig('inst_name', $siteName);
@@ -75,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         setAdminConfig('olaw_api_url', $olawApiUrl);
 
         $msg = "Portal settings, API configurations, and social media URLs updated successfully.";
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         $err = "Error updating settings: " . $e->getMessage();
     }
 }
@@ -95,21 +110,45 @@ $instagram = getAdminConfig('instagram', 'https://instagram.com/MyAdvocateAI');
 $telegram = getAdminConfig('telegram', 'https://t.me/MyAdvocateAI');
 $youtube = getAdminConfig('youtube', 'https://youtube.com/@MyAdvocateAI');
 $whatsapp = getAdminConfig('whatsapp', 'https://whatsapp.com/channel/0029VaA5aAnL7UVOohTGS31P');
-$olawApiKey = getAdminConfig('olaw_api_key', OLAW_API_KEY);
-$olawApiUrl = getAdminConfig('olaw_api_url', OLAW_API_URL);
+$olawApiKey = getAdminConfig('olaw_api_key', $defaultOlawKey);
+$olawApiUrl = getAdminConfig('olaw_api_url', $defaultOlawUrl);
 
-// Git status preview
+// Git & Deployment Version Preview (Safe for both CLI & Cloud Online Hosting)
 $gitBranch = 'main';
 $gitCommit = '';
 $repoRoot = dirname(__DIR__);
-if (is_dir($repoRoot . '/.git')) {
-    $gb = @shell_exec('git -C ' . escapeshellarg($repoRoot) . ' rev-parse --abbrev-ref HEAD 2>&1');
-    if ($gb && strpos($gb, 'fatal:') === false) {
-        $gitBranch = trim($gb);
+
+// 1. Read .git_version first (Used for zero-CLI online hostings)
+$versionFile = $repoRoot . '/.git_version';
+if (file_exists($versionFile)) {
+    $verData = @json_decode(@file_get_contents($versionFile), true);
+    if (!empty($verData['branch'])) {
+        $gitBranch = $verData['branch'];
     }
-    $gc = @shell_exec('git -C ' . escapeshellarg($repoRoot) . ' log -1 --format="%h (%ar)" 2>&1');
-    if ($gc && strpos($gc, 'fatal:') === false) {
-        $gitCommit = trim($gc);
+    if (!empty($verData['commit'])) {
+        $gitCommit = substr($verData['commit'], 0, 7);
+        if (!empty($verData['updated_at'])) {
+            $gitCommit .= ' (' . date('M j, Y', strtotime($verData['updated_at'])) . ')';
+        }
+    }
+}
+
+// 2. If Git CLI is available and .git directory exists, query live git
+$disabledFns = array_map('trim', explode(',', (string)@ini_get('disable_functions')));
+$canShellExec = function_exists('shell_exec') && !in_array('shell_exec', $disabledFns);
+
+if ($canShellExec && is_dir($repoRoot . '/.git')) {
+    try {
+        $gb = @shell_exec('git -C ' . escapeshellarg($repoRoot) . ' rev-parse --abbrev-ref HEAD 2>&1');
+        if ($gb && strpos($gb, 'fatal:') === false && strpos($gb, 'not recognized') === false) {
+            $gitBranch = trim($gb);
+        }
+        $gc = @shell_exec('git -C ' . escapeshellarg($repoRoot) . ' log -1 --format="%h (%ar)" 2>&1');
+        if ($gc && strpos($gc, 'fatal:') === false && strpos($gc, 'not recognized') === false) {
+            $gitCommit = trim($gc);
+        }
+    } catch (Throwable $e) {
+        // Silently preserve file-based version
     }
 }
 ?>
@@ -312,11 +351,11 @@ if (is_dir($repoRoot . '/.git')) {
                     </div>
                     <div>
                         <span style="color: var(--text-muted);">Server Environment:</span>
-                        <strong>Laragon / Apache</strong>
+                        <strong><?= htmlspecialchars($_SERVER['SERVER_SOFTWARE'] ?? (PHP_OS_FAMILY === 'Windows' ? 'Apache / Windows' : 'Apache / Linux')) ?></strong>
                     </div>
                     <div>
                         <span style="color: var(--text-muted);">App Version:</span>
-                        <strong><?= APP_VERSION ?></strong>
+                        <strong><?= defined('APP_VERSION') ? APP_VERSION : '2.2.8' ?></strong>
                     </div>
                     <div>
                         <span style="color: var(--text-muted);">Brand Theme:</span>
