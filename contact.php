@@ -3,7 +3,7 @@
 require_once __DIR__ . '/config/app.php';
 
 $pageTitle = "Contact Us & Profile Corrections - My Advocate";
-$pageDescription = "Get in touch with the My Advocate team for inquiries, data updates, or grievance redressal.";
+$pageDescription = "Contact the My Advocate support team for directory assistance, advocate profile claiming inquiries, data corrections, and grievance redressal under BCI norms.";
 
 $msg = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

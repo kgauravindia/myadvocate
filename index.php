@@ -3,7 +3,7 @@
 require_once __DIR__ . '/config/app.php';
 
 $pageTitle = "My Advocate - India's Premier Legal Information & Advocate Directory Platform";
-$pageDescription = "Explore India's largest advocate directory, search Bare Acts (BNS, BNSS, BSA), AIBE exam resources, Indian Courts, and Legal Calculators.";
+$pageDescription = "Explore India's premier digital legal directory. Search 161,800+ verified advocates, read latest Bare Acts (BNS, BNSS, BSA), access AIBE prep and court tools.";
 
 $states = getStates();
 $db = getDB();

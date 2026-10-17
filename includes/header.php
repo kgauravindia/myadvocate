@@ -74,7 +74,11 @@ if (isset($showAds) && $showAds === false) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= isset($pageTitle) ? sanitize($pageTitle) . ' | ' . APP_NAME : APP_NAME . ' - ' . APP_TAGLINE ?></title>
-    <meta name="description" content="<?= isset($pageDescription) ? sanitize($pageDescription) : 'Search India\'s digital advocate directory, Bare Acts, AIBE exam prep, Court info, Law Colleges, and Legal Tools on My Advocate.' ?>">
+    <?php
+    $defaultMetaDesc = "Search 161,800+ verified Indian advocates, read latest Bare Acts (BNS, BNSS, BSA), prepare for AIBE exams, check High Court case status, and find law colleges.";
+    $finalMetaDesc = !empty($pageDescription) ? sanitize($pageDescription) : $defaultMetaDesc;
+    ?>
+    <meta name="description" content="<?= $finalMetaDesc ?>">
     <meta name="keywords" content="<?= isset($pageKeywords) ? sanitize($pageKeywords) : 'advocate search, bare acts download, high court case status, law colleges india, legal resources, all india bar examination, aibe prep, vakil search' ?>">
     <meta name="author" content="OfferPlant">
     <link rel="canonical" href="<?= (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]" ?>">
@@ -96,13 +100,11 @@ if (isset($showAds) && $showAds === false) {
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1272970612043134" crossorigin="anonymous"></script>
     <?php endif; ?>
 
-
-
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="<?= (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]" ?>">
     <meta property="og:title" content="<?= isset($pageTitle) ? sanitize($pageTitle) . ' | ' . APP_NAME : APP_NAME . ' - ' . APP_TAGLINE ?>">
-    <meta property="og:description" content="<?= isset($pageDescription) ? sanitize($pageDescription) : 'Search India\'s digital advocate directory, Bare Acts, AIBE exam prep, Court info, Law Colleges, and Legal Tools on My Advocate.' ?>">
+    <meta property="og:description" content="<?= $finalMetaDesc ?>">
     <meta property="og:image" content="<?= APP_URL ?>/assets/images/logo-dark.png">
     <meta property="og:site_name" content="My Advocate">
 
@@ -110,8 +112,53 @@ if (isset($showAds) && $showAds === false) {
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="<?= (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]" ?>">
     <meta property="twitter:title" content="<?= isset($pageTitle) ? sanitize($pageTitle) . ' | ' . APP_NAME : APP_NAME . ' - ' . APP_TAGLINE ?>">
-    <meta property="twitter:description" content="<?= isset($pageDescription) ? sanitize($pageDescription) : 'Search India\'s digital advocate directory, Bare Acts, AIBE exam prep, Court info, Law Colleges, and Legal Tools on My Advocate.' ?>">
+    <meta property="twitter:description" content="<?= $finalMetaDesc ?>">
     <meta property="twitter:image" content="<?= APP_URL ?>/assets/images/logo-dark.png">
+
+    <!-- Schema.org Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://myadv.in/#website",
+          "url": "https://myadv.in/",
+          "name": "My Advocate",
+          "description": "<?= $finalMetaDesc ?>",
+          "publisher": {
+            "@id": "https://myadv.in/#organization"
+          },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://myadv.in/advocate-search-result.php?name={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://myadv.in/#organization",
+          "name": "My Advocate",
+          "url": "https://myadv.in/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://myadv.in/assets/images/logo-circle.png"
+          },
+          "sameAs": [
+            "https://facebook.com/myadvocateai",
+            "https://twitter.com/myadvocateai",
+            "https://instagram.com/myadvocateai",
+            "https://linkedin.com/company/myadvocateai",
+            "https://youtube.com/@myadvocateai",
+            "https://github.com/kgauravindia/myadvocate"
+          ]
+        }
+      ]
+    }
+    </script>
 
     <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

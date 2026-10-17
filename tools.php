@@ -3,7 +3,7 @@
 require_once __DIR__ . '/config/app.php';
 
 $pageTitle = "Legal Tools & Calculators - Court Fee, Limitation & Judicial Reference";
-$pageDescription = "Free online legal utility tools for advocates, litigants, and law students: Court Fee Calculator, Limitation Period Finder, and Date Reference.";
+$pageDescription = "Free online legal utility tools for advocates, litigants, and law students in India: Court Fee Calculator, Limitation Period Finder, and Legal Date References.";
 
 require_once INCLUDES_PATH . '/header.php';
 ?>

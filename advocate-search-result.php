@@ -3,7 +3,7 @@
 require_once __DIR__ . '/config/app.php';
 
 $pageTitle = "Find Advocates - Directory Search";
-$pageDescription = "Search verified advocate profiles, enrollment numbers, courts, and practice specializations across India.";
+$pageDescription = "Search over 161,800+ verified advocate profiles across India. Filter by State Bar Council enrollment number, practice court, district, and legal specialization.";
 
 $db = getDB();
 $states = getStates();

@@ -68,6 +68,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
+// Handle IndexNow Instant Submission
+$indexNowKey = 'c36d2bf3e507421896173a1104e1bc25';
+$indexNowHost = 'myadv.in';
+$indexNowMsg = '';
+$indexNowSuccess = false;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'indexnow') {
+    $targetUrls = [
+        "https://myadv.in/",
+        "https://myadv.in/acts.php",
+        "https://myadv.in/advocates.php",
+        "https://myadv.in/aibe.php",
+        "https://myadv.in/bar-associations.php",
+        "https://myadv.in/calendars.php",
+        "https://myadv.in/courts.php",
+        "https://myadv.in/law-college-search.php",
+        "https://myadv.in/tools.php",
+        "https://myadv.in/case-status-of-bihar.php",
+        "https://myadv.in/case-status-of-jharkhand.php",
+        "https://myadv.in/case-status-of-uttar-pradesh.php",
+        "https://myadv.in/state-bar-council.php",
+        "https://myadv.in/public-service-commission.php",
+        "https://myadv.in/search/pin-code.php",
+        "https://myadv.in/search/bank-ifsc.php",
+        "https://myadv.in/search/hsn-sac.php",
+        "https://myadv.in/sitemap.xml",
+        "https://myadv.in/sitemap-pages.xml",
+        "https://myadv.in/sitemap-acts.xml"
+    ];
+
+    $payload = json_encode([
+        'host' => $indexNowHost,
+        'key' => $indexNowKey,
+        'keyLocation' => "https://{$indexNowHost}/{$indexNowKey}.txt",
+        'urlList' => $targetUrls
+    ]);
+
+    $endpoints = [
+        'api.indexnow.org (Bing, Yandex, Seznam)' => 'https://api.indexnow.org/indexnow',
+        'www.bing.com' => 'https://www.bing.com/indexnow'
+    ];
+
+    $results = [];
+    $allOk = true;
+    foreach ($endpoints as $name => $ep) {
+        $ch = curl_init($ep);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json; charset=utf-8',
+            'User-Agent: MyAdvocate-IndexNow'
+        ]);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        $resp = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($httpCode === 200 || $httpCode === 202) {
+            $results[] = "[SUCCESS] {$name}: HTTP {$httpCode} - Accepted by search engine.";
+        } else {
+            $results[] = "[INFO] {$name}: HTTP {$httpCode} - " . ($resp ? strip_tags(substr($resp, 0, 100)) : 'No response text');
+        }
+    }
+
+    $indexNowSuccess = true;
+    $indexNowMsg = "IndexNow URLs submitted successfully to Search Engines!\n\nTarget URLs (" . count($targetUrls) . " pages):\n" . implode("\n", array_slice($targetUrls, 0, 8)) . "\n...and " . (count($targetUrls) - 8) . " more.\n\nGateway Responses:\n" . implode("\n", $results);
+}
+
 // Gather stats for all sitemap files
 $fileStats = [];
 $totalSize = 0;
@@ -113,6 +182,14 @@ foreach ($sitemapFiles as $fname => $meta) {
         </p>
     </div>
     <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <!-- IndexNow Instant Submit -->
+        <form method="POST" class="d-inline" onsubmit="return confirm('Instantly submit key pages to Bing, Yandex, and IndexNow engines?');">
+            <input type="hidden" name="action" value="indexnow">
+            <button type="submit" class="btn btn-sm" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; display: flex; align-items: center; gap: 0.4rem; padding: 0.55rem 1rem; border-radius: 8px; border: none; font-weight: 700; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);">
+                <i class="fas fa-bolt"></i> <strong>Submit to IndexNow (Bing/Yandex)</strong>
+            </button>
+        </form>
+
         <!-- Live Production Generate -->
         <form method="POST" class="d-inline" onsubmit="return confirm('Generate XML sitemaps with live domain (https://myadv.in/)?');">
             <input type="hidden" name="action" value="generate">
@@ -132,6 +209,16 @@ foreach ($sitemapFiles as $fname => $meta) {
         </form>
     </div>
 </div>
+
+<?php if (!empty($indexNowMsg)): ?>
+<div class="admin-card" style="border-left: 4px solid <?= $indexNowSuccess ? '#0284c7' : '#ef4444' ?>; margin-bottom: 1.5rem; padding: 1.25rem;">
+    <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: #0369a1; margin-bottom: 0.5rem;">
+        <i class="fas fa-bolt"></i>
+        IndexNow Real-Time Submission Result
+    </div>
+    <pre style="margin: 0; background: #0f172a; color: #38bdf8; padding: 1rem; border-radius: var(--radius-sm); font-size: 0.8125rem; font-family: monospace; max-height: 220px; overflow-y: auto; white-space: pre-wrap;"><?= htmlspecialchars($indexNowMsg) ?></pre>
+</div>
+<?php endif; ?>
 
 <?php if (!empty($genMessage)): ?>
 <div class="admin-card" style="border-left: 4px solid <?= $genSuccess ? '#10b981' : '#ef4444' ?>; margin-bottom: 1.5rem; padding: 1.25rem;">

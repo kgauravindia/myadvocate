@@ -3,7 +3,7 @@
 require_once __DIR__ . '/config/app.php';
 
 $pageTitle = "Bar Associations in India - District & High Court Bar Directory";
-$pageDescription = "Explore Bar Associations across India, office bearers, court locations, and practicing members.";
+$pageDescription = "Comprehensive directory of Bar Associations across India. Find active bar associations, office bearers, court locations, contact details, and member advocates.";
 
 $db = getDB();
 $states = getStates();

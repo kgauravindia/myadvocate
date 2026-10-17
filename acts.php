@@ -3,7 +3,7 @@
 require_once __DIR__ . '/config/app.php';
 
 $pageTitle = "Bare Acts Library - Central & State Acts, BNS, BNSS, BSA";
-$pageDescription = "Browse and search complete Indian Bare Acts including the Bharatiya Nyaya Sanhita (BNS), BNSS, BSA, CPC, and Constitution.";
+$pageDescription = "Read and search complete Indian Bare Acts including Bharatiya Nyaya Sanhita (BNS), BNSS, BSA, CPC, and the Constitution of India with instant PDF downloads.";
 
 $db = getDB();
 $searchQuery = sanitize($_GET['q'] ?? $_GET['name'] ?? '');

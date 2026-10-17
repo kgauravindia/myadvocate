@@ -3,7 +3,7 @@
 require_once __DIR__ . '/config/app.php';
 
 $pageTitle = "About My Advocate - India's Digital Legal Information Platform";
-$pageDescription = "Learn about My Advocate (formerly MyAdv India), our mission, verification methodology, and legal resources.";
+$pageDescription = "Learn about My Advocate, India's leading digital advocate directory and legal portal. Discover our verification standards, mission, and legal research tools.";
 
 require_once INCLUDES_PATH . '/header.php';
 ?>

@@ -3,7 +3,7 @@
 require_once __DIR__ . '/config/app.php';
 
 $pageTitle = "Courts in India - Supreme Court, High Courts & District Judiciary Directory";
-$pageDescription = "Browse directory of Indian Courts: Supreme Court of India, 25 High Courts, District Courts, Family Courts, and Special Tribunals.";
+$pageDescription = "Explore the complete directory of Indian Courts: Supreme Court of India, 25 State High Courts, District & Sessions Courts, Family Courts, and Special Tribunals.";
 
 $db = getDB();
 $states = getStates();
