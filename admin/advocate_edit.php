@@ -363,6 +363,43 @@ $practiceAreasList = getAdvocatePracticeAreas();
                 </div>
             </div>
         <?php endif; ?>
+
+        <?php if (!empty($adv['id_proof'])): 
+            $bannerIdUrl = getAdvocateIdProofUrl($adv['id_proof']);
+            $bannerFullIdUrl = (strpos($bannerIdUrl, 'http') === 0) ? $bannerIdUrl : '../' . ltrim($bannerIdUrl, '/');
+            $bannerIsPdf = preg_match('/\.pdf$/i', $bannerIdUrl);
+        ?>
+            <div style="margin-top: 0.85rem; padding: 1rem; background: #fff; border: 1.5px solid #fcd34d; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <div style="font-size: 0.825rem; font-weight: 700; color: #92400e; text-transform: uppercase;">
+                        <i class="fas fa-id-card"></i> Submitted ID Proof / Bar Council Certificate (<code><?= sanitize($adv['id_proof']) ?></code>)
+                    </div>
+                    <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                        <a href="<?= sanitize($bannerFullIdUrl) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="background: #dc2626; border-color: #dc2626; color: #fff; font-size: 0.75rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;">
+                            <i class="fas fa-arrow-up-right-from-square"></i> Open Full Image (New Tab)
+                        </a>
+                        <a href="advocate_edit.php?id=<?= $adv['id'] ?>&quick_action=send_sms_docs" class="btn btn-outline btn-sm" style="font-size: 0.75rem; color: #b45309; border-color: #fcd34d; font-weight: 600;">
+                            <i class="fas fa-comment-sms"></i> Request Clearer Docs
+                        </a>
+                    </div>
+                </div>
+                <div style="text-align: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.75rem;">
+                    <?php if (!$bannerIsPdf): ?>
+                        <a href="<?= sanitize($bannerFullIdUrl) ?>" target="_blank" rel="noopener noreferrer" title="Click to view full image in new tab">
+                            <img src="<?= sanitize($bannerFullIdUrl) ?>" alt="ID Proof" style="max-width: 100%; max-height: 360px; object-fit: contain; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); background: #fff;">
+                        </a>
+                    <?php else: ?>
+                        <div style="padding: 1.5rem 0; color: #dc2626;">
+                            <i class="fas fa-file-pdf" style="font-size: 2.8rem;"></i>
+                            <div style="font-size: 0.85rem; font-weight: 700; margin-top: 0.5rem; color: #334155;">PDF Document</div>
+                            <a href="<?= sanitize($bannerFullIdUrl) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-danger btn-sm" style="margin-top: 0.5rem;">
+                                <i class="fas fa-download"></i> View / Download PDF
+                            </a>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endif; ?>
     </div>
 <?php endif; ?>
 
@@ -473,6 +510,39 @@ $practiceAreasList = getAdvocatePracticeAreas();
                             <a href="advocate_edit.php?id=<?= $adv['id'] ?>&quick_action=send_sms_update" class="btn btn-outline btn-sm" style="font-size: 0.75rem; color: #059669; border-color: #86efac; font-weight: 600;" onclick="return confirm('Send SMS profile update notification?');">
                                 <i class="fas fa-paper-plane"></i> SMS: For Update
                             </a>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <?php if (!empty($adv['id_proof'])): 
+                    $docProofUrl = getAdvocateIdProofUrl($adv['id_proof']);
+                    $docFullUrl = (strpos($docProofUrl, 'http') === 0) ? $docProofUrl : '../' . ltrim($docProofUrl, '/');
+                    $docIsPdf = preg_match('/\.pdf$/i', $docProofUrl);
+                ?>
+                    <div style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 0.85rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; flex-wrap: wrap; gap: 0.5rem;">
+                            <div style="font-size: 0.825rem; font-weight: 700; color: var(--primary);">
+                                <i class="fas fa-id-card" style="color: var(--brand-gold-dark);"></i> Uploaded Bar Council Certificate / ID Proof
+                                <code style="font-size: 0.75rem; margin-left: 0.35rem;"><?= sanitize($adv['id_proof']) ?></code>
+                            </div>
+                            <a href="<?= sanitize($docFullUrl) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-outline-danger btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; font-weight: 600;">
+                                <i class="fas fa-arrow-up-right-from-square"></i> Open Full Image (New Tab)
+                            </a>
+                        </div>
+                        <div style="text-align: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.5rem;">
+                            <?php if (!$docIsPdf): ?>
+                                <a href="<?= sanitize($docFullUrl) ?>" target="_blank" rel="noopener noreferrer" title="Click to view full image in new tab">
+                                    <img src="<?= sanitize($docFullUrl) ?>" alt="Bar Council ID Proof" style="max-width: 100%; max-height: 380px; object-fit: contain; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); background: #fff;">
+                                </a>
+                            <?php else: ?>
+                                <div style="padding: 1.5rem 0; color: #dc2626;">
+                                    <i class="fas fa-file-pdf" style="font-size: 2.8rem;"></i>
+                                    <div style="font-weight: 700; margin-top: 0.5rem; color: #334155;">PDF Document</div>
+                                    <a href="<?= sanitize($docFullUrl) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-danger btn-sm" style="margin-top: 0.5rem;">
+                                        <i class="fas fa-arrow-up-right-from-square"></i> Open PDF (New Tab)
+                                    </a>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 <?php endif; ?>
@@ -724,15 +794,33 @@ $practiceAreasList = getAdvocatePracticeAreas();
                     <?php 
                     $adminIdUrl = getAdvocateIdProofUrl($adv['id_proof'] ?? '');
                     if ($adminIdUrl): 
+                        $adminFullIdUrl = (strpos($adminIdUrl, 'http') === 0) ? $adminIdUrl : '../' . ltrim($adminIdUrl, '/');
+                        $adminIsPdf = preg_match('/\.pdf$/i', $adminIdUrl);
                     ?>
-                        <div style="margin-bottom: 0.5rem;">
-                            <a href="../<?= sanitize($adminIdUrl) ?>" target="_blank" class="btn btn-outline-success btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
-                                <i class="fas fa-file-lines"></i> View Document (<?= sanitize($adv['id_proof']) ?>)
-                            </a>
+                        <div style="margin-bottom: 0.75rem; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 0.6rem; text-align: center;">
+                            <?php if (!$adminIsPdf): ?>
+                                <a href="<?= sanitize($adminFullIdUrl) ?>" target="_blank" rel="noopener noreferrer" title="Click to view full image in new tab">
+                                    <img src="<?= sanitize($adminFullIdUrl) ?>" alt="ID Proof" style="max-width: 100%; max-height: 240px; object-fit: contain; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); background: #fff;">
+                                </a>
+                            <?php else: ?>
+                                <div style="padding: 1.25rem 0; color: #dc2626;">
+                                    <i class="fas fa-file-pdf" style="font-size: 2.5rem;"></i>
+                                    <div style="font-size: 0.75rem; font-weight: 700; margin-top: 0.35rem; color: #475569;">PDF Document</div>
+                                </div>
+                            <?php endif; ?>
+                            <div style="font-size: 0.72rem; color: var(--text-muted); margin: 0.4rem 0; word-break: break-all;">
+                                <code><?= sanitize($adv['id_proof']) ?></code>
+                            </div>
+                            <div style="display: flex; gap: 0.35rem; justify-content: center; flex-wrap: wrap;">
+                                <a href="<?= sanitize($adminFullIdUrl) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-outline-danger btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.6rem;">
+                                    <i class="fas fa-arrow-up-right-from-square"></i> Open Full Image (New Tab)
+                                </a>
+                            </div>
                         </div>
                     <?php else: ?>
-                        <div style="margin-bottom: 0.5rem; font-size: 0.75rem; color: var(--text-muted);">
-                            <i class="fas fa-clock"></i> No ID proof document on file
+                        <div style="margin-bottom: 0.75rem; font-size: 0.75rem; color: var(--text-muted); background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; padding: 0.75rem; text-align: center;">
+                            <i class="fas fa-id-card" style="font-size: 1.25rem; color: #94a3b8; display: block; margin-bottom: 0.25rem;"></i>
+                            No ID proof document on file
                         </div>
                     <?php endif; ?>
                     <input type="file" name="id_proof" accept=".jpg,.jpeg,.png,.webp,.pdf" class="filter-input" style="padding: 0.35rem 0.5rem; font-size: 0.8125rem;">

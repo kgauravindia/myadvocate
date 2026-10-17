@@ -1,8 +1,8 @@
 {
-  "commit": "57a892e",
+  "commit": "preview",
   "branch": "main",
   "author": "kgauravindia",
-  "date": "2026-10-17 12:30:00",
-  "message": "Add verify advocate option via bc.url_1 in new tab across admin (bc.php, advocate_edit.php, advocates.php) and quick SMS for docs/update",
-  "updated_at": "2026-10-17 12:30:00"
+  "date": "2026-10-17 12:35:00",
+  "message": "Render advocate ID proof image directly in page in advocate_edit.php and open in new tab",
+  "updated_at": "2026-10-17 12:35:00"
 }
