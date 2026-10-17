@@ -1,8 +1,8 @@
 {
-  "commit": "preview",
+  "commit": "6ad12bb",
   "branch": "main",
   "author": "kgauravindia",
-  "date": "2026-10-17 12:35:00",
+  "date": "2026-10-17 12:35:15",
   "message": "Render advocate ID proof image directly in page in advocate_edit.php and open in new tab",
-  "updated_at": "2026-10-17 12:35:00"
+  "updated_at": "2026-10-17 12:35:15"
 }
