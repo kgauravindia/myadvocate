@@ -1,8 +1,8 @@
 {
-  "commit": "8124def",
+  "commit": "bd31622",
   "branch": "main",
   "author": "kgauravindia",
-  "date": "2026-10-17 11:18:00",
-  "message": "Update DLT templates to EMYADV_NEW and EMYADV_PLAN, support Active and Not ACTIVE status SMS",
-  "updated_at": "2026-10-17 11:18:00"
+  "date": "2026-10-17 11:25:00",
+  "message": "Support EMYADV_PLAN examples: 'ACTIVE update it' and 'PENDING for Documents' with plan 'Advocate Profile'",
+  "updated_at": "2026-10-17 11:25:00"
 }

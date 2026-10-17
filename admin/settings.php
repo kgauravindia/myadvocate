@@ -431,7 +431,8 @@ if ($canShellExec && is_dir($repoRoot . '/.git')) {
                         <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">TE ID: <code><?= defined('SMS_DLT_TE_ID_PLAN') ? SMS_DLT_TE_ID_PLAN : '1277179181681832015' ?></code></div>
                         <div style="font-size: 0.7rem; color: #475569; font-style: italic; background: #fff; padding: 0.35rem; border-radius: 4px; border: 1px dashed #cbd5e1;">Dear {#alphanumeric#},<br>Your plan {#alphanumeric#} is {#alphanumeric#} <br>Regards<br>EMYADV<br>OfferPlant</div>
                         <small style="color: #64748b; font-size: 0.7rem; display: block; margin-top: 0.25rem;">
-                            Status param: <strong>Active</strong> (Approved) or <strong>Not ACTIVE</strong> (Unverified)
+                            Plan: <strong>Advocate Profile</strong><br>
+                            Status: <strong>ACTIVE update it</strong> (Approved) or <strong>PENDING for Documents</strong> (Pending)
                         </small>
                     </div>
                 </div>

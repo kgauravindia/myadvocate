@@ -32,8 +32,8 @@ if ($quickAction === 'verify' && $adv) {
         $db->prepare("UPDATE advocate SET type = 'ACTIVE', plan_type = 'verified', status = 'ACTIVE', updated_at = NOW() WHERE id = ?")->execute([$id]);
         recordAdvocateProfileUpdate((int)$id, ['type' => 'Manually approved and verified via quick action'], 'admin');
         if (function_exists('sendAdvocatePlanSMS')) {
-            $smsRes = sendAdvocatePlanSMS((int)$id, 'Active');
-            $msg = "Advocate #{$id} has been manually approved and verified! Profile is now active. (DLT SMS: Active sent)";
+            $smsRes = sendAdvocatePlanSMS((int)$id, 'ACTIVE update it', 'Advocate Profile');
+            $msg = "Advocate #{$id} has been manually approved and verified! Profile is now active. (DLT SMS: 'ACTIVE update it' sent)";
         } else {
             $msg = "Advocate #{$id} has been manually approved and verified! Profile is now active.";
         }
@@ -46,12 +46,12 @@ if ($quickAction === 'verify' && $adv) {
 } elseif ($quickAction === 'not_active' && $adv) {
     try {
         $db->prepare("UPDATE advocate SET type = 'PENDING', status = 'PENDING', updated_at = NOW() WHERE id = ?")->execute([$id]);
-        recordAdvocateProfileUpdate((int)$id, ['type' => 'Marked not verified / pending via quick action'], 'admin');
+        recordAdvocateProfileUpdate((int)$id, ['type' => 'Marked pending for documents via quick action'], 'admin');
         if (function_exists('sendAdvocatePlanSMS')) {
-            $smsRes = sendAdvocatePlanSMS((int)$id, 'Not ACTIVE');
-            $msg = "Advocate #{$id} set to Pending / Not Active. (DLT SMS: Not ACTIVE sent)";
+            $smsRes = sendAdvocatePlanSMS((int)$id, 'PENDING for Documents', 'Advocate Profile');
+            $msg = "Advocate #{$id} set to Pending. (DLT SMS: 'PENDING for Documents' sent)";
         } else {
-            $msg = "Advocate #{$id} set to Pending / Not Active.";
+            $msg = "Advocate #{$id} set to Pending.";
         }
         // Refresh
         $stmt->execute([$id]);
@@ -64,8 +64,8 @@ if ($quickAction === 'verify' && $adv) {
         $db->prepare("UPDATE advocate SET type = 'BLOCK', status = 'BLOCKED', updated_at = NOW() WHERE id = ?")->execute([$id]);
         recordAdvocateProfileUpdate((int)$id, ['type' => 'Manually blocked via quick action'], 'admin');
         if (function_exists('sendAdvocatePlanSMS')) {
-            $smsRes = sendAdvocatePlanSMS((int)$id, 'Not ACTIVE');
-            $msg = "Advocate #{$id} has been blocked. (DLT SMS: Not ACTIVE sent)";
+            $smsRes = sendAdvocatePlanSMS((int)$id, 'Not ACTIVE', 'Advocate Profile');
+            $msg = "Advocate #{$id} has been blocked. (DLT SMS: 'Not ACTIVE' sent)";
         } else {
             $msg = "Advocate #{$id} has been blocked.";
         }
@@ -75,18 +75,27 @@ if ($quickAction === 'verify' && $adv) {
     } catch (Exception $e) {
         $err = "Block action failed: " . $e->getMessage();
     }
-} elseif ($quickAction === 'send_sms_active' && $adv) {
+} elseif ($quickAction === 'send_sms_active_update' && $adv) {
     if (function_exists('sendAdvocatePlanSMS')) {
-        $smsRes = sendAdvocatePlanSMS((int)$id, 'Active');
+        $smsRes = sendAdvocatePlanSMS((int)$id, 'ACTIVE update it', 'Advocate Profile');
         if (!empty($smsRes['success'])) {
-            $msg = "Active plan SMS (EMYADV_PLAN) dispatched successfully to " . sanitize($adv['mobile'] ?: '') . ".";
+            $msg = "Plan SMS ('ACTIVE update it') dispatched successfully to " . sanitize($adv['mobile'] ?: '') . ".";
+        } else {
+            $err = "SMS send failed: " . ($smsRes['message'] ?? 'Gateway response error');
+        }
+    }
+} elseif ($quickAction === 'send_sms_pending_docs' && $adv) {
+    if (function_exists('sendAdvocatePlanSMS')) {
+        $smsRes = sendAdvocatePlanSMS((int)$id, 'PENDING for Documents', 'Advocate Profile');
+        if (!empty($smsRes['success'])) {
+            $msg = "Plan SMS ('PENDING for Documents') dispatched successfully to " . sanitize($adv['mobile'] ?: '') . ".";
         } else {
             $err = "SMS send failed: " . ($smsRes['message'] ?? 'Gateway response error');
         }
     }
 } elseif ($quickAction === 'send_sms_not_active' && $adv) {
     if (function_exists('sendAdvocatePlanSMS')) {
-        $smsRes = sendAdvocatePlanSMS((int)$id, 'Not ACTIVE');
+        $smsRes = sendAdvocatePlanSMS((int)$id, 'Not ACTIVE', 'Advocate Profile');
         if (!empty($smsRes['success'])) {
             $msg = "Not ACTIVE plan SMS (EMYADV_PLAN) dispatched successfully to " . sanitize($adv['mobile'] ?: '') . ".";
         } else {
@@ -213,23 +222,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // Trigger DLT SMS notification (Template: EMYADV_PLAN, 1277179181681832015)
-        // If advocate is verified/active -> Status is "Active"
-        // If advocate is NOT verified (PENDING, BLOCK, etc.) -> Status is "Not ACTIVE"
+        // e.g.: "Dear Kumar, Your plan Advocate Profile is PENDING for Documents Regards EMYADV OfferPlant"
+        // or:   "Dear Singh, Your plan Advocate Profile is ACTIVE update it Regards EMYADV OfferPlant"
         $isVerifiedNow = in_array(strtoupper(trim($statusType)), ['ACTIVE', 'VERIFIED']);
         $wasVerified = in_array(strtoupper(trim($adv['type'] ?? '')), ['ACTIVE', 'VERIFIED']);
         $sendSmsRequested = !empty($_POST['send_status_sms']) || !empty($_POST['send_approval_sms']);
+        $customSmsStatus = sanitize($_POST['sms_status_custom'] ?? '');
 
         if ($sendSmsRequested || ($wasVerified !== $isVerifiedNow)) {
-            if ($isVerifiedNow) {
-                $smsRes = sendAdvocatePlanSMS((int)$id, 'Active');
-                if (!empty($smsRes['success'])) {
-                    $msg .= " DLT Plan SMS (Status: Active) dispatched to advocate mobile.";
-                }
+            if (!empty($customSmsStatus)) {
+                $statusMsg = $customSmsStatus;
+            } elseif ($isVerifiedNow) {
+                $statusMsg = 'ACTIVE update it';
             } else {
-                $smsRes = sendAdvocatePlanSMS((int)$id, 'Not ACTIVE');
-                if (!empty($smsRes['success'])) {
-                    $msg .= " DLT Plan SMS (Status: Not ACTIVE) dispatched to advocate mobile.";
-                }
+                $statusMsg = 'PENDING for Documents';
+            }
+            $smsRes = sendAdvocatePlanSMS((int)$id, $statusMsg, 'Advocate Profile');
+            if (!empty($smsRes['success'])) {
+                $msg .= " DLT Plan SMS (Status: {$statusMsg}) dispatched to advocate mobile.";
             }
         }
         
@@ -305,14 +315,14 @@ $practiceAreasList = getAdvocatePracticeAreas();
             <p style="color: #78350f; font-size: 0.875rem; margin: 0;">This advocate profile registered on the portal and requires manual review of their Bar Council enrollment credentials.</p>
         </div>
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-            <a href="advocate_edit.php?id=<?= $adv['id'] ?>&quick_action=verify" class="btn btn-primary btn-sm" onclick="return confirm('Manually verify and activate this advocate profile? (Sends DLT SMS: Active)');" style="background: #059669; border-color: #059669; font-weight: 700; padding: 0.45rem 1rem;">
-                <i class="fas fa-circle-check"></i> Approve &amp; Verify (SMS: Active)
+            <a href="advocate_edit.php?id=<?= $adv['id'] ?>&quick_action=verify" class="btn btn-primary btn-sm" onclick="return confirm('Manually verify and approve advocate? (Sends: Your plan Advocate Profile is ACTIVE update it)');" style="background: #059669; border-color: #059669; font-weight: 700; padding: 0.45rem 1rem;">
+                <i class="fas fa-circle-check"></i> Approve (ACTIVE update it)
             </a>
-            <a href="advocate_edit.php?id=<?= $adv['id'] ?>&quick_action=not_active" class="btn btn-outline btn-sm" onclick="return confirm('Keep as Pending / Not Active and notify advocate? (Sends DLT SMS: Not ACTIVE)');" style="color: #b45309; border-color: #fcd34d; font-weight: 600; padding: 0.45rem 0.85rem;">
-                <i class="fas fa-clock"></i> Keep Pending (SMS: Not ACTIVE)
+            <a href="advocate_edit.php?id=<?= $adv['id'] ?>&quick_action=not_active" class="btn btn-outline btn-sm" onclick="return confirm('Keep Pending and request documents? (Sends: Your plan Advocate Profile is PENDING for Documents)');" style="color: #b45309; border-color: #fcd34d; font-weight: 600; padding: 0.45rem 0.85rem;">
+                <i class="fas fa-clock"></i> Keep Pending (PENDING for Docs)
             </a>
-            <a href="advocate_edit.php?id=<?= $adv['id'] ?>&quick_action=block" class="btn btn-outline btn-sm" onclick="return confirm('Block/reject this applicant profile? (Sends DLT SMS: Not ACTIVE)');" style="color: #dc2626; border-color: #fca5a5; font-weight: 600; padding: 0.45rem 0.85rem;">
-                <i class="fas fa-ban"></i> Block (SMS: Not ACTIVE)
+            <a href="advocate_edit.php?id=<?= $adv['id'] ?>&quick_action=block" class="btn btn-outline btn-sm" onclick="return confirm('Block/reject profile? (Sends: Your plan Advocate Profile is Not ACTIVE)');" style="color: #dc2626; border-color: #fca5a5; font-weight: 600; padding: 0.45rem 0.85rem;">
+                <i class="fas fa-ban"></i> Block (Not ACTIVE)
             </a>
         </div>
     </div>
@@ -583,15 +593,33 @@ $practiceAreasList = getAdvocatePracticeAreas();
                     </div>
                     <label style="font-size: 0.8125rem; display: flex; align-items: flex-start; gap: 0.4rem; cursor: pointer; margin: 0 0 0.5rem 0; color: #334155; font-weight: 600;">
                         <input type="checkbox" name="send_status_sms" value="1" <?= (($adv['type'] ?? '') === 'PENDING' ? 'checked' : '') ?> style="margin-top: 0.15rem;">
-                        <span>Send DLT SMS on save<br><small style="font-weight: 400; color: var(--text-muted);">Sends <strong>Active</strong> if verified, or <strong>Not ACTIVE</strong> if unverified</small></span>
+                        <span>Send DLT SMS on save</span>
                     </label>
-                    <div style="display: flex; gap: 0.35rem; border-top: 1px dashed #cbd5e1; padding-top: 0.5rem;">
-                        <a href="advocate_edit.php?id=<?= $adv['id'] ?>&quick_action=send_sms_active" class="btn btn-outline btn-sm" style="font-size: 0.7rem; padding: 0.25rem 0.5rem; color: #059669; border-color: #86efac; flex: 1; text-align: center;" onclick="return confirm('Send DLT Plan SMS (Active) to <?= htmlspecialchars(addslashes($adv['mobile'] ?: '')) ?>?');">
-                            <i class="fas fa-paper-plane"></i> SMS: Active
-                        </a>
-                        <a href="advocate_edit.php?id=<?= $adv['id'] ?>&quick_action=send_sms_not_active" class="btn btn-outline btn-sm" style="font-size: 0.7rem; padding: 0.25rem 0.5rem; color: #dc2626; border-color: #fca5a5; flex: 1; text-align: center;" onclick="return confirm('Send DLT Plan SMS (Not ACTIVE) to <?= htmlspecialchars(addslashes($adv['mobile'] ?: '')) ?>?');">
-                            <i class="fas fa-paper-plane"></i> SMS: Not ACTIVE
-                        </a>
+                    <div style="margin-bottom: 0.5rem;">
+                        <label style="font-size: 0.75rem; color: #475569; font-weight: 600; display: block; margin-bottom: 0.2rem;">Plan Status Message Variable:</label>
+                        <select name="sms_status_custom" class="filter-select" style="font-size: 0.75rem; padding: 0.3rem 0.5rem;">
+                            <option value="ACTIVE update it" <?= (($adv['type'] ?? '') === 'ACTIVE' || ($adv['type'] ?? '') === 'VERIFIED') ? 'selected' : '' ?>>ACTIVE update it (Approved)</option>
+                            <option value="PENDING for Documents" <?= (($adv['type'] ?? '') === 'PENDING') ? 'selected' : '' ?>>PENDING for Documents (Under Review)</option>
+                            <option value="Not ACTIVE" <?= (($adv['type'] ?? '') === 'BLOCK') ? 'selected' : '' ?>>Not ACTIVE (Suspended/Unverified)</option>
+                            <option value="ACTIVE">ACTIVE</option>
+                        </select>
+                        <small style="color: var(--text-muted); font-size: 0.68rem; display: block; margin-top: 0.2rem;">
+                            Sends: <em>"Dear <?= sanitize($adv['name'] ?: 'User') ?>, Your plan Advocate Profile is <strong>{Status}</strong> Regards EMYADV OfferPlant"</em>
+                        </small>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.35rem; border-top: 1px dashed #cbd5e1; padding-top: 0.5rem;">
+                        <div style="font-size: 0.7rem; color: #64748b; font-weight: 600;">Instant SMS Triggers:</div>
+                        <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
+                            <a href="advocate_edit.php?id=<?= $adv['id'] ?>&quick_action=send_sms_active_update" class="btn btn-outline btn-sm" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; color: #059669; border-color: #86efac; flex: 1; text-align: center;" onclick="return confirm('Send DLT SMS: ACTIVE update it?');">
+                                <i class="fas fa-paper-plane"></i> ACTIVE update it
+                            </a>
+                            <a href="advocate_edit.php?id=<?= $adv['id'] ?>&quick_action=send_sms_pending_docs" class="btn btn-outline btn-sm" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; color: #d97706; border-color: #fcd34d; flex: 1; text-align: center;" onclick="return confirm('Send DLT SMS: PENDING for Documents?');">
+                                <i class="fas fa-paper-plane"></i> PENDING for Docs
+                            </a>
+                            <a href="advocate_edit.php?id=<?= $adv['id'] ?>&quick_action=send_sms_not_active" class="btn btn-outline btn-sm" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; color: #dc2626; border-color: #fca5a5; flex: 1; text-align: center;" onclick="return confirm('Send DLT SMS: Not ACTIVE?');">
+                                <i class="fas fa-paper-plane"></i> Not ACTIVE
+                            </a>
+                        </div>
                     </div>
                 </div>
 

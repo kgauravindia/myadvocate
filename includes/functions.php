@@ -1152,13 +1152,13 @@ function sendOTPSMS(string $mobile, string $otp, string $name = 'User'): array {
  * EMYADV
  * OfferPlant"
  */
-function sendPlanSMS(string $mobile, string $planName = 'Verified', string $status = 'Active', string $name = 'Advocate'): array {
+function sendPlanSMS(string $mobile, string $planName = 'Advocate Profile', string $status = 'ACTIVE update it', string $name = 'Advocate'): array {
     $displayName = trim($name) !== '' ? preg_replace('/[^a-zA-Z0-9 ]/', '', $name) : 'Advocate';
     if (empty($displayName)) {
         $displayName = 'Advocate';
     }
-    $cleanPlan = preg_replace('/[^a-zA-Z0-9 ]/', '', $planName) ?: 'Verified';
-    $cleanStatus = preg_replace('/[^a-zA-Z0-9 ]/', '', $status) ?: 'Active';
+    $cleanPlan = preg_replace('/[^a-zA-Z0-9 ]/', '', $planName) ?: 'Advocate Profile';
+    $cleanStatus = preg_replace('/[^a-zA-Z0-9 ]/', '', $status) ?: 'ACTIVE update it';
 
     // Approved DLT template: EMYADV_PLAN (1277179181681832015)
     // "Dear {#alphanumeric#},\nYour plan {#alphanumeric#} is {#alphanumeric#} \nRegards\nEMYADV\nOfferPlant"
@@ -1170,9 +1170,10 @@ function sendPlanSMS(string $mobile, string $planName = 'Verified', string $stat
 /**
  * Send Advocate Plan / Status notification SMS using EMYADV_PLAN
  * @param int|array $advocate Advocate record or ID
- * @param string $status e.g. 'Active' or 'Not ACTIVE'
+ * @param string $status e.g. 'ACTIVE update it', 'PENDING for Documents', 'Not ACTIVE'
+ * @param string $planName e.g. 'Advocate Profile'
  */
-function sendAdvocatePlanSMS($advocate, string $status = 'Active'): array {
+function sendAdvocatePlanSMS($advocate, string $status = 'ACTIVE update it', string $planName = 'Advocate Profile'): array {
     $db = getDB();
     if (is_numeric($advocate)) {
         $stmt = $db->prepare("SELECT id, name, mobile, plan_type, type, status FROM advocate WHERE id = ? LIMIT 1");
@@ -1185,23 +1186,23 @@ function sendAdvocatePlanSMS($advocate, string $status = 'Active'): array {
 
     $mobile = trim((string)$advocate['mobile']);
     $displayName = trim((string)($advocate['name'] ?? '')) ?: 'Advocate';
-    $planName = !empty($advocate['plan_type']) ? ucfirst($advocate['plan_type']) : 'Verified';
+    $cleanPlan = !empty($planName) ? $planName : 'Advocate Profile';
 
-    return sendPlanSMS($mobile, $planName, $status, $displayName);
+    return sendPlanSMS($mobile, $cleanPlan, $status, $displayName);
 }
 
 /**
- * Send Profile Approval SMS notification to advocate (Active)
+ * Send Profile Approval SMS notification to advocate (ACTIVE update it)
  */
 function sendAdvocateProfileApprovedSMS($advocate): array {
-    return sendAdvocatePlanSMS($advocate, 'Active');
+    return sendAdvocatePlanSMS($advocate, 'ACTIVE update it', 'Advocate Profile');
 }
 
 /**
- * Send Not Verified / Not Active SMS notification to advocate (Not ACTIVE)
+ * Send Not Verified / Pending SMS notification to advocate (PENDING for Documents or Not ACTIVE)
  */
-function sendAdvocateProfileNotActiveSMS($advocate): array {
-    return sendAdvocatePlanSMS($advocate, 'Not ACTIVE');
+function sendAdvocateProfileNotActiveSMS($advocate, string $status = 'PENDING for Documents'): array {
+    return sendAdvocatePlanSMS($advocate, $status, 'Advocate Profile');
 }
 
 /**
