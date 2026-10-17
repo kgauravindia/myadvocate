@@ -135,23 +135,46 @@ document.addEventListener('DOMContentLoaded', () => {
             targetDistrict.innerHTML = '<option value="">Loading districts...</option>';
 
             if (!stateCode) {
-                targetDistrict.innerHTML = '<option value="">All Districts</option>';
+                targetDistrict.innerHTML = '<option value="">Select District</option>';
                 return;
             }
 
-            fetch(`api/get_districts.php?state=${encodeURIComponent(stateCode)}`)
-                .then(res => res.json())
+            const inAdmin = window.location.pathname.indexOf('/admin/') !== -1;
+            const apiUrl = inAdmin ? `../api/get_districts.php?state=${encodeURIComponent(stateCode)}` : `api/get_districts.php?state=${encodeURIComponent(stateCode)}`;
+
+            fetch(apiUrl)
+                .then(res => {
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    return res.json();
+                })
                 .then(data => {
-                    let html = '<option value="">All Districts</option>';
-                    if (Array.isArray(data)) {
+                    let html = '<option value="">Select District</option>';
+                    if (Array.isArray(data) && data.length > 0) {
                         data.forEach(d => {
                             html += `<option value="${d.code}">${d.name}</option>`;
                         });
+                    } else {
+                        html = '<option value="">No districts found</option>';
                     }
                     targetDistrict.innerHTML = html;
                 })
                 .catch(() => {
-                    targetDistrict.innerHTML = '<option value="">All Districts</option>';
+                    // Fallback try alternate relative url
+                    const altUrl = inAdmin ? `api/get_districts.php?state=${encodeURIComponent(stateCode)}` : `../api/get_districts.php?state=${encodeURIComponent(stateCode)}`;
+                    fetch(altUrl)
+                        .then(r => r.json())
+                        .then(data => {
+                            let html = '<option value="">Select District</option>';
+                            if (Array.isArray(data) && data.length > 0) {
+                                data.forEach(d => {
+                                    html += `<option value="${d.code}">${d.name}</option>`;
+                                });
+                            }
+                            targetDistrict.innerHTML = html;
+                        })
+                        .catch(() => {
+                            targetDistrict.innerHTML = '<option value="">Select District</option>';
+                        });
                 });
         });
     });

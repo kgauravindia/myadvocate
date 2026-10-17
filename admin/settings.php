@@ -432,7 +432,7 @@ if ($canShellExec && is_dir($repoRoot . '/.git')) {
                         <div style="font-size: 0.7rem; color: #475569; font-style: italic; background: #fff; padding: 0.35rem; border-radius: 4px; border: 1px dashed #cbd5e1;">Dear {#alphanumeric#},<br>Your plan {#alphanumeric#} is {#alphanumeric#} <br>Regards<br>EMYADV<br>OfferPlant</div>
                         <small style="color: #64748b; font-size: 0.7rem; display: block; margin-top: 0.25rem;">
                             Plan: <strong>Advocate Profile</strong><br>
-                            Status: <strong>ACTIVE update it</strong> (Approved) or <strong>PENDING for Documents</strong> (Pending)
+                            Status: <strong>ACTIVE update it in myadv.in</strong> (Approved) or <strong>PENDING for Documents</strong> (Pending)
                         </small>
                     </div>
                 </div>
