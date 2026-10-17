@@ -1347,6 +1347,12 @@ a:hover {
     border: 1px solid #d1d5db;
 }
 
+.badge-pending {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+}
+
 /* Practice Tags */
 .practice-tags {
     display: flex;

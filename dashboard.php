@@ -352,6 +352,18 @@ require_once INCLUDES_PATH . '/header.php';
         </div>
     <?php endif; ?>
 
+    <?php if (strtoupper(trim((string)($advocate['type'] ?? ''))) === 'PENDING'): ?>
+        <div class="stat-box" style="margin-bottom: 1.5rem; background: #fffbeb; border: 1px solid #fde68a; color: #92400e; padding: 1rem 1.25rem; border-radius: var(--radius-md); display: flex; align-items: flex-start; gap: 0.85rem;">
+            <i class="fas fa-clock" style="color: #f59e0b; font-size: 1.35rem; margin-top: 0.15rem; flex-shrink: 0;"></i>
+            <div>
+                <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.2rem; color: #78350f;">Profile Under Manual Verification</div>
+                <div style="font-size: 0.875rem; color: #92400e; line-height: 1.45;">
+                    Your advocate registration has been recorded and is currently awaiting manual authentication by our administration team. Your dashboard tools remain operational, and your verified badge will activate upon approval.
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <!-- ADVOCATE INDEX COMPLETION HERO CARD -->
     <div class="adv-index-meter-box" style="margin-bottom: 1.75rem; border-top: 4px solid <?= $advIndex['color'] ?>; background: #ffffff; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 1.25rem 1.5rem;">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.75rem;">

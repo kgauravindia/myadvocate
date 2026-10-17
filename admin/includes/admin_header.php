@@ -11,13 +11,15 @@ $currentAdminPage = basename($_SERVER['PHP_SELF'], '.php');
 $adminName = $_SESSION['admin_name'] ?? 'Administrator';
 $adminRole = $_SESSION['admin_role'] ?? 'ADMIN';
 
-// Quick counter for pending grievances
+// Quick counter for pending grievances & verifications
 $pendingContactsCount = 0;
 $pendingChangeRequestsCount = 0;
+$pendingAdvocatesCount = 0;
 try {
     $db = getDB();
     $pendingContactsCount = (int)$db->query("SELECT COUNT(*) FROM contact WHERE status = 'PENDING' OR status = 'NEW' OR status IS NULL OR status = ''")->fetchColumn();
     $pendingChangeRequestsCount = (int)$db->query("SELECT COUNT(*) FROM advocate_change_requests WHERE status = 'PENDING'")->fetchColumn();
+    $pendingAdvocatesCount = (int)$db->query("SELECT COUNT(*) FROM advocate WHERE type = 'PENDING'")->fetchColumn();
 } catch (Exception $e) {}
 ?>
 <!DOCTYPE html>
@@ -350,8 +352,16 @@ try {
             <div class="admin-nav-section-title">Advocates Management</div>
             <ul class="admin-nav">
                 <li>
-                    <a href="advocates.php" class="admin-nav-link <?= in_array($currentAdminPage, ['advocates', 'advocate_edit']) ? 'active' : '' ?>">
+                    <a href="advocates.php" class="admin-nav-link <?= $currentAdminPage === 'advocates' && empty($_GET['type']) ? 'active' : '' ?>">
                         <span class="admin-nav-link-content"><i class="fas fa-user-tie"></i> Manage Advocates</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="advocates.php?type=PENDING" class="admin-nav-link <?= $currentAdminPage === 'advocates' && ($_GET['type'] ?? '') === 'PENDING' ? 'active' : '' ?>">
+                        <span class="admin-nav-link-content"><i class="fas fa-user-clock" style="color: #f59e0b;"></i> Pending Verification</span>
+                        <?php if ($pendingAdvocatesCount > 0): ?>
+                            <span class="admin-badge-count" style="background: #f59e0b;"><?= number_format($pendingAdvocatesCount) ?></span>
+                        <?php endif; ?>
                     </a>
                 </li>
                 <li>

@@ -168,7 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'e_year'        => $eYear,
                         'court'         => $court,
                         'public_url'    => $publicUrl,
-                        'type'          => 'ACTIVE',
+                        'type'          => 'PENDING',
                         'plan_type'     => 'registered',
                         'status'        => 'ACTIVE',
                         'created_at'    => date('Y-m-d H:i:s')
@@ -225,9 +225,9 @@ require_once INCLUDES_PATH . '/header.php';
             <?php if ($success): ?>
                 <div style="background: #f0fdf4; border: 1px solid #86efac; color: #166534; padding: 2rem; border-radius: var(--radius-sm); text-align: center;">
                     <div style="font-size: 2.8rem; margin-bottom: 0.5rem;">🎉</div>
-                    <h3 style="margin-bottom: 0.5rem; font-size: 1.4rem; font-weight: 800; color: #15803d;">Registration Successful!</h3>
+                    <h3 style="margin-bottom: 0.5rem; font-size: 1.4rem; font-weight: 800; color: #15803d;">Registration Submitted!</h3>
                     <p style="font-size: 0.9375rem; margin-bottom: 1.5rem; color: #166534;">
-                        <?= $successType === 'advocate' ? 'Welcome to My Advocate! Your advocate profile has been registered and activated.' : 'Welcome! Your user account has been successfully created and activated.' ?>
+                        <?= $successType === 'advocate' ? 'Welcome to My Advocate! Your advocate registration has been submitted and is currently <strong>Pending Manual Verification</strong> by our administration team. You can access your dashboard now to complete your profile.' : 'Welcome! Your user account has been successfully created and activated.' ?>
                     </p>
                     <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
                         <?php if ($successType === 'advocate'): ?>

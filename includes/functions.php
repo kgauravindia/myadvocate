@@ -124,11 +124,27 @@ function getBarAssociationName(?string $code): string {
 }
 
 function getVerificationBadge(array $advocate): array {
-    $plan = strtolower($advocate['plan_type'] ?? 'basic');
-    $status = strtolower($advocate['type'] ?? 'pending');
-    $isClaimed = !empty($advocate['password']) || $status === 'active' || ($advocate['premium_member'] ?? 0) == 1;
+    $plan = strtolower(trim((string)($advocate['plan_type'] ?? 'basic')));
+    $status = strtolower(trim((string)($advocate['type'] ?? '')));
+    $isClaimed = !empty($advocate['password']) || $status === 'active' || $status === 'verified' || ($advocate['premium_member'] ?? 0) == 1;
 
-    if ($plan === 'verified' || ($advocate['premium_member'] ?? 0) == 1) {
+    if ($status === 'pending') {
+        return [
+            'type' => 'pending',
+            'label' => 'Pending Verification',
+            'badge_class' => 'badge-pending',
+            'icon' => 'fa-clock',
+            'desc' => 'Registration under manual verification'
+        ];
+    } elseif ($status === 'block') {
+        return [
+            'type' => 'blocked',
+            'label' => 'Account Blocked',
+            'badge_class' => 'badge-basic',
+            'icon' => 'fa-ban',
+            'desc' => 'Profile blocked'
+        ];
+    } elseif ($plan === 'verified' || $status === 'verified' || ($advocate['premium_member'] ?? 0) == 1) {
         return [
             'type' => 'verified',
             'label' => 'Verified Advocate',

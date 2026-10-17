@@ -25,6 +25,35 @@ if (!$adv) {
     exit;
 }
 
+// Handle Quick Verification Action via GET
+$quickAction = sanitize($_GET['quick_action'] ?? '');
+if ($quickAction === 'verify' && $adv) {
+    try {
+        $db->prepare("UPDATE advocate SET type = 'ACTIVE', plan_type = 'verified', status = 'ACTIVE', updated_at = NOW() WHERE id = ?")->execute([$id]);
+        recordAdvocateProfileUpdate((int)$id, ['type' => 'Manually approved and verified via quick action'], 'admin');
+        if (function_exists('sendAdvocateProfileApprovedSMS')) {
+            @sendAdvocateProfileApprovedSMS((int)$id);
+        }
+        $msg = "Advocate #{$id} has been manually approved and verified! Profile is now active.";
+        // Refresh
+        $stmt->execute([$id]);
+        $adv = $stmt->fetch();
+    } catch (Exception $e) {
+        $err = "Verification failed: " . $e->getMessage();
+    }
+} elseif ($quickAction === 'block' && $adv) {
+    try {
+        $db->prepare("UPDATE advocate SET type = 'BLOCK', status = 'BLOCKED', updated_at = NOW() WHERE id = ?")->execute([$id]);
+        recordAdvocateProfileUpdate((int)$id, ['type' => 'Manually blocked via quick action'], 'admin');
+        $msg = "Advocate #{$id} has been blocked.";
+        // Refresh
+        $stmt->execute([$id]);
+        $adv = $stmt->fetch();
+    } catch (Exception $e) {
+        $err = "Block action failed: " . $e->getMessage();
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Personal Info
     $name = sanitize($_POST['name'] ?? '');
@@ -211,6 +240,28 @@ $practiceAreasList = getAdvocatePracticeAreas();
 <?php if ($err): ?>
     <div class="stat-box" style="background: #fef2f2; border-color: #fca5a5; color: #b91c1c; font-weight: 600; margin-bottom: 1.5rem;">
         <i class="fas fa-circle-xmark"></i> <?= sanitize($err) ?>
+    </div>
+<?php endif; ?>
+
+<?php if (strtoupper(trim((string)($adv['type'] ?? ''))) === 'PENDING'): ?>
+    <div class="stat-box" style="background: #fffbeb; border: 2px solid #fcd34d; margin-bottom: 1.5rem; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                <span class="badge-verification badge-pending" style="font-size: 0.8rem; padding: 0.3rem 0.65rem;">
+                    <i class="fas fa-clock"></i> PENDING VERIFICATION
+                </span>
+                <strong style="color: #92400e; font-size: 1.05rem;">Manual Verification Required</strong>
+            </div>
+            <p style="color: #78350f; font-size: 0.875rem; margin: 0;">This advocate profile registered on the portal and requires manual review of their Bar Council enrollment credentials.</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="advocate_edit.php?id=<?= $adv['id'] ?>&quick_action=verify" class="btn btn-primary btn-sm" onclick="return confirm('Manually verify and activate this advocate profile?');" style="background: #059669; border-color: #059669; font-weight: 700; padding: 0.45rem 1rem;">
+                <i class="fas fa-circle-check"></i> Approve & Verify Advocate
+            </a>
+            <a href="advocate_edit.php?id=<?= $adv['id'] ?>&quick_action=block" class="btn btn-outline btn-sm" onclick="return confirm('Block/reject this applicant profile?');" style="color: #dc2626; border-color: #fca5a5; font-weight: 600; padding: 0.45rem 0.85rem;">
+                <i class="fas fa-ban"></i> Block Applicant
+            </a>
+        </div>
     </div>
 <?php endif; ?>
 
