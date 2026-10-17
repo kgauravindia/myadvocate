@@ -47,6 +47,101 @@ if ($actId > 0 && ($action === 'verify' || $action === 'block' || $action === 'r
     }
 }
 
+// Handle Bulk Actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    @set_time_limit(300);
+    @ini_set('max_execution_time', '300');
+
+    $bulkAction = sanitize($_POST['bulk_action'] ?? '');
+    $isAllPending = !empty($_POST['bulk_action_all_pending']);
+    $selectedIds = isset($_POST['selected_ids']) && is_array($_POST['selected_ids']) 
+        ? array_filter(array_map('intval', $_POST['selected_ids'])) 
+        : [];
+
+    if ($isAllPending) {
+        $bulkAction = 'all_pending_docs';
+    }
+
+    if (empty($bulkAction)) {
+        $err = "Please select a bulk action to perform.";
+    } elseif (!$isAllPending && empty($selectedIds)) {
+        $err = "Please select at least one advocate using the checkboxes.";
+    } else {
+        try {
+            $processedCount = 0;
+            $smsSuccessCount = 0;
+            $smsFailCount = 0;
+
+            if ($bulkAction === 'all_pending_docs') {
+                $stmtPending = $db->prepare("SELECT id, name, mobile, plan_type, type, status FROM advocate WHERE type = 'PENDING' AND mobile IS NOT NULL AND mobile != '' ORDER BY id DESC LIMIT 150");
+                $stmtPending->execute();
+                $pendingAdvs = $stmtPending->fetchAll(PDO::FETCH_ASSOC);
+
+                foreach ($pendingAdvs as $pAdv) {
+                    $processedCount++;
+                    $res = sendAdvocateProfileNotActiveSMS($pAdv, 'PENDING for Documents');
+                    if (!empty($res['success'])) {
+                        $smsSuccessCount++;
+                    } else {
+                        $smsFailCount++;
+                    }
+                }
+                $msg = "Batch Docs SMS dispatched to {$processedCount} pending advocate(s): {$smsSuccessCount} sent successfully" . ($smsFailCount > 0 ? ", {$smsFailCount} failed." : ".");
+            } elseif (!empty($selectedIds)) {
+                $inClause = implode(',', array_fill(0, count($selectedIds), '?'));
+                $stmtSel = $db->prepare("SELECT id, name, mobile, plan_type, type, status FROM advocate WHERE id IN ($inClause)");
+                $stmtSel->execute($selectedIds);
+                $targetAdvs = $stmtSel->fetchAll(PDO::FETCH_ASSOC);
+
+                if (empty($targetAdvs)) {
+                    $err = "No matching advocate records found for the selected IDs.";
+                } else {
+                    foreach ($targetAdvs as $tAdv) {
+                        $advId = (int)$tAdv['id'];
+                        $processedCount++;
+
+                        if ($bulkAction === 'bulk_sms_docs') {
+                            $res = sendAdvocateProfileNotActiveSMS($tAdv, 'PENDING for Documents');
+                            if (!empty($res['success'])) $smsSuccessCount++; else $smsFailCount++;
+                        } elseif ($bulkAction === 'bulk_sms_update') {
+                            $res = sendAdvocatePlanSMS($tAdv, 'ACTIVE update it in myadv.in');
+                            if (!empty($res['success'])) $smsSuccessCount++; else $smsFailCount++;
+                        } elseif ($bulkAction === 'bulk_approve_sms') {
+                            $up = $db->prepare("UPDATE advocate SET type = 'ACTIVE', plan_type = 'verified', status = 'ACTIVE', updated_at = NOW() WHERE id = ?");
+                            $up->execute([$advId]);
+                            recordAdvocateProfileUpdate($advId, ['type' => 'Bulk verified and approved via admin directory'], 'admin');
+                            $res = sendAdvocatePlanSMS($tAdv, 'ACTIVE update it in myadv.in');
+                            if (!empty($res['success'])) $smsSuccessCount++; else $smsFailCount++;
+                        } elseif ($bulkAction === 'bulk_pending_sms') {
+                            $up = $db->prepare("UPDATE advocate SET type = 'PENDING', updated_at = NOW() WHERE id = ?");
+                            $up->execute([$advId]);
+                            recordAdvocateProfileUpdate($advId, ['type' => 'Bulk reset to pending verification'], 'admin');
+                            $res = sendAdvocateProfileNotActiveSMS($tAdv, 'PENDING for Documents');
+                            if (!empty($res['success'])) $smsSuccessCount++; else $smsFailCount++;
+                        } elseif ($bulkAction === 'bulk_approve_only') {
+                            $up = $db->prepare("UPDATE advocate SET type = 'ACTIVE', plan_type = 'verified', status = 'ACTIVE', updated_at = NOW() WHERE id = ?");
+                            $up->execute([$advId]);
+                            recordAdvocateProfileUpdate($advId, ['type' => 'Bulk approved (no SMS) via admin directory'], 'admin');
+                        } elseif ($bulkAction === 'bulk_block') {
+                            $up = $db->prepare("UPDATE advocate SET type = 'BLOCK', status = 'BLOCKED', updated_at = NOW() WHERE id = ?");
+                            $up->execute([$advId]);
+                            recordAdvocateProfileUpdate($advId, ['type' => 'Bulk blocked via admin directory'], 'admin');
+                        }
+                    }
+
+                    if (in_array($bulkAction, ['bulk_sms_docs', 'bulk_sms_update', 'bulk_approve_sms', 'bulk_pending_sms'])) {
+                        $msg = "Bulk action completed for {$processedCount} advocate(s): {$smsSuccessCount} SMS sent successfully" . ($smsFailCount > 0 ? ", {$smsFailCount} failed." : ".");
+                    } else {
+                        $msg = "Bulk action completed for {$processedCount} advocate(s) successfully.";
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            $err = "Bulk action failed: " . $e->getMessage();
+        }
+    }
+}
+
 // Fetch Global Counts for Quick Filter Pills
 $allCount = 0;
 $pendingCount = 0;
@@ -205,12 +300,52 @@ try {
     </form>
 </div>
 
+<!-- Table & Bulk Actions Form -->
+<form method="POST" action="advocates.php<?= !empty($_SERVER['QUERY_STRING']) ? '?' . htmlspecialchars($_SERVER['QUERY_STRING']) : '' ?>" id="bulkAdvocatesForm" onsubmit="return confirmBulkAction();">
+
+<!-- Bulk Action Toolbar -->
+<div class="stat-box" style="margin-bottom: 1rem; padding: 1rem 1.25rem; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; font-size: 0.875rem; color: #1e293b;">
+            <i class="fas fa-tasks" style="color: var(--primary);"></i>
+            <span>Bulk Actions:</span>
+            <span id="selectedCountBadge" class="badge" style="background: #e2e8f0; color: #475569; font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 9999px;">0 Selected</span>
+        </div>
+        <select name="bulk_action" id="bulkActionSelect" class="filter-select" style="min-width: 260px; height: 38px; font-size: 0.85rem;" onchange="handleBulkSelectChange()">
+            <option value="">-- Choose Bulk Action --</option>
+            <optgroup label="SMS Notifications">
+                <option value="bulk_sms_docs">📨 Send SMS: PENDING for Documents</option>
+                <option value="bulk_sms_update">📨 Send SMS: ACTIVE update it in myadv.in</option>
+            </optgroup>
+            <optgroup label="Status Updates & SMS">
+                <option value="bulk_approve_sms">✅ Approve & Send Active SMS</option>
+                <option value="bulk_pending_sms">⏳ Mark Pending & Send Docs SMS</option>
+            </optgroup>
+            <optgroup label="Status Only (No SMS)">
+                <option value="bulk_approve_only">Approve / Activate (No SMS)</option>
+                <option value="bulk_block">Block Selected</option>
+            </optgroup>
+        </select>
+        <button type="submit" id="applyBulkBtn" name="apply_bulk" class="btn btn-primary btn-sm" style="height: 38px; padding: 0 1rem; display: inline-flex; align-items: center; gap: 0.4rem;" disabled>
+            <i class="fas fa-play"></i> Apply to Selected
+        </button>
+    </div>
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <button type="submit" name="bulk_action_all_pending" value="1" class="btn btn-warning btn-sm" style="height: 38px; background: #f59e0b; border-color: #f59e0b; color: #fff; font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem;" onclick="return confirm('Send PENDING for Documents SMS to ALL pending advocates (up to 150 pending records)?');">
+            <i class="fas fa-paper-plane"></i> Send Docs SMS to All Pending (<?= number_format($pendingCount) ?>)
+        </button>
+    </div>
+</div>
+
 <!-- Table -->
 <div class="stat-box" style="padding: 0; overflow: hidden;">
     <div class="table-responsive">
         <table class="admin-table">
             <thead>
                 <tr>
+                    <th style="width: 40px; text-align: center;">
+                        <input type="checkbox" id="selectAllAdv" title="Select all on this page" style="cursor: pointer; width: 16px; height: 16px;" onchange="toggleSelectAll(this)">
+                    </th>
                     <th>ID</th>
                     <th>Advocate Name</th>
                     <th>Mobile / Email</th>
@@ -228,7 +363,10 @@ try {
                         $advIndex = calculateAdvocateIndex($adv);
                         $isPendingAdv = strtoupper(trim((string)($adv['type'] ?? ''))) === 'PENDING';
                     ?>
-                        <tr style="<?= $isPendingAdv ? 'background: #fffdf5;' : '' ?>">
+                        <tr style="<?= $isPendingAdv ? 'background: #fffdf5;' : '' ?>" id="row_adv_<?= $adv['id'] ?>">
+                            <td style="text-align: center;">
+                                <input type="checkbox" name="selected_ids[]" value="<?= (int)$adv['id'] ?>" class="adv-checkbox" style="cursor: pointer; width: 16px; height: 16px;" onchange="updateSelectedCount()">
+                            </td>
                             <td>#<?= $adv['id'] ?></td>
                             <td>
                                 <strong><a href="advocate_edit.php?id=<?= $adv['id'] ?>"><?= sanitize($adv['name'] ?: 'Unnamed Advocate') ?></a></strong><br>
@@ -302,12 +440,13 @@ try {
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <tr><td colspan="8" style="text-align: center; padding: 3rem; color: var(--text-muted);">No advocates match your search.</td></tr>
+                    <tr><td colspan="9" style="text-align: center; padding: 3rem; color: var(--text-muted);">No advocates match your search.</td></tr>
                 <?php endif; ?>
             </tbody>
         </table>
     </div>
 </div>
+</form>
 
 <!-- ID Proof Lightbox Modal -->
 <div id="proofModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.78); z-index: 9999; align-items: center; justify-content: center; padding: 1rem;">
@@ -338,7 +477,100 @@ try {
     </div>
 </div>
 
+<style>
+.selected-row {
+    background-color: #f0f7ff !important;
+}
+</style>
+
 <script>
+function toggleSelectAll(master) {
+    var checkboxes = document.querySelectorAll('.adv-checkbox');
+    checkboxes.forEach(function(cb) {
+        cb.checked = master.checked;
+        var row = cb.closest('tr');
+        if (row) {
+            if (master.checked) {
+                row.classList.add('selected-row');
+            } else {
+                row.classList.remove('selected-row');
+            }
+        }
+    });
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    var checkedBoxes = document.querySelectorAll('.adv-checkbox:checked');
+    var count = checkedBoxes.length;
+    var totalOnPage = document.querySelectorAll('.adv-checkbox').length;
+    var badge = document.getElementById('selectedCountBadge');
+    var applyBtn = document.getElementById('applyBulkBtn');
+    var selectMaster = document.getElementById('selectAllAdv');
+    var actionSelect = document.getElementById('bulkActionSelect');
+
+    // Also update row highlighting for individually clicked checkboxes
+    document.querySelectorAll('.adv-checkbox').forEach(function(cb) {
+        var row = cb.closest('tr');
+        if (row) {
+            if (cb.checked) {
+                row.classList.add('selected-row');
+            } else {
+                row.classList.remove('selected-row');
+            }
+        }
+    });
+
+    if (badge) {
+        badge.textContent = count + ' Selected';
+        if (count > 0) {
+            badge.style.background = '#dbeafe';
+            badge.style.color = '#1d4ed8';
+            badge.style.fontWeight = '700';
+        } else {
+            badge.style.background = '#e2e8f0';
+            badge.style.color = '#475569';
+            badge.style.fontWeight = 'normal';
+        }
+    }
+
+    if (applyBtn) {
+        var hasAction = actionSelect && actionSelect.value !== '';
+        applyBtn.disabled = !(count > 0 && hasAction);
+    }
+
+    if (selectMaster && totalOnPage > 0) {
+        selectMaster.checked = (count === totalOnPage);
+        selectMaster.indeterminate = (count > 0 && count < totalOnPage);
+    }
+}
+
+function handleBulkSelectChange() {
+    updateSelectedCount();
+}
+
+function confirmBulkAction() {
+    // If clicked the "SMS All Pending" button, onclick handled it
+    if (document.activeElement && document.activeElement.name === 'bulk_action_all_pending') {
+        return true;
+    }
+
+    var actionSelect = document.getElementById('bulkActionSelect');
+    var count = document.querySelectorAll('.adv-checkbox:checked').length;
+
+    if (!actionSelect || !actionSelect.value) {
+        alert('Please select an action from the Bulk Actions dropdown.');
+        return false;
+    }
+    if (count === 0) {
+        alert('Please select at least one advocate checkbox.');
+        return false;
+    }
+
+    var actionText = actionSelect.options[actionSelect.selectedIndex].text;
+    return confirm('Are you sure you want to apply:\n\n"' + actionText + '"\n\nto ' + count + ' selected advocate(s)?');
+}
+
 function openProofModal(url, name, eno, isPdf) {
     var modal = document.getElementById('proofModal');
     var img = document.getElementById('proofModalImg');
