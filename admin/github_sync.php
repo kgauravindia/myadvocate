@@ -147,7 +147,7 @@ $action = $_REQUEST['action'] ?? '';
 $confirmed = isset($_POST['confirm']) && $_POST['confirm'] === 'yes';
 
 if ($action && $hasGit) {
-    // For POST verify CSRF; for GET allow safe 'fetch' and 'status'
+    // For POST verify CSRF; for GET allow safe inspection and confirmed actions
     $validRequest = false;
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($_POST['csrf_token']) && hash_equals($_SESSION['admin_csrf'], $_POST['csrf_token'])) {
@@ -156,7 +156,7 @@ if ($action && $hasGit) {
             $msg = "Invalid or expired CSRF security token.";
             $msgType = "error";
         }
-    } elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && in_array($action, ['fetch', 'status', 'check'])) {
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && in_array($action, ['fetch', 'status', 'check', 'update', 'pull', 'log'])) {
         $validRequest = true;
     }
 
@@ -178,9 +178,9 @@ if ($action && $hasGit) {
                 }
                 break;
 
+            case 'update':
             case 'pull':
-                // Check if user has uncommitted files
-                $safe = true;
+                // Pull latest changes from remote GitHub repository
                 $pullArgs = 'pull ' . escapeshellarg($remoteName) . ' ' . escapeshellarg($currentBranch);
                 $res = executeGit($pullArgs, $repoDir, $gitBin);
                 $executedCommand = $res['cmd'];
@@ -188,10 +188,15 @@ if ($action && $hasGit) {
                 $commandOutput = trim($res['stdout'] . "\n" . $res['stderr']);
 
                 if ($res['code'] === 0) {
-                    $msg = "Successfully pulled and merged latest updates from GitHub!";
-                    $msgType = "success";
+                    if (stripos($commandOutput, 'Already up to date') !== false) {
+                        $msg = "Repository is already up to date with https://github.com/kgauravindia/myadvocate.git ({$currentBranch})!";
+                        $msgType = "info";
+                    } else {
+                        $msg = "Successfully updated codebase from https://github.com/kgauravindia/myadvocate.git ({$currentBranch})!";
+                        $msgType = "success";
+                    }
                 } else {
-                    $msg = "Git pull exited with code {$res['code']}. Conflicts or local modified files may prevent automatic merge.";
+                    $msg = "Git pull exited with code {$res['code']}. If local modified files prevent merge, try 'Stash & Update'.";
                     $msgType = "error";
                 }
                 break;
@@ -334,14 +339,18 @@ if ($remoteUrl) {
     </div>
 
     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <!-- 1-Click Update from GitHub -->
+        <a href="github_sync.php?action=update" class="btn btn-primary btn-sm" onclick="return confirm('Update and pull latest code from https://github.com/kgauravindia/myadvocate.git now?');" style="display: inline-flex; align-items: center; gap: 0.45rem; background: var(--brand-red); border-color: var(--brand-red);">
+            <i class="fas fa-cloud-arrow-down"></i> Update from GitHub
+        </a>
         <!-- Fetch Button (GET quick action) -->
-        <a href="github_sync.php?action=fetch" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;">
-            <i class="fas fa-arrows-rotate"></i> Fetch from GitHub
+        <a href="github_sync.php?action=fetch" class="btn btn-dark btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+            <i class="fas fa-arrows-rotate"></i> Fetch Only
         </a>
         <a href="github_sync.php?action=status" class="btn btn-outline btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;">
             <i class="fas fa-list-check"></i> Check Status
         </a>
-        <a href="github_sync.php?action=log" class="btn btn-dark btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+        <a href="github_sync.php?action=log" class="btn btn-outline btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;">
             <i class="fas fa-code-commit"></i> Commit Log
         </a>
     </div>
@@ -375,17 +384,17 @@ if ($remoteUrl) {
     <!-- GitHub Remote Card -->
     <div class="stat-box" style="border-left: 4px solid #24292e;">
         <div class="stat-label"><i class="fab fa-github" style="color: #24292e;"></i> Remote Repository</div>
-        <div class="stat-value" style="font-size: 1.15rem; color: var(--primary); font-family: var(--font-heading); margin-top: 0.35rem; word-break: break-all;">
+        <div class="stat-value" style="font-size: 1rem; color: var(--primary); font-family: var(--font-heading); margin-top: 0.35rem; word-break: break-all;">
             <?php if ($githubWebUrl): ?>
                 <a href="<?= htmlspecialchars($githubWebUrl) ?>" target="_blank" rel="noopener noreferrer" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;">
-                    <?= htmlspecialchars(basename($githubWebUrl)) ?>
+                    https://github.com/kgauravindia/myadvocate.git
                     <i class="fas fa-arrow-up-right-from-square" style="font-size: 0.75rem; color: var(--brand-red);"></i>
                 </a>
             <?php else: ?>
-                <?= htmlspecialchars($remoteUrl ?: 'No Remote Configured') ?>
+                <?= htmlspecialchars($remoteUrl ?: 'https://github.com/kgauravindia/myadvocate.git') ?>
             <?php endif; ?>
         </div>
-        <small style="color: var(--text-muted); font-size: 0.75rem;">Remote: <?= htmlspecialchars($remoteName) ?></small>
+        <small style="color: var(--text-muted); font-size: 0.75rem;">Remote: <?= htmlspecialchars($remoteName) ?> &bull; Branch: <?= htmlspecialchars($currentBranch) ?></small>
     </div>
 
     <!-- Active Branch & Sync Status -->
@@ -538,30 +547,30 @@ if ($remoteUrl) {
             </p>
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                <!-- 1. Fetch from GitHub -->
-                <form action="github_sync.php" method="POST" style="margin: 0;">
+                <!-- 1. Update from GitHub (Pull) -->
+                <form action="github_sync.php" method="POST" style="margin: 0;" onsubmit="return confirm('Update and pull latest code from https://github.com/kgauravindia/myadvocate.git?');">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
-                    <input type="hidden" name="action" value="fetch">
-                    <button type="submit" class="btn btn-primary w-100" style="padding: 0.85rem 1rem; text-align: left; display: flex; flex-direction: column; gap: 0.35rem;">
+                    <input type="hidden" name="action" value="update">
+                    <button type="submit" class="btn btn-primary w-100" style="padding: 0.85rem 1rem; text-align: left; display: flex; flex-direction: column; gap: 0.35rem; background: var(--brand-red); border-color: var(--brand-red);">
                         <span style="font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
-                            <i class="fas fa-arrows-rotate fa-spin-hover"></i> 1. Fetch from GitHub
+                            <i class="fas fa-cloud-arrow-down"></i> 1. Update from GitHub
                         </span>
-                        <small style="opacity: 0.9; font-size: 0.75rem; font-weight: normal; line-height: 1.25;">
-                            Safe: Checks GitHub for latest commits without altering local files.
+                        <small style="opacity: 0.95; font-size: 0.75rem; font-weight: normal; line-height: 1.25;">
+                            Pulls latest changes directly from https://github.com/kgauravindia/myadvocate.git.
                         </small>
                     </button>
                 </form>
 
-                <!-- 2. Pull from GitHub -->
-                <form action="github_sync.php" method="POST" style="margin: 0;" onsubmit="return confirm('Are you sure you want to pull latest code from GitHub? Any uncommitted changes may cause conflicts.');">
+                <!-- 2. Fetch from GitHub -->
+                <form action="github_sync.php" method="POST" style="margin: 0;">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
-                    <input type="hidden" name="action" value="pull">
-                    <button type="submit" class="btn btn-gold w-100" style="padding: 0.85rem 1rem; text-align: left; display: flex; flex-direction: column; gap: 0.35rem;">
-                        <span style="font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; color: #1e293b;">
-                            <i class="fas fa-download"></i> 2. Pull Latest Changes
+                    <input type="hidden" name="action" value="fetch">
+                    <button type="submit" class="btn btn-dark w-100" style="padding: 0.85rem 1rem; text-align: left; display: flex; flex-direction: column; gap: 0.35rem;">
+                        <span style="font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-arrows-rotate fa-spin-hover"></i> 2. Fetch References
                         </span>
-                        <small style="color: #475569; font-size: 0.75rem; font-weight: normal; line-height: 1.25;">
-                            Fast-forward / merge incoming GitHub commits into local files.
+                        <small style="opacity: 0.9; font-size: 0.75rem; font-weight: normal; line-height: 1.25;">
+                            Safe: Checks GitHub for latest commits without altering local files.
                         </small>
                     </button>
                 </form>
@@ -570,7 +579,7 @@ if ($remoteUrl) {
                 <form action="github_sync.php" method="POST" style="margin: 0;" onsubmit="return confirm('Stash local changes and pull from GitHub? This temporarily stashes unstaged work.');">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
                     <input type="hidden" name="action" value="stash_pull">
-                    <button type="submit" class="btn btn-dark w-100" style="padding: 0.85rem 1rem; text-align: left; display: flex; flex-direction: column; gap: 0.35rem;">
+                    <button type="submit" class="btn btn-outline w-100" style="padding: 0.85rem 1rem; text-align: left; display: flex; flex-direction: column; gap: 0.35rem;">
                         <span style="font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
                             <i class="fas fa-shield-halved"></i> 3. Safe Stash & Pull
                         </span>

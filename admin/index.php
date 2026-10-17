@@ -103,7 +103,8 @@ try {
             <a href="acts.php?action=add" class="btn btn-gold btn-sm"><i class="fas fa-plus-circle"></i> Add Bare Act</a>
             <a href="notices.php?action=add" class="btn btn-dark btn-sm"><i class="fas fa-bullhorn"></i> Post Notice</a>
             <a href="colleges.php?action=add" class="btn btn-outline btn-sm"><i class="fas fa-graduation-cap"></i> Add College</a>
-            <a href="github_sync.php?action=fetch" class="btn btn-outline btn-sm" style="border-color: #24292e; color: #24292e;"><i class="fab fa-github"></i> Fetch from GitHub</a>
+            <a href="github_sync.php?action=update" class="btn btn-primary btn-sm" onclick="return confirm('Update and pull latest code from https://github.com/kgauravindia/myadvocate.git?');" style="background: var(--brand-red); border-color: var(--brand-red);"><i class="fas fa-cloud-arrow-down"></i> Update from GitHub</a>
+            <a href="github_sync.php?action=fetch" class="btn btn-outline btn-sm" style="border-color: #24292e; color: #24292e;"><i class="fab fa-github"></i> Fetch Only</a>
         </div>
     </div>
 

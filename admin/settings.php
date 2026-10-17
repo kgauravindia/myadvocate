@@ -119,11 +119,14 @@ if (is_dir($repoRoot . '/.git')) {
         <h1 style="font-size: 1.75rem; color: var(--primary); margin: 0; font-family: var(--font-heading); font-weight: 800;">Portal Settings & Configuration</h1>
         <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0;">Configure platform branding, official social media handles, contact details, and disclaimers.</p>
     </div>
-    <div style="display: flex; gap: 0.5rem;">
-        <a href="github_sync.php?action=fetch" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;">
-            <i class="fab fa-github"></i> Fetch from GitHub
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <a href="github_sync.php?action=update" class="btn btn-primary btn-sm" onclick="return confirm('Update and pull latest code from https://github.com/kgauravindia/myadvocate.git?');" style="display: inline-flex; align-items: center; gap: 0.4rem; background: var(--brand-red); border-color: var(--brand-red);">
+            <i class="fas fa-cloud-arrow-down"></i> Update from GitHub
         </a>
-        <a href="github_sync.php" class="btn btn-dark btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+        <a href="github_sync.php?action=fetch" class="btn btn-dark btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+            <i class="fab fa-github"></i> Fetch Only
+        </a>
+        <a href="github_sync.php" class="btn btn-outline btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;">
             <i class="fas fa-code-branch"></i> Git Console
         </a>
     </div>
@@ -284,8 +287,11 @@ if (is_dir($repoRoot . '/.git')) {
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                    <a href="github_sync.php?action=fetch" class="btn btn-primary btn-sm w-100" style="display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
-                        <i class="fas fa-arrows-rotate"></i> Fetch from GitHub
+                    <a href="github_sync.php?action=update" class="btn btn-primary btn-sm w-100" onclick="return confirm('Update from https://github.com/kgauravindia/myadvocate.git?');" style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; background: var(--brand-red); border-color: var(--brand-red);">
+                        <i class="fas fa-cloud-arrow-down"></i> Update from GitHub
+                    </a>
+                    <a href="github_sync.php?action=fetch" class="btn btn-dark btn-sm w-100" style="display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
+                        <i class="fas fa-arrows-rotate"></i> Fetch References
                     </a>
                     <a href="github_sync.php" class="btn btn-outline btn-sm w-100" style="display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
                         <i class="fab fa-github"></i> Open Git Sync Console
