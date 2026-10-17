@@ -75,20 +75,20 @@ if ($quickAction === 'verify' && $adv) {
     } catch (Exception $e) {
         $err = "Block action failed: " . $e->getMessage();
     }
-} elseif ($quickAction === 'send_sms_active_update' && $adv) {
+} elseif (($quickAction === 'send_sms_active_update' || $quickAction === 'send_sms_update') && $adv) {
     if (function_exists('sendAdvocatePlanSMS')) {
         $smsRes = sendAdvocatePlanSMS((int)$id, 'ACTIVE update it', 'Advocate Profile');
         if (!empty($smsRes['success'])) {
-            $msg = "Plan SMS ('ACTIVE update it') dispatched successfully to " . sanitize($adv['mobile'] ?: '') . ".";
+            $msg = "Update SMS ('ACTIVE update it') dispatched successfully to " . sanitize($adv['mobile'] ?: '') . ".";
         } else {
             $err = "SMS send failed: " . ($smsRes['message'] ?? 'Gateway response error');
         }
     }
-} elseif ($quickAction === 'send_sms_pending_docs' && $adv) {
+} elseif (($quickAction === 'send_sms_pending_docs' || $quickAction === 'send_sms_docs') && $adv) {
     if (function_exists('sendAdvocatePlanSMS')) {
         $smsRes = sendAdvocatePlanSMS((int)$id, 'PENDING for Documents', 'Advocate Profile');
         if (!empty($smsRes['success'])) {
-            $msg = "Plan SMS ('PENDING for Documents') dispatched successfully to " . sanitize($adv['mobile'] ?: '') . ".";
+            $msg = "Documents request SMS ('PENDING for Documents') dispatched successfully to " . sanitize($adv['mobile'] ?: '') . ".";
         } else {
             $err = "SMS send failed: " . ($smsRes['message'] ?? 'Gateway response error');
         }
@@ -253,6 +253,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $districts = !empty($adv['state_code']) ? getDistrictsByState($adv['state_code']) : [];
 $barCouncils = getBarCouncils();
+$advBc = getBarCouncilById($adv['bc_id'] ?? null, $adv['state_code'] ?? null);
 $barAssociations = getBarAssociations($adv['state_code'] ?? '', $adv['district_code'] ?? '');
 $advIndex = calculateAdvocateIndex($adv);
 $advData = getAdvocateData((int)$adv['id']);
@@ -283,6 +284,17 @@ $practiceAreasList = getAdvocatePracticeAreas();
         </div>
     </div>
     <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+        <?php if ($advBc && !empty($advBc['url_1'])): ?>
+            <a href="<?= sanitize($advBc['url_1']) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="background: #dc2626; border-color: #dc2626; color: #fff; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;" title="Verify Enrollment on <?= sanitize($advBc['name']) ?> Portal (opens in new tab)">
+                <i class="fas fa-shield-halved"></i> Verify on BC (url_1) <i class="fas fa-arrow-up-right-from-square" style="font-size: 0.65rem;"></i>
+            </a>
+        <?php endif; ?>
+        <a href="advocate_edit.php?id=<?= $adv['id'] ?>&quick_action=send_sms_docs" class="btn btn-outline btn-sm" style="color: #b45309; border-color: #fcd34d; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;" onclick="return confirm('Send SMS requesting documents to <?= htmlspecialchars(addslashes($adv['name'] ?: 'Advocate')) ?>?');" title="Send SMS: Your plan Advocate Profile is PENDING for Documents">
+            <i class="fas fa-comment-sms"></i> SMS: For Docs
+        </a>
+        <a href="advocate_edit.php?id=<?= $adv['id'] ?>&quick_action=send_sms_update" class="btn btn-outline-success btn-sm" style="font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;" onclick="return confirm('Send SMS notifying profile update to <?= htmlspecialchars(addslashes($adv['name'] ?: 'Advocate')) ?>?');" title="Send SMS: Your plan Advocate Profile is ACTIVE update it">
+            <i class="fas fa-comment-sms"></i> SMS: For Update
+        </a>
         <a href="impersonate.php?type=advocate&id=<?= $adv['id'] ?>" target="_blank" class="btn btn-dark btn-sm" style="font-weight: 700;">
             <i class="fas fa-right-to-bracket"></i> Login as Advocate
         </a>
@@ -304,27 +316,53 @@ $practiceAreasList = getAdvocatePracticeAreas();
 <?php endif; ?>
 
 <?php if (strtoupper(trim((string)($adv['type'] ?? ''))) === 'PENDING'): ?>
-    <div class="stat-box" style="background: #fffbeb; border: 2px solid #fcd34d; margin-bottom: 1.5rem; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-        <div>
-            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
-                <span class="badge-verification badge-pending" style="font-size: 0.8rem; padding: 0.3rem 0.65rem;">
-                    <i class="fas fa-clock"></i> PENDING VERIFICATION
-                </span>
-                <strong style="color: #92400e; font-size: 1.05rem;">Manual Verification Required</strong>
+    <div class="stat-box" style="background: #fffbeb; border: 2px solid #fcd34d; margin-bottom: 1.5rem; padding: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.75rem;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                    <span class="badge-verification badge-pending" style="font-size: 0.8rem; padding: 0.3rem 0.65rem;">
+                        <i class="fas fa-clock"></i> PENDING VERIFICATION
+                    </span>
+                    <strong style="color: #92400e; font-size: 1.05rem;">Manual Verification Required</strong>
+                </div>
+                <p style="color: #78350f; font-size: 0.875rem; margin: 0;">This advocate profile registered on the portal and requires manual review of their Bar Council enrollment credentials.</p>
             </div>
-            <p style="color: #78350f; font-size: 0.875rem; margin: 0;">This advocate profile registered on the portal and requires manual review of their Bar Council enrollment credentials.</p>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <a href="advocate_edit.php?id=<?= $adv['id'] ?>&quick_action=verify" class="btn btn-primary btn-sm" onclick="return confirm('Manually verify and approve advocate? (Sends: Your plan Advocate Profile is ACTIVE update it)');" style="background: #059669; border-color: #059669; font-weight: 700; padding: 0.45rem 1rem;">
+                    <i class="fas fa-circle-check"></i> Approve (ACTIVE update it)
+                </a>
+                <a href="advocate_edit.php?id=<?= $adv['id'] ?>&quick_action=not_active" class="btn btn-outline btn-sm" onclick="return confirm('Keep Pending and request documents? (Sends: Your plan Advocate Profile is PENDING for Documents)');" style="color: #b45309; border-color: #fcd34d; font-weight: 600; padding: 0.45rem 0.85rem;">
+                    <i class="fas fa-clock"></i> Keep Pending (PENDING for Docs)
+                </a>
+                <a href="advocate_edit.php?id=<?= $adv['id'] ?>&quick_action=block" class="btn btn-outline btn-sm" onclick="return confirm('Block/reject profile? (Sends: Your plan Advocate Profile is Not ACTIVE)');" style="color: #dc2626; border-color: #fca5a5; font-weight: 600; padding: 0.45rem 0.85rem;">
+                    <i class="fas fa-ban"></i> Block (Not ACTIVE)
+                </a>
+            </div>
         </div>
-        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-            <a href="advocate_edit.php?id=<?= $adv['id'] ?>&quick_action=verify" class="btn btn-primary btn-sm" onclick="return confirm('Manually verify and approve advocate? (Sends: Your plan Advocate Profile is ACTIVE update it)');" style="background: #059669; border-color: #059669; font-weight: 700; padding: 0.45rem 1rem;">
-                <i class="fas fa-circle-check"></i> Approve (ACTIVE update it)
-            </a>
-            <a href="advocate_edit.php?id=<?= $adv['id'] ?>&quick_action=not_active" class="btn btn-outline btn-sm" onclick="return confirm('Keep Pending and request documents? (Sends: Your plan Advocate Profile is PENDING for Documents)');" style="color: #b45309; border-color: #fcd34d; font-weight: 600; padding: 0.45rem 0.85rem;">
-                <i class="fas fa-clock"></i> Keep Pending (PENDING for Docs)
-            </a>
-            <a href="advocate_edit.php?id=<?= $adv['id'] ?>&quick_action=block" class="btn btn-outline btn-sm" onclick="return confirm('Block/reject profile? (Sends: Your plan Advocate Profile is Not ACTIVE)');" style="color: #dc2626; border-color: #fca5a5; font-weight: 600; padding: 0.45rem 0.85rem;">
-                <i class="fas fa-ban"></i> Block (Not ACTIVE)
-            </a>
-        </div>
+
+        <?php if ($advBc): ?>
+            <div style="padding-top: 0.75rem; border-top: 1px dashed #fcd34d; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+                <div style="font-size: 0.825rem; color: #78350f;">
+                    <i class="fas fa-building-columns"></i> State Bar Council: <strong><?= sanitize($advBc['name']) ?></strong> (<code><?= sanitize($advBc['code']) ?></code>)
+                    <?php if (!empty($adv['e_no'])): ?>
+                        &bull; Enrollment No: <strong style="background: #fff; padding: 2px 6px; border-radius: 4px; border: 1px solid #fcd34d;"><?= sanitize($adv['e_no']) ?><?= !empty($adv['e_year']) ? '/' . sanitize($adv['e_year']) : '' ?></strong>
+                    <?php endif; ?>
+                </div>
+                <div style="display: flex; gap: 0.4rem; align-items: center;">
+                    <?php if (!empty($advBc['url_1'])): ?>
+                        <a href="<?= sanitize($advBc['url_1']) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="background: #dc2626; border-color: #dc2626; color: #fff; font-weight: 700; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.75rem; border-radius: 6px; box-shadow: 0 2px 4px rgba(220,38,38,0.2);">
+                            <i class="fas fa-shield-halved"></i> Verify on <?= sanitize($advBc['code']) ?> Portal <i class="fas fa-arrow-up-right-from-square" style="font-size: 0.65rem;"></i>
+                        </a>
+                    <?php elseif (!empty($advBc['url'])): ?>
+                        <a href="<?= sanitize($advBc['url']) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm" style="color: #b45309; border-color: #fcd34d; font-size: 0.75rem;">
+                            <i class="fas fa-external-link-alt"></i> Open Website <i class="fas fa-arrow-up-right-from-square" style="font-size: 0.65rem;"></i>
+                        </a>
+                    <?php else: ?>
+                        <a href="bc.php?action=edit&id=<?= $advBc['id'] ?>" target="_blank" style="font-size: 0.75rem; color: var(--brand-red);">+ Configure Verify URL (url_1)</a>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endif; ?>
     </div>
 <?php endif; ?>
 
@@ -413,6 +451,31 @@ $practiceAreasList = getAdvocatePracticeAreas();
                         </select>
                     </div>
                 </div>
+
+                <?php if ($advBc): ?>
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Bar Council Verification</div>
+                            <strong style="color: var(--primary); font-size: 0.875rem;"><?= sanitize($advBc['name']) ?></strong>
+                            <?php if (!empty($adv['e_no'])): ?>
+                                <span style="font-size: 0.8125rem; color: #475569; margin-left: 0.35rem;">(Enrollment: <code><?= sanitize($adv['e_no']) ?><?= !empty($adv['e_year']) ? '/' . sanitize($adv['e_year']) : '' ?></code>)</span>
+                            <?php endif; ?>
+                        </div>
+                        <div style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
+                            <?php if (!empty($advBc['url_1'])): ?>
+                                <a href="<?= sanitize($advBc['url_1']) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="background: #dc2626; border-color: #dc2626; color: #fff; font-weight: 700; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.35rem;" title="Verify on Official Portal (opens in new tab)">
+                                    <i class="fas fa-shield-halved"></i> Verify on <?= sanitize($advBc['code']) ?> Portal <i class="fas fa-arrow-up-right-from-square" style="font-size: 0.65rem;"></i>
+                                </a>
+                            <?php endif; ?>
+                            <a href="advocate_edit.php?id=<?= $adv['id'] ?>&quick_action=send_sms_docs" class="btn btn-outline btn-sm" style="font-size: 0.75rem; color: #b45309; border-color: #fcd34d; font-weight: 600;" onclick="return confirm('Send SMS requesting documents to advocate?');">
+                                <i class="fas fa-paper-plane"></i> SMS: For Docs
+                            </a>
+                            <a href="advocate_edit.php?id=<?= $adv['id'] ?>&quick_action=send_sms_update" class="btn btn-outline btn-sm" style="font-size: 0.75rem; color: #059669; border-color: #86efac; font-weight: 600;" onclick="return confirm('Send SMS profile update notification?');">
+                                <i class="fas fa-paper-plane"></i> SMS: For Update
+                            </a>
+                        </div>
+                    </div>
+                <?php endif; ?>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div class="filter-group">

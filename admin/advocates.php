@@ -65,22 +65,22 @@ $page = max(1, (int)($_GET['page'] ?? 1));
 $perPage = 25;
 $offset = ($page - 1) * $perPage;
 
-$sql = "SELECT * FROM advocate WHERE 1=1";
-$countSql = "SELECT COUNT(*) FROM advocate WHERE 1=1";
+$sql = "SELECT a.*, bc.url_1 AS bc_verify_url, bc.name AS bc_name, bc.code AS bc_code FROM advocate a LEFT JOIN bc ON (bc.id = a.bc_id OR (a.bc_id IS NULL AND bc.state_code = a.state_code)) WHERE 1=1";
+$countSql = "SELECT COUNT(*) FROM advocate a WHERE 1=1";
 $params = [];
 
 if (!empty($search)) {
     if (is_numeric($search) && strlen($search) >= 10) {
-        $sql .= " AND mobile LIKE ?";
-        $countSql .= " AND mobile LIKE ?";
+        $sql .= " AND a.mobile LIKE ?";
+        $countSql .= " AND a.mobile LIKE ?";
         $params[] = "%" . $search . "%";
     } elseif (is_numeric($search) && strlen($search) <= 6) {
-        $sql .= " AND e_no = ?";
-        $countSql .= " AND e_no = ?";
+        $sql .= " AND a.e_no = ?";
+        $countSql .= " AND a.e_no = ?";
         $params[] = $search;
     } else {
-        $sql .= " AND (name LIKE ? OR email LIKE ? OR court LIKE ?)";
-        $countSql .= " AND (name LIKE ? OR email LIKE ? OR court LIKE ?)";
+        $sql .= " AND (a.name LIKE ? OR a.email LIKE ? OR a.court LIKE ?)";
+        $countSql .= " AND (a.name LIKE ? OR a.email LIKE ? OR a.court LIKE ?)";
         $params[] = "%" . $search . "%";
         $params[] = "%" . $search . "%";
         $params[] = "%" . $search . "%";
@@ -88,24 +88,24 @@ if (!empty($search)) {
 }
 
 if (!empty($state)) {
-    $sql .= " AND state_code = ?";
-    $countSql .= " AND state_code = ?";
+    $sql .= " AND a.state_code = ?";
+    $countSql .= " AND a.state_code = ?";
     $params[] = $state;
 }
 
 if (!empty($plan)) {
-    $sql .= " AND plan_type = ?";
-    $countSql .= " AND plan_type = ?";
+    $sql .= " AND a.plan_type = ?";
+    $countSql .= " AND a.plan_type = ?";
     $params[] = $plan;
 }
 
 if (!empty($type)) {
     if ($type === 'PENDING') {
-        $sql .= " AND type = 'PENDING'";
-        $countSql .= " AND type = 'PENDING'";
+        $sql .= " AND a.type = 'PENDING'";
+        $countSql .= " AND a.type = 'PENDING'";
     } else {
-        $sql .= " AND type = ?";
-        $countSql .= " AND type = ?";
+        $sql .= " AND a.type = ?";
+        $countSql .= " AND a.type = ?";
         $params[] = $type;
     }
 }
@@ -120,7 +120,7 @@ try {
 
 $totalPages = ceil($totalCount / $perPage);
 
-$sql .= " ORDER BY id DESC LIMIT $perPage OFFSET $offset";
+$sql .= " ORDER BY a.id DESC LIMIT $perPage OFFSET $offset";
 try {
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
@@ -240,6 +240,13 @@ try {
                             </td>
                             <td>
                                 <strong><?= sanitize($adv['e_no'] ?: '—') ?></strong><?= $adv['e_year'] ? '/' . sanitize($adv['e_year']) : '' ?>
+                                <?php if (!empty($adv['bc_verify_url'])): ?>
+                                    <div style="margin-top: 3px;">
+                                        <a href="<?= sanitize($adv['bc_verify_url']) ?>" target="_blank" rel="noopener noreferrer" class="badge" style="background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; font-size: 0.68rem; text-decoration: none; padding: 2px 5px; display: inline-flex; align-items: center; gap: 3px; font-weight: 700;" title="Verify on <?= sanitize($adv['bc_code'] ?? 'Bar Council') ?> Official Portal (opens in new tab)">
+                                            <i class="fas fa-shield-halved"></i> Verify BC <i class="fas fa-arrow-up-right-from-square" style="font-size: 0.55rem;"></i>
+                                        </a>
+                                    </div>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <?= sanitize(getDistrictName($adv['district_code'] ?? '')) ?><br>
@@ -258,6 +265,11 @@ try {
                                     <?php if ($isPendingAdv): ?>
                                         <a href="advocates.php?action=verify&id=<?= $adv['id'] ?>&type=<?= urlencode($type) ?>&page=<?= $page ?>" class="btn btn-primary btn-sm" onclick="return confirm('Manually verify and approve advocate <?= htmlspecialchars(addslashes($adv['name'] ?: '')) ?>?');" style="background: #059669; border-color: #059669; font-weight: 700; padding: 0.3rem 0.6rem; display: inline-flex; align-items: center; gap: 0.3rem;" title="Manually Verify & Approve">
                                             <i class="fas fa-circle-check"></i> Verify
+                                        </a>
+                                    <?php endif; ?>
+                                    <?php if (!empty($adv['bc_verify_url'])): ?>
+                                        <a href="<?= sanitize($adv['bc_verify_url']) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm" style="color: #dc2626; border-color: #fca5a5; font-size: 0.75rem; padding: 0.3rem 0.5rem;" title="Verify on Bar Council Portal (opens in new tab)">
+                                            <i class="fas fa-shield-halved"></i>
                                         </a>
                                     <?php endif; ?>
                                     <a href="advocate_edit.php?id=<?= $adv['id'] ?>" class="btn btn-outline btn-sm" title="Edit Profile">

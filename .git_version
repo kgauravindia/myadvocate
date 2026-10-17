@@ -1,8 +1,8 @@
 {
-  "commit": "bd31622",
+  "commit": "57a892e",
   "branch": "main",
   "author": "kgauravindia",
-  "date": "2026-10-17 11:25:00",
-  "message": "Support EMYADV_PLAN examples: 'ACTIVE update it' and 'PENDING for Documents' with plan 'Advocate Profile'",
-  "updated_at": "2026-10-17 11:25:00"
+  "date": "2026-10-17 12:30:00",
+  "message": "Add verify advocate option via bc.url_1 in new tab across admin (bc.php, advocate_edit.php, advocates.php) and quick SMS for docs/update",
+  "updated_at": "2026-10-17 12:30:00"
 }

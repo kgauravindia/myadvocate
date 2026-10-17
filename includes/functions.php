@@ -55,10 +55,34 @@ function getBarAssociations(string $stateCode = '', string $districtCode = ''): 
 function getBarCouncils(): array {
     $db = getDB();
     try {
-        $stmt = $db->query("SELECT id, name, code, state_code FROM bc WHERE status = 'ACTIVE' ORDER BY name ASC");
+        $stmt = $db->query("SELECT id, bc_id, name, code, state_code, url, url_1 FROM bc WHERE status = 'ACTIVE' ORDER BY name ASC");
         return $stmt->fetchAll();
     } catch (Exception $e) {
         return [];
+    }
+}
+
+/**
+ * Get Bar Council record by ID, BC_ID, or State Code
+ */
+function getBarCouncilById($bcId, ?string $stateCode = null): ?array {
+    $db = getDB();
+    try {
+        if (!empty($bcId)) {
+            $stmt = $db->prepare("SELECT id, bc_id, name, code, state_code, url, url_1 FROM bc WHERE id = ? OR bc_id = ? LIMIT 1");
+            $stmt->execute([$bcId, $bcId]);
+            $res = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($res) return $res;
+        }
+        if (!empty($stateCode)) {
+            $stmt = $db->prepare("SELECT id, bc_id, name, code, state_code, url, url_1 FROM bc WHERE state_code = ? LIMIT 1");
+            $stmt->execute([$stateCode]);
+            $res = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($res) return $res;
+        }
+        return null;
+    } catch (Exception $e) {
+        return null;
     }
 }
 
