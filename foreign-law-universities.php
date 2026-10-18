@@ -385,15 +385,6 @@ require_once INCLUDES_PATH . '/header.php';
                 </div>
 
                 <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem;">
-                    <div style="font-size: 0.8125rem; font-weight: 700; color: var(--primary); margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.5px;">
-                        Direct Official BCI Document Link (Amazon S3):
-                    </div>
-                    <div style="word-break: break-all; font-family: monospace; font-size: 0.8125rem; color: #1e40af; background: #ffffff; padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid #cbd5e1; margin-bottom: 1rem;">
-                        <a href="<?= sanitize($officialBciPdfUrl) ?>" target="_blank" rel="noopener noreferrer" style="color: #2563eb; text-decoration: none;">
-                            <?= sanitize($officialBciPdfUrl) ?>
-                        </a>
-                    </div>
-
                     <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
                         <a href="<?= sanitize($officialBciPdfUrl) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-md" style="font-weight: 700;">
                             <i class="fas fa-download me-2"></i> Download Official BCI PDF (BCA0001X81XET1H2Z.pdf)
