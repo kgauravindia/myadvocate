@@ -115,9 +115,14 @@ require_once INCLUDES_PATH . '/header.php';
         <h1 style="font-size: 2.25rem; font-weight: 800; color: var(--primary); margin-bottom: 0.5rem; line-height: 1.2;">
             Law College <span style="background: linear-gradient(120deg, #c00000, #b45309); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Search Directory</span>
         </h1>
-        <p style="color: var(--text-muted); font-size: 0.95rem; max-width: 850px; line-height: 1.6;">
+        <p style="color: var(--text-muted); font-size: 0.95rem; max-width: 850px; line-height: 1.6; margin-bottom: 0.85rem;">
             Search over 5,000+ BCI-approved law colleges, faculties of law, and universities across India offering 3-Year LL.B., 5-Year Integrated (B.A. LL.B., B.B.A. LL.B.), and LL.M. degree programs.
         </p>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="foreign-law-universities" class="btn btn-outline btn-sm" style="font-weight: 700; color: var(--brand-red); border-color: #fca5a5; background: #fff5f5;">
+                <i class="fas fa-globe me-1"></i> Foreign Universities Recognized by BCI (UK, Australia, Canada...) &rarr;
+            </a>
+        </div>
     </div>
 
     <!-- Filter Card -->

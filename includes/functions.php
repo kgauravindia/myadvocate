@@ -899,15 +899,102 @@ function getHighCourts(): array {
     return $highCourts;
 }
 
-function getUniversities(string $stateCode = ''): array {
+/**
+ * Get all universities with law colleges from law_college table
+ */
+function getLawUniversities(): array {
     $db = getDB();
     try {
-        if (!empty($stateCode)) {
-            $stmt = $db->prepare("SELECT code, name, state_code FROM university WHERE state_code = ? AND status = 'ACTIVE' ORDER BY name ASC");
-            $stmt->execute([$stateCode]);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $sql = "SELECT 
+                    affiliating_university as raw_name,
+                    state,
+                    COUNT(DISTINCT TRIM(name)) as college_count
+                FROM law_college
+                WHERE affiliating_university IS NOT NULL AND TRIM(affiliating_university) != ''
+                GROUP BY affiliating_university, state
+                ORDER BY affiliating_university ASC";
+
+        $stmt = $db->query($sql);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $universities = [];
+        $seen = [];
+
+        foreach ($rows as $r) {
+            $raw = trim($r['raw_name'] ?? '');
+            $clean = preg_replace('/\s+/', ' ', $raw);
+            $clean = trim($clean, " \t\n\r\0\x0B.,");
+            $state = preg_replace('/\s+/', ' ', trim($r['state'] ?? ''));
+
+            if (empty($clean)) continue;
+
+            $key = strtolower($clean);
+            if (!isset($seen[$key])) {
+                $seen[$key] = true;
+                $universities[] = [
+                    'code' => $clean,
+                    'name' => $clean,
+                    'state_name' => $state,
+                    'law_col_count' => (int)($r['college_count'] ?? 0)
+                ];
+            }
         }
-        $stmt = $db->query("SELECT code, name, state_code FROM university WHERE status = 'ACTIVE' ORDER BY name ASC LIMIT 350");
+
+        usort($universities, function($a, $b) {
+            return strcasecmp($a['name'], $b['name']);
+        });
+
+        return $universities;
+    } catch (Exception $e) {
+        return [];
+    }
+}
+
+/**
+ * Get law colleges affiliated with a given university from law_college table
+ */
+function getLawCollegesByUniversity(string $univName): array {
+    $univName = trim($univName);
+    if (empty($univName)) return [];
+    $db = getDB();
+    try {
+        $searchTerm = '%' . str_replace(' ', '%', preg_replace('/\s+/', ' ', $univName)) . '%';
+        $stmt = $db->prepare("SELECT DISTINCT TRIM(name) as name, state, course_name 
+                              FROM law_college 
+                              WHERE affiliating_university LIKE ? OR affiliating_university = ?
+                              ORDER BY name ASC");
+        $stmt->execute([$searchTerm, $univName]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $colleges = [];
+        $seen = [];
+        foreach ($rows as $r) {
+            $cName = preg_replace('/\s+/', ' ', trim($r['name'] ?? ''));
+            if (empty($cName)) continue;
+            $k = strtolower($cName);
+            if (!isset($seen[$k])) {
+                $seen[$k] = true;
+                $colleges[] = [
+                    'name' => $cName,
+                    'state' => preg_replace('/\s+/', ' ', trim($r['state'] ?? '')),
+                    'course' => preg_replace('/\s+/', ' ', trim($r['course_name'] ?? ''))
+                ];
+            }
+        }
+        return $colleges;
+    } catch (Exception $e) {
+        return [];
+    }
+}
+
+function getUniversities(string $stateCode = ''): array {
+    if (empty($stateCode)) {
+        return getLawUniversities();
+    }
+    $db = getDB();
+    try {
+        $stmt = $db->prepare("SELECT code, TRIM(TRAILING ',' FROM TRIM(name)) as name, state_code FROM university WHERE state_code = ? AND status = 'ACTIVE' ORDER BY name ASC");
+        $stmt->execute([$stateCode]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (Exception $e) {
         return [];
@@ -917,11 +1004,12 @@ function getUniversities(string $stateCode = ''): array {
 function getEducationOptions(): array {
     return [
         'Graduate (LL.B.)' => 'LL.B. (3-Year Professional Course)',
-        'Integrated (B.A. LL.B.)' => 'B.A. LL.B. / B.B.A. LL.B. (5-Year Integrated)',
-        'B.Com. LL.B.' => 'B.Com. LL.B. (5-Year Integrated)',
-        'B.Sc. LL.B.' => 'B.Sc. LL.B. (5-Year Integrated)',
+        'Integrated (B.A. LL.B.)' => 'B.A. LL.B. (5-Year Integrated Course)',
+        'Integrated (B.B.A. LL.B.)' => 'B.B.A. LL.B. (5-Year Integrated Course)',
+        'Integrated (B.Com. LL.B.)' => 'B.Com. LL.B. (5-Year Integrated Course)',
+        'Integrated (B.Sc. LL.B.)' => 'B.Sc. LL.B. (5-Year Integrated Course)',
         'Post Graduate (LL.M.)' => 'LL.M. (Master of Laws)',
-        'Doctorate (Ph.D. in Law)' => 'Ph.D. / LL.D. (Doctor of Laws)',
+        'Doctorate (Ph.D. in Law)' => 'Ph.D. / LL.D. (Doctorate in Law)',
         'Post Graduate Diploma in Law' => 'PG Diploma in Cyber / Corporate / Tax Law',
         'Other' => 'Other Legal Education'
     ];

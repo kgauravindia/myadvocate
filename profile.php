@@ -144,10 +144,12 @@ try {
         }
         if (!empty($advocate['univ_code'])) {
             try {
-                $uStmt = $db->prepare("SELECT name FROM university WHERE code = ? LIMIT 1");
-                $uStmt->execute([$advocate['univ_code']]);
-                $advocate['univ_name'] = $uStmt->fetchColumn() ?: '';
-            } catch (Exception $ue) {}
+                $uStmt = $db->prepare("SELECT TRIM(TRAILING ',' FROM TRIM(name)) FROM university WHERE code = ? OR name = ? LIMIT 1");
+                $uStmt->execute([$advocate['univ_code'], $advocate['univ_code']]);
+                $advocate['univ_name'] = $uStmt->fetchColumn() ?: $advocate['univ_code'];
+            } catch (Exception $ue) {
+                $advocate['univ_name'] = $advocate['univ_code'];
+            }
         }
         if (!empty($advocate['college_code'])) {
             try {

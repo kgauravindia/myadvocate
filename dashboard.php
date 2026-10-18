@@ -202,6 +202,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Education & Academic Credentials
         $education = sanitize($_POST['education'] ?? '');
         $univCode = sanitize($_POST['univ_code'] ?? '');
+        if ($univCode === '__OTHER__') {
+            $univCode = sanitize($_POST['univ_code_custom'] ?? '');
+        }
         $collegeCode = sanitize($_POST['college_code'] ?? '');
 
         // Languages Known
@@ -347,7 +350,8 @@ $barAssociations = getBarAssociations($advocate['state_code'] ?? '', $advocate['
 $practiceAreasList = getAdvocatePracticeAreas();
 $languagesList = getAdvocateLanguages();
 $highCourtsList = getHighCourts();
-$universitiesList = getUniversities($advocate['state_code'] ?? '');
+$universitiesList = getLawUniversities();
+$initialLawColleges = !empty($advocate['univ_code']) ? getLawCollegesByUniversity($advocate['univ_code']) : [];
 $educationOptions = getEducationOptions();
 $courtsList = getCourtsList();
 
@@ -1396,8 +1400,8 @@ require_once INCLUDES_PATH . '/header.php';
                             <!-- Legal Degree / Education Level -->
                             <div class="filter-group" style="margin-bottom: 0;">
                                 <label class="filter-label" style="font-weight: 700; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-                                    <span>Law Degree / Qualification</span>
-                                    <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: normal;">Click chips or type</span>
+                                    <span>Law Degree / Course</span>
+                                    <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: normal;">Click chip or type</span>
                                 </label>
                                 <input type="text" name="education" id="educationInput" list="educationDatalist" class="filter-input" value="<?= sanitize(getEducationDegree($advocate['education'] ?? '')) ?>" placeholder="e.g. Graduate (LL.B.) or Post Graduate (LL.M.)" style="min-height: 42px;">
                                 <datalist id="educationDatalist">
@@ -1405,34 +1409,153 @@ require_once INCLUDES_PATH . '/header.php';
                                         <option value="<?= sanitize($eVal) ?>"><?= sanitize($eLbl) ?></option>
                                     <?php endforeach; ?>
                                 </datalist>
-                                <!-- Quick Select Chips for Education -->
-                                <div style="margin-top: 0.4rem; display: flex; flex-wrap: wrap; gap: 0.35rem;">
-                                    <?php foreach (['Graduate (LL.B.)', 'Integrated (B.A. LL.B.)', 'Post Graduate (LL.M.)', 'Doctorate (Ph.D. in Law)'] as $eduChip): ?>
-                                        <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('educationInput').value='<?= $eduChip ?>'" style="padding: 0.15rem 0.5rem; font-size: 0.72rem; border-radius: 9999px; background: #f8fafc; border-color: #cbd5e1; color: #334155;">
-                                            + <?= $eduChip ?>
+                                <!-- Quick Select Chips for Law Courses -->
+                                <div style="margin-top: 0.45rem; display: flex; flex-wrap: wrap; gap: 0.35rem;">
+                                    <?php 
+                                    $lawCourseChips = [
+                                        'Graduate (LL.B.)', 
+                                        'Integrated (B.A. LL.B.)', 
+                                        'Integrated (B.B.A. LL.B.)', 
+                                        'Integrated (B.Com. LL.B.)', 
+                                        'Post Graduate (LL.M.)', 
+                                        'Doctorate (Ph.D. in Law)',
+                                        'Post Graduate Diploma in Law'
+                                    ];
+                                    $currentEdu = getEducationDegree($advocate['education'] ?? '');
+                                    foreach ($lawCourseChips as $eduChip): 
+                                        $isChipActive = (strcasecmp($currentEdu, $eduChip) === 0 || stripos($currentEdu, $eduChip) !== false);
+                                    ?>
+                                        <button type="button" class="btn btn-sm edu-course-chip" onclick="selectLawCourse('<?= addslashes($eduChip) ?>', this)" style="padding: 0.2rem 0.6rem; font-size: 0.75rem; border-radius: 9999px; background: <?= $isChipActive ? 'var(--primary)' : '#f8fafc' ?>; border: 1px solid <?= $isChipActive ? 'var(--primary)' : '#cbd5e1' ?>; color: <?= $isChipActive ? '#ffffff' : '#334155' ?>; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                                            <i class="fas <?= $isChipActive ? 'fa-check' : 'fa-plus' ?>" style="font-size: 0.65rem; margin-right: 0.25rem;"></i><?= $eduChip ?>
                                         </button>
                                     <?php endforeach; ?>
                                 </div>
                             </div>
 
+                            <script>
+                                function selectLawCourse(courseName, btn) {
+                                    var input = document.getElementById('educationInput');
+                                    if (input) input.value = courseName;
+                                    document.querySelectorAll('.edu-course-chip').forEach(function(b) {
+                                        b.style.background = '#f8fafc';
+                                        b.style.borderColor = '#cbd5e1';
+                                        b.style.color = '#334155';
+                                        var icon = b.querySelector('i');
+                                        if (icon) icon.className = 'fas fa-plus';
+                                    });
+                                    if (btn) {
+                                        btn.style.background = 'var(--primary)';
+                                        btn.style.borderColor = 'var(--primary)';
+                                        btn.style.color = '#ffffff';
+                                        var icon = btn.querySelector('i');
+                                        if (icon) icon.className = 'fas fa-check';
+                                    }
+                                }
+                            </script>
+
                             <!-- Law University / Institute -->
                             <div class="filter-group" style="margin-bottom: 0;">
-                                <label class="filter-label" style="font-weight: 700;">Law University / Institute</label>
-                                <input type="text" name="univ_code" list="univDatalist" class="filter-input" value="<?= sanitize($advocate['univ_code'] ?? '') ?>" placeholder="e.g. University of Delhi / National Law University or Code" style="min-height: 42px;">
-                                <datalist id="univDatalist">
-                                    <?php foreach ($universitiesList as $univ): ?>
-                                        <option value="<?= sanitize($univ['name']) ?> (<?= sanitize($univ['code']) ?>)"></option>
+                                <label class="filter-label" style="font-weight: 700; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                                    <span>Law University / Institute</span>
+                                    <span style="font-size: 0.72rem; color: #059669; font-weight: 600;">(<?= count($universitiesList) ?> Law Universities across India)</span>
+                                </label>
+                                <?php 
+                                $matchedUniv = false;
+                                foreach ($universitiesList as $univ) {
+                                    if (!empty($advocate['univ_code']) && ($advocate['univ_code'] === $univ['code'] || $advocate['univ_code'] === $univ['name'] || stripos($advocate['univ_code'], $univ['code']) !== false)) {
+                                        $matchedUniv = true;
+                                        break;
+                                    }
+                                }
+                                ?>
+                                <select name="univ_code" id="univ_code_select" class="filter-select" style="min-height: 42px;" onchange="handleLawUnivChange(this.value)">
+                                    <option value="">-- Select Law University / Institute --</option>
+                                    <?php foreach ($universitiesList as $univ): 
+                                        $isSel = (!empty($advocate['univ_code']) && ($advocate['univ_code'] === $univ['code'] || $advocate['univ_code'] === $univ['name'] || stripos($advocate['univ_code'], $univ['code']) !== false));
+                                        $st = !empty($univ['state_name']) ? $univ['state_name'] : ($univ['state_code'] ?? '');
+                                    ?>
+                                        <option value="<?= sanitize($univ['code']) ?>" <?= $isSel ? 'selected' : '' ?> data-colleges="<?= (int)($univ['law_col_count'] ?? 0) ?>">
+                                            <?= sanitize($univ['name']) ?><?= $st ? ' [' . sanitize($st) . ']' : '' ?><?= !empty($univ['law_col_count']) ? ' (' . $univ['law_col_count'] . ' Law Colleges)' : '' ?>
+                                        </option>
                                     <?php endforeach; ?>
-                                </datalist>
+                                    <option value="__OTHER__" <?= (!empty($advocate['univ_code']) && !$matchedUniv) ? 'selected' : '' ?>>-- Other / University Not Listed --</option>
+                                </select>
+                                <div id="custom_univ_box" style="margin-top: 0.45rem; <?= (!empty($advocate['univ_code']) && !$matchedUniv) ? '' : 'display: none;' ?>">
+                                    <input type="text" name="univ_code_custom" id="univ_code_custom" class="filter-input" value="<?= (!empty($advocate['univ_code']) && !$matchedUniv) ? sanitize($advocate['univ_code']) : '' ?>" placeholder="Type your University name here..." style="min-height: 38px;">
+                                </div>
                             </div>
                         </div>
 
                         <!-- Law College / Campus -->
                         <div class="filter-group" style="margin-top: 0.85rem; margin-bottom: 0;">
-                            <label class="filter-label" style="font-weight: 700;">Law College / Campus Name</label>
-                            <input type="text" name="college_code" class="filter-input" value="<?= sanitize($advocate['college_code'] ?? '') ?>" placeholder="e.g. Faculty of Law / Campus Law Centre / Government Law College" style="min-height: 42px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; flex-wrap: wrap;">
+                                <label class="filter-label" style="font-weight: 700; margin-bottom: 0;">Law College / Campus Name</label>
+                                <span id="law_colleges_hint" style="font-size: 0.75rem; color: #059669; font-weight: 600;">
+                                    <?= !empty($initialLawColleges) ? count($initialLawColleges) . ' Law Colleges available' : '' ?>
+                                </span>
+                            </div>
+                            <input type="text" name="college_code" id="college_code_input" list="lawCollegesDatalist" class="filter-input" value="<?= sanitize($advocate['college_code'] ?? '') ?>" placeholder="Type college name or choose from affiliated law colleges..." style="min-height: 42px;">
+                            <datalist id="lawCollegesDatalist">
+                                <?php if (!empty($initialLawColleges)): ?>
+                                    <?php foreach ($initialLawColleges as $lc): ?>
+                                        <option value="<?= sanitize($lc['name']) ?>"><?= sanitize($lc['district'] ? $lc['district'] . ', ' . $lc['state'] : $lc['state']) ?></option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </datalist>
                         </div>
                     </div>
+
+                    <script>
+                        function handleLawUnivChange(val) {
+                            var customBox = document.getElementById('custom_univ_box');
+                            var customInput = document.getElementById('univ_code_custom');
+                            var datalist = document.getElementById('lawCollegesDatalist');
+                            var hint = document.getElementById('law_colleges_hint');
+
+                            if (val === '__OTHER__') {
+                                if (customBox) customBox.style.display = 'block';
+                                if (customInput) customInput.focus();
+                                if (hint) hint.innerText = '';
+                                if (datalist) datalist.innerHTML = '';
+                                return;
+                            } else {
+                                if (customBox) customBox.style.display = 'none';
+                            }
+
+                            if (!val) {
+                                if (hint) hint.innerText = '';
+                                if (datalist) datalist.innerHTML = '';
+                                return;
+                            }
+
+                            if (hint) hint.innerText = 'Loading law colleges...';
+
+                            // Call new clean /api/ endpoint (never /ais/)
+                            fetch('api/get_law_colleges.php?univ_code=' + encodeURIComponent(val))
+                                .then(function(res) { return res.json(); })
+                                .then(function(data) {
+                                    if (datalist) {
+                                        datalist.innerHTML = '';
+                                        if (Array.isArray(data) && data.length > 0) {
+                                            data.forEach(function(item) {
+                                                var opt = document.createElement('option');
+                                                opt.value = item.name;
+                                                if (item.district) {
+                                                    opt.label = item.district + (item.state ? ', ' + item.state : '');
+                                                }
+                                                datalist.appendChild(opt);
+                                            });
+                                            if (hint) hint.innerText = '✓ ' + data.length + ' Law Colleges available';
+                                        } else {
+                                            if (hint) hint.innerText = 'Type your campus / college name';
+                                        }
+                                    }
+                                })
+                                .catch(function() {
+                                    if (hint) hint.innerText = '';
+                                });
+                        }
+                    </script>
 
                     <!-- =========================================================
                          SECTION: ADDRESS DETAILS (Home/Office)
