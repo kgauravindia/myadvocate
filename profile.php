@@ -135,6 +135,29 @@ try {
                 $advocate['association_name'] = $baStmt->fetchColumn() ?: '';
             } catch (Exception $bae) {}
         }
+        if (!empty($advocate['hc_id'])) {
+            try {
+                $hcStmt = $db->prepare("SELECT name FROM hc WHERE id = ? LIMIT 1");
+                $hcStmt->execute([(int)$advocate['hc_id']]);
+                $advocate['hc_name'] = $hcStmt->fetchColumn() ?: '';
+            } catch (Exception $he) {}
+        }
+        if (!empty($advocate['univ_code'])) {
+            try {
+                $uStmt = $db->prepare("SELECT name FROM university WHERE code = ? LIMIT 1");
+                $uStmt->execute([$advocate['univ_code']]);
+                $advocate['univ_name'] = $uStmt->fetchColumn() ?: '';
+            } catch (Exception $ue) {}
+        }
+        if (!empty($advocate['college_code'])) {
+            try {
+                $cStmt = $db->prepare("SELECT name FROM college WHERE code = ? LIMIT 1");
+                $cStmt->execute([$advocate['college_code']]);
+                $advocate['college_name'] = $cStmt->fetchColumn() ?: $advocate['college_code'];
+            } catch (Exception $ce) {
+                $advocate['college_name'] = $advocate['college_code'];
+            }
+        }
     }
 } catch (Exception $e) {
     $advocate = null;
@@ -270,10 +293,20 @@ require_once INCLUDES_PATH . '/header.php';
             </div>
 
             <div class="profile-title-area">
-                <div style="margin-bottom: 0.5rem;">
+                <div style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                     <span class="badge-verification <?= $badge['badge_class'] ?>">
                         <i class="fas <?= $badge['icon'] ?>"></i> <?= $badge['label'] ?>
                     </span>
+                    <?php if (strtoupper(trim((string)($advocate['aor'] ?? ''))) === 'YES'): ?>
+                        <span class="badge-verification" style="background: #fdf2f8; color: #be185d; border-color: #fbcfe8;">
+                            <i class="fas fa-landmark"></i> Advocate-on-Record (AOR)
+                        </span>
+                    <?php endif; ?>
+                    <?php if (!empty($advocate['hc_name'])): ?>
+                        <span class="badge-verification" style="background: #f0fdf4; color: #15803d; border-color: #bbf7d0;">
+                            <i class="fas fa-building-columns"></i> <?= sanitize($advocate['hc_name']) ?>
+                        </span>
+                    <?php endif; ?>
                 </div>
                 <h1><?= sanitize($advocate['name'] ?: 'Advocate') ?></h1>
                 
@@ -336,6 +369,12 @@ require_once INCLUDES_PATH . '/header.php';
                         <div class="stat-label">Primary Court Jurisdiction</div>
                         <div style="font-weight: 600;"><?= sanitize($courtName) ?></div>
                     </div>
+                    <?php if (!empty($advocate['hc_name'])): ?>
+                    <div>
+                        <div class="stat-label">Affiliated High Court</div>
+                        <div style="font-weight: 600; color: #15803d;"><i class="fas fa-building-columns me-1"></i> <?= sanitize($advocate['hc_name']) ?></div>
+                    </div>
+                    <?php endif; ?>
                     <?php if (!empty($advocate['practicing_courts'])): ?>
                     <div>
                         <div class="stat-label">Practicing Courts</div>
@@ -348,9 +387,33 @@ require_once INCLUDES_PATH . '/header.php';
                         <div style="font-weight: 600;"><?= sanitize($advocate['sitting_address']) ?></div>
                     </div>
                     <?php endif; ?>
+                    <?php if (!empty($advocate['education']) || !empty($advocate['univ_name'])): ?>
+                    <div>
+                        <div class="stat-label">Legal Qualifications</div>
+                        <div style="font-weight: 600;">
+                            <?= sanitize($advocate['education'] ?: 'Law Degree') ?>
+                            <?php if (!empty($advocate['univ_name'])): ?>
+                                <span style="font-size: 0.8125rem; font-weight: 400; color: var(--text-muted); display: block; margin-top: 0.15rem;">
+                                    <i class="fas fa-graduation-cap me-1"></i><?= sanitize($advocate['univ_name']) ?>
+                                    <?= !empty($advocate['college_name']) && $advocate['college_name'] !== $advocate['univ_name'] ? ' (' . sanitize($advocate['college_name']) . ')' : '' ?>
+                                </span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                     <div>
                         <div class="stat-label">Languages Known</div>
-                        <div style="font-weight: 600;"><?= sanitize($advocate['languages'] ?? 'Hindi, English') ?></div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.35rem;">
+                            <?php 
+                            $langs = array_filter(array_map('trim', explode(',', $advocate['languages'] ?? 'Hindi, English')));
+                            if (empty($langs)) $langs = ['Hindi', 'English'];
+                            foreach ($langs as $lng):
+                            ?>
+                                <span style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.6rem; background: var(--bg-alt); border: 1px solid var(--border-color); border-radius: var(--radius-full); font-size: 0.8125rem; font-weight: 600; color: var(--text-main);">
+                                    <i class="fas fa-language" style="color: var(--brand-red); font-size: 0.75rem;"></i> <?= sanitize($lng) ?>
+                                </span>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -418,9 +481,17 @@ require_once INCLUDES_PATH . '/header.php';
                     </div>
                 </div>
 
-                <div style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                <div style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 0.6rem;">
+                    <?php if (!empty($advocate['whatsapp'])): 
+                        $waNum = preg_replace('/[^0-9]/', '', $advocate['whatsapp']);
+                        if (strlen($waNum) === 10) $waNum = '91' . $waNum;
+                    ?>
+                        <a href="https://wa.me/<?= $waNum ?>?text=<?= urlencode("Hello Advocate " . $advocate['name'] . ", I found your profile on My Advocate: " . $canonicalUrl) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="width: 100%; justify-content: center; background: #25d366; color: #ffffff; border: none; font-weight: 600;">
+                            <i class="fab fa-whatsapp me-1"></i> Message on WhatsApp
+                        </a>
+                    <?php endif; ?>
                     <a href="https://api.whatsapp.com/send?text=<?= urlencode("Connect with Advocate " . $advocate['name'] . " on My Advocate: " . $canonicalUrl) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-outline-success btn-sm" style="width: 100%; justify-content: center; color: #16a34a; border-color: #86efac;">
-                        <i class="fab fa-whatsapp me-1"></i> Share on WhatsApp
+                        <i class="fas fa-share-nodes me-1"></i> Share via WhatsApp
                     </a>
                 </div>
             </div>

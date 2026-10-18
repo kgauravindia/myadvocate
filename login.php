@@ -12,6 +12,8 @@ $authRequired = isset($_GET['auth_required']);
 if (!empty($_SESSION['advocate_id'])) {
     if ($redirect === 'pricing') {
         header("Location: pricing");
+    } elseif (!empty($redirect) && (str_starts_with($redirect, 'dashboard') || str_starts_with($redirect, 'my-profile'))) {
+        header("Location: " . $redirect);
     } else {
         header("Location: dashboard");
     }
@@ -129,7 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $_SESSION['advocate_id'] = $userId;
                         $_SESSION['advocate_name'] = $userName;
                         $_SESSION['user_type'] = 'advocate';
-                        $targetUrl = ($redirect === 'pricing') ? 'pricing' : 'dashboard';
+                        $targetUrl = ($redirect === 'pricing') ? 'pricing' : ((!empty($redirect) && (str_starts_with($redirect, 'dashboard') || str_starts_with($redirect, 'my-profile'))) ? $redirect : 'dashboard');
                     } else {
                         $_SESSION['member_id'] = $userId;
                         $_SESSION['member_name'] = $userName;
@@ -218,6 +220,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         if ($redirect === 'pricing') {
                             header("Location: pricing");
+                        } elseif (!empty($redirect) && (str_starts_with($redirect, 'dashboard') || str_starts_with($redirect, 'my-profile'))) {
+                            header("Location: " . $redirect);
                         } else {
                             header("Location: dashboard");
                         }

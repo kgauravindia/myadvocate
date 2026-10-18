@@ -866,6 +866,68 @@ function getAdvocatePracticeAreas(): array {
     return $areas;
 }
 
+function getAdvocateLanguages(): array {
+    $rows = getAdvocateConfigs('language');
+    $languages = [];
+    foreach ($rows as $r) {
+        $val = trim($r['config_value']);
+        if (!empty($val) && !in_array($val, $languages)) {
+            $languages[] = $val;
+        }
+    }
+    if (empty($languages)) {
+        $languages = [
+            'Hindi', 'English', 'Bengali', 'Marathi', 'Telugu', 'Tamil',
+            'Gujarati', 'Urdu', 'Kannada', 'Odia', 'Malayalam', 'Punjabi',
+            'Assamese', 'Maithili', 'Bhojpuri', 'Sanskrit', 'Marwari', 'Konkani'
+        ];
+    }
+    return $languages;
+}
+
+function getHighCourts(): array {
+    static $highCourts = null;
+    if ($highCourts === null) {
+        $db = getDB();
+        try {
+            $stmt = $db->query("SELECT id, name, url FROM hc WHERE status = 'ACTIVE' ORDER BY name ASC");
+            $highCourts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $highCourts = [];
+        }
+    }
+    return $highCourts;
+}
+
+function getUniversities(string $stateCode = ''): array {
+    $db = getDB();
+    try {
+        if (!empty($stateCode)) {
+            $stmt = $db->prepare("SELECT code, name, state_code FROM university WHERE state_code = ? AND status = 'ACTIVE' ORDER BY name ASC");
+            $stmt->execute([$stateCode]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+        $stmt = $db->query("SELECT code, name, state_code FROM university WHERE status = 'ACTIVE' ORDER BY name ASC LIMIT 350");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        return [];
+    }
+}
+
+function getEducationOptions(): array {
+    return [
+        'Graduate (LL.B.)' => 'LL.B. (3-Year Professional Course)',
+        'Integrated (B.A. LL.B.)' => 'B.A. LL.B. / B.B.A. LL.B. (5-Year Integrated)',
+        'B.Com. LL.B.' => 'B.Com. LL.B. (5-Year Integrated)',
+        'B.Sc. LL.B.' => 'B.Sc. LL.B. (5-Year Integrated)',
+        'Post Graduate (LL.M.)' => 'LL.M. (Master of Laws)',
+        'Doctorate (Ph.D. in Law)' => 'Ph.D. / LL.D. (Doctor of Laws)',
+        'Post Graduate Diploma in Law' => 'PG Diploma in Cyber / Corporate / Tax Law',
+        'Other' => 'Other Legal Education'
+    ];
+}
+
+
 function getAdvocateCourtTypes(): array {
     $rows = getAdvocateConfigs('court_type');
     $courts = [];

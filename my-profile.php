@@ -6,6 +6,6 @@ if (!empty($_SESSION['advocate_id'])) {
     header("Location: dashboard#profile-edit");
     exit;
 } else {
-    header("Location: login");
+    header("Location: login?redirect=" . urlencode("dashboard#profile-edit"));
     exit;
 }

@@ -182,8 +182,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $dob = sanitize($_POST['dob'] ?? '');
         $email = sanitize($_POST['email'] ?? '');
         $altMobile = sanitize($_POST['alt_mobile'] ?? '');
+        $whatsapp = sanitize($_POST['whatsapp'] ?? '');
 
-        // Practicing Courts
+        // Practicing Courts & Jurisdiction
         $practicingCourtsArr = isset($_POST['practicing_courts']) && is_array($_POST['practicing_courts']) ? array_map('sanitize', $_POST['practicing_courts']) : [];
         $otherCourt = sanitize($_POST['other_court'] ?? '');
         if (!empty($otherCourt)) {
@@ -191,10 +192,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $practicingCourtsStr = implode(', ', array_filter(array_unique($practicingCourtsArr)));
         $court = sanitize($_POST['court'] ?? ($practicingCourtsArr[0] ?? ($advocate['court'] ?? 'CC')));
+        $hcId = !empty($_POST['hc_id']) && is_numeric($_POST['hc_id']) ? (int)$_POST['hc_id'] : null;
+        $aor = sanitize($_POST['aor'] ?? '');
 
         $practiceArea = sanitize($_POST['practice_area'] ?? '');
         $baCode = sanitize($_POST['ba_code'] ?? '');
         $sittingAddress = sanitize($_POST['sitting_address'] ?? '');
+
+        // Education & Academic Credentials
+        $education = sanitize($_POST['education'] ?? '');
+        $univCode = sanitize($_POST['univ_code'] ?? '');
+        $collegeCode = sanitize($_POST['college_code'] ?? '');
+
+        // Languages Known
+        $languagesArr = [];
+        if (!empty($_POST['languages_select']) && is_array($_POST['languages_select'])) {
+            $languagesArr = array_map('sanitize', $_POST['languages_select']);
+        }
+        if (!empty($_POST['languages'])) {
+            $rawLangs = explode(',', sanitize($_POST['languages']));
+            foreach ($rawLangs as $rl) {
+                $trimmed = trim($rl);
+                if (!empty($trimmed) && !in_array($trimmed, $languagesArr)) {
+                    $languagesArr[] = $trimmed;
+                }
+            }
+        }
+        $languagesArr = array_filter(array_unique(array_map('trim', $languagesArr)));
+        $languagesStr = implode(', ', $languagesArr);
+        if (empty($languagesStr)) {
+            $languagesStr = 'Hindi, English';
+        }
 
         // Address details
         $address = sanitize($_POST['address'] ?? '');
@@ -209,21 +237,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $addrVis = sanitize($_POST['address_visibility'] ?? 'PRIVATE');
         $about = sanitize($_POST['about'] ?? '');
 
+        // Public Profile Handle / Slug
+        $rawPublicUrl = sanitize($_POST['public_url'] ?? ($advocate['public_url'] ?? ''));
+        $publicUrl = preg_replace('/[^a-zA-Z0-9_\-\.]/', '', strtolower(trim($rawPublicUrl)));
+        if (!empty($publicUrl) && $publicUrl !== ($advocate['public_url'] ?? '')) {
+            $chkSlug = $db->prepare("SELECT id FROM advocate WHERE public_url = ? AND id != ? LIMIT 1");
+            $chkSlug->execute([$publicUrl, $advId]);
+            if ($chkSlug->fetch()) {
+                $publicUrl = $advocate['public_url'] ?? generateAdvocatePublicUrl($name, $stateCode, $districtCode, $db, (int)$advId);
+                $error = ($error ? $error . ' ' : '') . "Custom profile URL slug was already in use by another advocate. Retained previous URL.";
+            }
+        } elseif (empty($publicUrl)) {
+            $publicUrl = $advocate['public_url'] ?? generateAdvocatePublicUrl($name, $stateCode, $districtCode, $db, (int)$advId);
+        }
+
         try {
             $updateStmt = $db->prepare("UPDATE advocate SET 
-                name = ?, r_name = ?, gender = ?, dob = ?, email = ?, mobile = ?, alt_mobile = ?,
-                e_no = ?, bc_id = ?, e_date = ?, e_year = ?, court = ?, practicing_courts = ?,
-                practice_area = ?, ba_code = ?, sitting_address = ?,
+                name = ?, r_name = ?, gender = ?, dob = ?, email = ?, mobile = ?, alt_mobile = ?, whatsapp = ?,
+                e_no = ?, bc_id = ?, e_date = ?, e_year = ?, court = ?, practicing_courts = ?, hc_id = ?, aor = ?,
+                practice_area = ?, languages = ?, ba_code = ?, sitting_address = ?,
+                education = ?, univ_code = ?, college_code = ?,
                 address = ?, mohalla_village = ?, state_code = ?, district_code = ?, pincode = ?,
-                mobile_visibility = ?, email_visibility = ?, address_visibility = ?, about = ?,
+                mobile_visibility = ?, email_visibility = ?, address_visibility = ?, about = ?, public_url = ?,
                 updated_at = NOW() 
                 WHERE id = ?");
             $updateStmt->execute([
-                $name, $rName, $gender, $dob, $email, $mobile, $altMobile,
-                $eNo, $bcId, $eDate, $eYear, $court, $practicingCourtsStr,
-                $practiceArea, $baCode, $sittingAddress,
+                $name, $rName, $gender, $dob, $email, $mobile, $altMobile, $whatsapp,
+                $eNo, $bcId, $eDate, $eYear, $court, $practicingCourtsStr, $hcId, $aor,
+                $practiceArea, $languagesStr, $baCode, $sittingAddress,
+                $education, $univCode, $collegeCode,
                 $address, $mohallaVillage, $stateCode, $districtCode, $pincode,
-                $mobileVis, $emailVis, $addrVis, $about,
+                $mobileVis, $emailVis, $addrVis, $about, $publicUrl,
                 $advId
             ]);
             $msg = "Profile details successfully updated and saved.";
@@ -237,16 +281,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (($advocate['email'] ?? '') !== $email) $changedFields['email'] = $email;
             if (($advocate['mobile'] ?? '') !== $mobile) $changedFields['mobile'] = $mobile;
             if (($advocate['alt_mobile'] ?? '') !== $altMobile) $changedFields['alt_mobile'] = $altMobile;
+            if (($advocate['whatsapp'] ?? '') !== $whatsapp) $changedFields['whatsapp'] = $whatsapp;
+            if (($advocate['court'] ?? '') !== $court) $changedFields['court'] = $court;
+            if ((string)($advocate['hc_id'] ?? '') !== (string)($hcId ?? '')) $changedFields['hc_id'] = (string)$hcId;
+            if (($advocate['aor'] ?? '') !== $aor) $changedFields['aor'] = $aor;
             if (($advocate['practicing_courts'] ?? '') !== $practicingCourtsStr) $changedFields['practicing_courts'] = $practicingCourtsStr;
             if (($advocate['practice_area'] ?? '') !== $practiceArea) $changedFields['practice_area'] = $practiceArea;
+            if (($advocate['languages'] ?? '') !== $languagesStr) $changedFields['languages'] = $languagesStr;
             if (($advocate['ba_code'] ?? '') !== $baCode) $changedFields['ba_code'] = $baCode;
             if (($advocate['sitting_address'] ?? '') !== $sittingAddress) $changedFields['sitting_address'] = $sittingAddress;
+            if (($advocate['education'] ?? '') !== $education) $changedFields['education'] = $education;
+            if (($advocate['univ_code'] ?? '') !== $univCode) $changedFields['univ_code'] = $univCode;
+            if (($advocate['college_code'] ?? '') !== $collegeCode) $changedFields['college_code'] = $collegeCode;
             if (($advocate['address'] ?? '') !== $address) $changedFields['address'] = $address;
             if (($advocate['mohalla_village'] ?? '') !== $mohallaVillage) $changedFields['mohalla_village'] = $mohallaVillage;
             if (($advocate['state_code'] ?? '') !== $stateCode) $changedFields['state_code'] = $stateCode;
             if (($advocate['district_code'] ?? '') !== $districtCode) $changedFields['district_code'] = $districtCode;
             if (($advocate['pincode'] ?? '') !== $pincode) $changedFields['pincode'] = $pincode;
             if (($advocate['about'] ?? '') !== $about) $changedFields['about'] = 'Updated About & Practice Overview';
+            if (($advocate['public_url'] ?? '') !== $publicUrl) $changedFields['public_url'] = $publicUrl;
             if (empty($changedFields)) {
                 $changedFields = ['Profile Details (Saved)'];
             }
@@ -292,6 +345,12 @@ $districts = !empty($advocate['state_code']) ? getDistrictsByState($advocate['st
 $barCouncils = getBarCouncils();
 $barAssociations = getBarAssociations($advocate['state_code'] ?? '', $advocate['district_code'] ?? '');
 $practiceAreasList = getAdvocatePracticeAreas();
+$languagesList = getAdvocateLanguages();
+$highCourtsList = getHighCourts();
+$universitiesList = getUniversities($advocate['state_code'] ?? '');
+$educationOptions = getEducationOptions();
+$courtsList = getCourtsList();
+
 
 $advChangeRequests = [];
 try {
@@ -979,23 +1038,35 @@ require_once INCLUDES_PATH . '/header.php';
                                 <input type="email" name="email" class="filter-input" value="<?= sanitize($advocate['email'] ?? '') ?>" placeholder="advocate@example.com" style="min-height: 42px;">
                             </div>
 
-                            <!-- Mobile Numbers -->
+                            <!-- WhatsApp Contact Number -->
                             <div class="filter-group" style="margin-bottom: 0;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
-                                    <label class="filter-label" style="font-weight: 700; margin-bottom: 0;">Mobile Numbers</label>
-                                    <?php if ($isLocked): ?>
-                                        <span class="locked-badge" title="Registered Mobile cannot be modified"><i class="fas fa-lock"></i> Primary Locked</span>
-                                    <?php endif; ?>
+                                <label class="filter-label" style="font-weight: 700; display: flex; justify-content: space-between; align-items: center;">
+                                    <span><i class="fab fa-whatsapp" style="color: #16a34a;"></i> WhatsApp Number</span>
+                                    <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: normal;">Direct client chat</span>
+                                </label>
+                                <div class="phone-input-group">
+                                    <span class="phone-input-prefix" style="color: #16a34a;"><i class="fab fa-whatsapp"></i> +91</span>
+                                    <input type="tel" name="whatsapp" class="filter-input phone-input-field" style="font-size: 0.85rem; min-height: 42px;" value="<?= sanitize($advocate['whatsapp'] ?? '') ?>" placeholder="10-digit WhatsApp number" pattern="[0-9]{10}">
                                 </div>
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;" class="mobile-stack-gap">
-                                    <div class="phone-input-group">
-                                        <span class="phone-input-prefix <?= $isLocked ? 'prefix-locked' : '' ?>">+91</span>
-                                        <input type="tel" name="mobile" class="filter-input phone-input-field <?= $isLocked ? 'input-locked' : '' ?>" style="font-size: 0.85rem; min-height: 42px;" value="<?= sanitize($advocate['mobile'] ?? '') ?>" <?= $isLocked ? 'readonly' : '' ?> placeholder="Primary Mobile">
-                                    </div>
-                                    <div class="phone-input-group">
-                                        <span class="phone-input-prefix">+91</span>
-                                        <input type="tel" name="alt_mobile" class="filter-input phone-input-field" style="font-size: 0.85rem; min-height: 42px;" value="<?= sanitize($advocate['alt_mobile'] ?? $advocate['whatsapp'] ?? '') ?>" placeholder="Secondary Mobile">
-                                    </div>
+                            </div>
+                        </div>
+
+                        <!-- Mobile Numbers -->
+                        <div class="filter-group" style="margin-top: 0.85rem; margin-bottom: 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                                <label class="filter-label" style="font-weight: 700; margin-bottom: 0;">Calling Numbers (Primary &amp; Alternate)</label>
+                                <?php if ($isLocked): ?>
+                                    <span class="locked-badge" title="Registered Mobile cannot be modified"><i class="fas fa-lock"></i> Primary Locked</span>
+                                <?php endif; ?>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;" class="mobile-stack-gap">
+                                <div class="phone-input-group">
+                                    <span class="phone-input-prefix <?= $isLocked ? 'prefix-locked' : '' ?>">+91</span>
+                                    <input type="tel" name="mobile" class="filter-input phone-input-field <?= $isLocked ? 'input-locked' : '' ?>" style="font-size: 0.85rem; min-height: 42px;" value="<?= sanitize($advocate['mobile'] ?? '') ?>" <?= $isLocked ? 'readonly' : '' ?> placeholder="Primary Mobile">
+                                </div>
+                                <div class="phone-input-group">
+                                    <span class="phone-input-prefix">+91</span>
+                                    <input type="tel" name="alt_mobile" class="filter-input phone-input-field" style="font-size: 0.85rem; min-height: 42px;" value="<?= sanitize($advocate['alt_mobile'] ?? '') ?>" placeholder="Secondary Mobile">
                                 </div>
                             </div>
                         </div>
@@ -1083,6 +1154,42 @@ require_once INCLUDES_PATH . '/header.php';
                             </div>
                         </div>
 
+                        <div class="form-grid-2" style="margin-top: 0.85rem;">
+                            <!-- Primary Court Jurisdiction -->
+                            <div class="filter-group" style="margin-bottom: 0;">
+                                <label class="filter-label" style="font-weight: 700;">Primary Court Jurisdiction</label>
+                                <select name="court" class="filter-select" style="min-height: 42px;">
+                                    <?php foreach ($courtsList as $cCode => $cName): ?>
+                                        <option value="<?= sanitize($cCode) ?>" <?= (strtoupper($advocate['court'] ?? '') === strtoupper($cCode)) ? 'selected' : '' ?>>
+                                            <?= sanitize($cName) ?> (<?= sanitize($cCode) ?>)
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+
+                            <!-- High Court Affiliation -->
+                            <div class="filter-group" style="margin-bottom: 0;">
+                                <label class="filter-label" style="font-weight: 700;">High Court Affiliation (if applicable)</label>
+                                <select name="hc_id" class="filter-select" style="min-height: 42px;">
+                                    <option value="">None / District Practitioner</option>
+                                    <?php foreach ($highCourtsList as $hc): ?>
+                                        <option value="<?= (int)$hc['id'] ?>" <?= ((string)($advocate['hc_id'] ?? '') === (string)$hc['id']) ? 'selected' : '' ?>>
+                                            <?= sanitize($hc['name']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Advocate-on-Record (AOR) Details -->
+                        <div class="filter-group" style="margin-top: 0.85rem; margin-bottom: 1rem;">
+                            <label class="filter-label" style="font-weight: 700; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                                <span>Advocate-on-Record (AOR) Roll / Reg. Number</span>
+                                <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: normal;">Supreme Court / High Court AOR</span>
+                            </label>
+                            <input type="text" name="aor" class="filter-input" value="<?= sanitize($advocate['aor'] ?? '') ?>" placeholder="e.g. SC AOR Reg. No. 1234 or 'Designated AOR'" style="min-height: 42px;">
+                        </div>
+
                         <!-- Practicing Courts -->
                         <div class="filter-group" style="margin-bottom: 1rem;">
                             <label class="filter-label" style="font-weight: 700; margin-bottom: 0.4rem;">Practicing Courts</label>
@@ -1152,6 +1259,124 @@ require_once INCLUDES_PATH . '/header.php';
                             }
                         </script>
 
+                        <!-- Languages Known (Spoken & Practicing) -->
+                        <div class="filter-group" style="margin-bottom: 1.25rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.4rem;">
+                                <label class="filter-label" style="font-weight: 700; margin-bottom: 0; display: flex; align-items: center; gap: 0.45rem;">
+                                    <i class="fas fa-language" style="color: var(--brand-red); font-size: 1.1rem;"></i>
+                                    <span>Languages Known (भाषाएँ) *</span>
+                                </label>
+                                <div style="display: flex; align-items: center; gap: 0.4rem;">
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="setLanguagePreset(['Hindi', 'English'])" style="padding: 0.15rem 0.5rem; font-size: 0.72rem; border-radius: 9999px; background: #f8fafc; border-color: #cbd5e1; color: #334155;">
+                                        Hindi + English
+                                    </button>
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="clearLanguages()" style="padding: 0.15rem 0.5rem; font-size: 0.72rem; border-radius: 9999px; color: #dc2626; border-color: #fecaca; background: #fff5f5;">
+                                        Clear
+                                    </button>
+                                </div>
+                            </div>
+                            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0 0 0.5rem;">
+                                Select all languages you communicate, draft, or consult in. Click chips below to toggle or add custom languages.
+                            </p>
+
+                            <!-- Interactive Chips -->
+                            <?php 
+                            $savedLanguages = array_filter(array_map('trim', explode(',', $advocate['languages'] ?? 'Hindi, English')));
+                            if (empty($savedLanguages)) {
+                                $savedLanguages = ['Hindi', 'English'];
+                            }
+                            ?>
+                            <div id="languageChipsContainer" style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.65rem;">
+                                <?php foreach ($languagesList as $lang): 
+                                    $isSelected = in_array(strtolower($lang), array_map('strtolower', $savedLanguages));
+                                ?>
+                                    <button type="button" 
+                                            class="lang-chip-btn <?= $isSelected ? 'lang-chip-active' : '' ?>" 
+                                            data-lang="<?= sanitize($lang) ?>"
+                                            onclick="toggleLanguage('<?= addslashes(sanitize($lang)) ?>')"
+                                            style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.65rem; font-size: 0.78rem; font-weight: 600; border-radius: 9999px; cursor: pointer; transition: all 0.15s ease; border: 1.5px solid <?= $isSelected ? 'var(--primary)' : '#cbd5e1' ?>; background: <?= $isSelected ? 'var(--primary)' : '#ffffff' ?>; color: <?= $isSelected ? '#ffffff' : '#334155' ?>;">
+                                        <i class="fas <?= $isSelected ? 'fa-check' : 'fa-plus' ?>" style="font-size: 0.68rem;"></i>
+                                        <span><?= sanitize($lang) ?></span>
+                                    </button>
+                                <?php endforeach; ?>
+                            </div>
+
+                            <!-- Text Input for Custom / Added Languages -->
+                            <div style="position: relative;">
+                                <input type="text" name="languages" id="languagesInput" list="languagesDatalist" class="filter-input" value="<?= sanitize(implode(', ', $savedLanguages)) ?>" placeholder="e.g. Hindi, English, Bengali, Punjabi" style="min-height: 42px;">
+                                <datalist id="languagesDatalist">
+                                    <?php foreach ($languagesList as $lang): ?>
+                                        <option value="<?= sanitize($lang) ?>"></option>
+                                    <?php endforeach; ?>
+                                </datalist>
+                            </div>
+                            <small style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">
+                                Click above chips to toggle, or type any regional languages separated by commas.
+                            </small>
+                        </div>
+
+                        <script>
+                            function updateLanguageChips() {
+                                var input = document.getElementById('languagesInput');
+                                if (!input) return;
+                                var current = input.value.split(',').map(function(s) { return s.trim().toLowerCase(); }).filter(Boolean);
+                                var buttons = document.querySelectorAll('#languageChipsContainer .lang-chip-btn');
+                                buttons.forEach(function(btn) {
+                                    var lang = (btn.getAttribute('data-lang') || '').toLowerCase();
+                                    var icon = btn.querySelector('i');
+                                    if (current.indexOf(lang) !== -1) {
+                                        btn.style.borderColor = 'var(--primary)';
+                                        btn.style.background = 'var(--primary)';
+                                        btn.style.color = '#ffffff';
+                                        if (icon) {
+                                            icon.className = 'fas fa-check';
+                                        }
+                                    } else {
+                                        btn.style.borderColor = '#cbd5e1';
+                                        btn.style.background = '#ffffff';
+                                        btn.style.color = '#334155';
+                                        if (icon) {
+                                            icon.className = 'fas fa-plus';
+                                        }
+                                    }
+                                });
+                            }
+
+                            function toggleLanguage(langName) {
+                                var input = document.getElementById('languagesInput');
+                                if (!input) return;
+                                var parts = input.value.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+                                var lowerParts = parts.map(function(s) { return s.toLowerCase(); });
+                                var idx = lowerParts.indexOf(langName.toLowerCase());
+                                if (idx !== -1) {
+                                    parts.splice(idx, 1);
+                                } else {
+                                    parts.push(langName);
+                                }
+                                input.value = parts.join(', ');
+                                updateLanguageChips();
+                            }
+
+                            function setLanguagePreset(presetArray) {
+                                var input = document.getElementById('languagesInput');
+                                if (!input) return;
+                                input.value = presetArray.join(', ');
+                                updateLanguageChips();
+                            }
+
+                            function clearLanguages() {
+                                var input = document.getElementById('languagesInput');
+                                if (!input) return;
+                                input.value = '';
+                                updateLanguageChips();
+                            }
+
+                            var langInp = document.getElementById('languagesInput');
+                            if (langInp) {
+                                langInp.addEventListener('input', updateLanguageChips);
+                            }
+                        </script>
+
                         <!-- Sitting Place Address -->
                         <div class="filter-group" style="margin-bottom: 0;">
                             <label class="filter-label" style="font-weight: 700;">Sitting Place Address</label>
@@ -1160,7 +1385,57 @@ require_once INCLUDES_PATH . '/header.php';
                     </div>
 
                     <!-- =========================================================
-                         SECTION 3: ADDRESS DETAILS (Home/Office)
+                         SECTION: ACADEMIC QUALIFICATIONS & LEGAL EDUCATION
+                         ========================================================= -->
+                    <div class="section-card-box" style="border-left: 4px solid #0284c7;">
+                        <h4 style="font-size: 1rem; font-weight: 800; color: var(--primary); margin: 0 0 1.15rem; display: flex; align-items: center; gap: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="fas fa-graduation-cap" style="color: #0284c7;"></i> Academic Qualifications &amp; Legal Education
+                        </h4>
+
+                        <div class="form-grid-2">
+                            <!-- Legal Degree / Education Level -->
+                            <div class="filter-group" style="margin-bottom: 0;">
+                                <label class="filter-label" style="font-weight: 700; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                                    <span>Law Degree / Qualification</span>
+                                    <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: normal;">Click chips or type</span>
+                                </label>
+                                <input type="text" name="education" id="educationInput" list="educationDatalist" class="filter-input" value="<?= sanitize(getEducationDegree($advocate['education'] ?? '')) ?>" placeholder="e.g. Graduate (LL.B.) or Post Graduate (LL.M.)" style="min-height: 42px;">
+                                <datalist id="educationDatalist">
+                                    <?php foreach ($educationOptions as $eVal => $eLbl): ?>
+                                        <option value="<?= sanitize($eVal) ?>"><?= sanitize($eLbl) ?></option>
+                                    <?php endforeach; ?>
+                                </datalist>
+                                <!-- Quick Select Chips for Education -->
+                                <div style="margin-top: 0.4rem; display: flex; flex-wrap: wrap; gap: 0.35rem;">
+                                    <?php foreach (['Graduate (LL.B.)', 'Integrated (B.A. LL.B.)', 'Post Graduate (LL.M.)', 'Doctorate (Ph.D. in Law)'] as $eduChip): ?>
+                                        <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('educationInput').value='<?= $eduChip ?>'" style="padding: 0.15rem 0.5rem; font-size: 0.72rem; border-radius: 9999px; background: #f8fafc; border-color: #cbd5e1; color: #334155;">
+                                            + <?= $eduChip ?>
+                                        </button>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+
+                            <!-- Law University / Institute -->
+                            <div class="filter-group" style="margin-bottom: 0;">
+                                <label class="filter-label" style="font-weight: 700;">Law University / Institute</label>
+                                <input type="text" name="univ_code" list="univDatalist" class="filter-input" value="<?= sanitize($advocate['univ_code'] ?? '') ?>" placeholder="e.g. University of Delhi / National Law University or Code" style="min-height: 42px;">
+                                <datalist id="univDatalist">
+                                    <?php foreach ($universitiesList as $univ): ?>
+                                        <option value="<?= sanitize($univ['name']) ?> (<?= sanitize($univ['code']) ?>)"></option>
+                                    <?php endforeach; ?>
+                                </datalist>
+                            </div>
+                        </div>
+
+                        <!-- Law College / Campus -->
+                        <div class="filter-group" style="margin-top: 0.85rem; margin-bottom: 0;">
+                            <label class="filter-label" style="font-weight: 700;">Law College / Campus Name</label>
+                            <input type="text" name="college_code" class="filter-input" value="<?= sanitize($advocate['college_code'] ?? '') ?>" placeholder="e.g. Faculty of Law / Campus Law Centre / Government Law College" style="min-height: 42px;">
+                        </div>
+                    </div>
+
+                    <!-- =========================================================
+                         SECTION: ADDRESS DETAILS (Home/Office)
                          ========================================================= -->
                     <div class="section-card-box" style="border-left: 4px solid #3b82f6;">
                         <h4 style="font-size: 1rem; font-weight: 800; color: var(--primary); margin: 0 0 1.15rem; display: flex; align-items: center; gap: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">
@@ -1216,13 +1491,31 @@ require_once INCLUDES_PATH . '/header.php';
                         </div>
                     </div>
 
-                    <!-- Professional Summary & Chambers Bio -->
+                    <!-- Professional Summary, Bio & Custom Handle -->
                     <div class="section-card-box" style="border-left: 4px solid #8b5cf6;">
                         <h4 style="font-size: 1rem; font-weight: 800; color: var(--primary); margin: 0 0 1rem; display: flex; align-items: center; gap: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">
-                            <i class="fas fa-file-lines" style="color: #7c3aed;"></i> Professional Summary &amp; Bio
+                            <i class="fas fa-file-lines" style="color: #7c3aed;"></i> Professional Summary, Bio &amp; Custom Web Handle
                         </h4>
+
+                        <!-- Custom Profile URL Handle -->
+                        <div class="filter-group" style="margin-bottom: 1.15rem;">
+                            <label class="filter-label" style="font-weight: 700; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                                <span><i class="fas fa-link" style="color: #7c3aed;"></i> Personalized Profile URL (Public Handle)</span>
+                                <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: normal;">Letters, numbers, hyphens only</span>
+                            </label>
+                            <div style="display: flex; align-items: stretch; border: 1.5px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden; background: #ffffff;">
+                                <span style="background: #f1f5f9; padding: 0.5rem 0.85rem; color: #475569; font-weight: 700; font-size: 0.85rem; border-right: 1px solid var(--border-color); display: flex; align-items: center; white-space: nowrap;">
+                                    myadv.in/@
+                                </span>
+                                <input type="text" name="public_url" id="publicUrlInput" class="filter-input" value="<?= sanitize($currentHandle ?: $defaultSlug) ?>" placeholder="e.g. rajesh-kumar-patna" pattern="[a-zA-Z0-9_\-\.]+" style="border: none; border-radius: 0; min-height: 42px; font-weight: 700; color: var(--primary);">
+                            </div>
+                            <small style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">
+                                Your public handle links directly to your profile page. Current link: <a href="<?= $publicProfileUrl ?>" target="_blank" style="color: var(--primary); font-weight: 600;"><?= $publicProfileUrl ?></a>
+                            </small>
+                        </div>
+
                         <div class="filter-group" style="margin-bottom: 0;">
-                            <label class="filter-label" style="font-weight: 700;">About / Legal Experience</label>
+                            <label class="filter-label" style="font-weight: 700;">About / Legal Experience &amp; Practice Overview</label>
                             <textarea name="about" class="filter-input" rows="4" placeholder="Describe your legal experience, notable court appearances, and practice profile..."><?= sanitize($advocate['about'] ?? '') ?></textarea>
                         </div>
                     </div>

@@ -131,9 +131,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $practicingCourtsStr = implode(', ', array_filter(array_unique($practicingCourtsArr)));
     $court = sanitize($_POST['court'] ?? ($practicingCourtsArr[0] ?? 'CC'));
+    $hcId = !empty($_POST['hc_id']) && is_numeric($_POST['hc_id']) ? (int)$_POST['hc_id'] : null;
+    $aor = sanitize($_POST['aor'] ?? '');
+    $whatsapp = sanitize($_POST['whatsapp'] ?? '');
     $practiceArea = sanitize($_POST['practice_area'] ?? '');
+
+    // Languages Known
+    $languagesStr = sanitize($_POST['languages'] ?? 'Hindi, English');
+    $languagesArr = array_filter(array_unique(array_map('trim', explode(',', $languagesStr))));
+    $languagesStr = implode(', ', $languagesArr) ?: 'Hindi, English';
+
     $baCode = sanitize($_POST['ba_code'] ?? '');
     $sittingAddress = sanitize($_POST['sitting_address'] ?? '');
+
+    // Education & Academic Credentials
+    $education = sanitize($_POST['education'] ?? '');
+    $univCode = sanitize($_POST['univ_code'] ?? '');
+    $collegeCode = sanitize($_POST['college_code'] ?? '');
 
     // Address Details
     $address = sanitize($_POST['address'] ?? '');
@@ -157,17 +171,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $publicUrl = generateAdvocatePublicUrl($name, $stateCode, $districtCode, $db, (int)$id);
         }
         $up = $db->prepare("UPDATE advocate SET 
-            name = ?, r_name = ?, gender = ?, dob = ?, email = ?, mobile = ?, alt_mobile = ?,
-            e_no = ?, bc_id = ?, e_date = ?, e_year = ?, court = ?, practicing_courts = ?,
-            practice_area = ?, ba_code = ?, sitting_address = ?,
+            name = ?, r_name = ?, gender = ?, dob = ?, email = ?, mobile = ?, alt_mobile = ?, whatsapp = ?,
+            e_no = ?, bc_id = ?, e_date = ?, e_year = ?, court = ?, practicing_courts = ?, hc_id = ?, aor = ?,
+            practice_area = ?, languages = ?, ba_code = ?, sitting_address = ?,
+            education = ?, univ_code = ?, college_code = ?,
             address = ?, mohalla_village = ?, state_code = ?, district_code = ?, pincode = ?,
             about = ?, plan_type = ?, type = ?, mobile_visibility = ?, email_visibility = ?, address_visibility = ?,
             premium_member = ?, public_url = ?, updated_at = NOW() 
             WHERE id = ?");
         $up->execute([
-            $name, $rName, $gender, $dob, $email, $mobile, $altMobile,
-            $eNo, $bcId, $eDate, $eYear, $court, $practicingCourtsStr,
-            $practiceArea, $baCode, $sittingAddress,
+            $name, $rName, $gender, $dob, $email, $mobile, $altMobile, $whatsapp,
+            $eNo, $bcId, $eDate, $eYear, $court, $practicingCourtsStr, $hcId, $aor,
+            $practiceArea, $languagesStr, $baCode, $sittingAddress,
+            $education, $univCode, $collegeCode,
             $address, $mohallaVillage, $stateCode, $districtCode, $pincode,
             $about, $planType, $statusType, $mobileVis, $emailVis, $addressVis,
             $premium, $publicUrl, $id
@@ -183,14 +199,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (($adv['email'] ?? '') !== $email) $changedFields['email'] = $email;
         if (($adv['mobile'] ?? '') !== $mobile) $changedFields['mobile'] = $mobile;
         if (($adv['alt_mobile'] ?? '') !== $altMobile) $changedFields['alt_mobile'] = $altMobile;
+        if (($adv['whatsapp'] ?? '') !== $whatsapp) $changedFields['whatsapp'] = $whatsapp;
         if (($adv['e_no'] ?? '') !== $eNo) $changedFields['e_no'] = $eNo;
         if (($adv['bc_id'] ?? '') !== $bcId) $changedFields['bc_id'] = $bcId;
         if (($adv['e_date'] ?? '') !== $eDate) $changedFields['e_date'] = $eDate;
         if (($adv['e_year'] ?? '') !== $eYear) $changedFields['e_year'] = $eYear;
+        if (($adv['court'] ?? '') !== $court) $changedFields['court'] = $court;
+        if ((string)($adv['hc_id'] ?? '') !== (string)($hcId ?? '')) $changedFields['hc_id'] = (string)$hcId;
+        if (($adv['aor'] ?? '') !== $aor) $changedFields['aor'] = $aor;
         if (($adv['practicing_courts'] ?? '') !== $practicingCourtsStr) $changedFields['practicing_courts'] = $practicingCourtsStr;
         if (($adv['practice_area'] ?? '') !== $practiceArea) $changedFields['practice_area'] = $practiceArea;
+        if (($adv['languages'] ?? '') !== $languagesStr) $changedFields['languages'] = $languagesStr;
         if (($adv['ba_code'] ?? '') !== $baCode) $changedFields['ba_code'] = $baCode;
         if (($adv['sitting_address'] ?? '') !== $sittingAddress) $changedFields['sitting_address'] = $sittingAddress;
+        if (($adv['education'] ?? '') !== $education) $changedFields['education'] = $education;
+        if (($adv['univ_code'] ?? '') !== $univCode) $changedFields['univ_code'] = $univCode;
+        if (($adv['college_code'] ?? '') !== $collegeCode) $changedFields['college_code'] = $collegeCode;
         if (($adv['address'] ?? '') !== $address) $changedFields['address'] = $address;
         if (($adv['mohalla_village'] ?? '') !== $mohallaVillage) $changedFields['mohalla_village'] = $mohallaVillage;
         if (($adv['state_code'] ?? '') !== $stateCode) $changedFields['state_code'] = $stateCode;
@@ -198,6 +222,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (($adv['pincode'] ?? '') !== $pincode) $changedFields['pincode'] = $pincode;
         if (($adv['plan_type'] ?? '') !== $planType) $changedFields['plan_type'] = $planType;
         if (($adv['type'] ?? '') !== $statusType) $changedFields['type'] = $statusType;
+        if (($adv['public_url'] ?? '') !== $publicUrl) $changedFields['public_url'] = $publicUrl;
         if (empty($changedFields)) $changedFields = ['Profile Details (Saved by Admin)'];
         recordAdvocateProfileUpdate((int)$id, $changedFields, 'admin');
 
@@ -271,6 +296,12 @@ $standardCourts = ['District Court', 'CC', 'District', 'High Court', 'HC', 'Supr
 $otherCourtsList = array_diff($savedCourts, $standardCourts);
 $otherCourtVal = implode(', ', $otherCourtsList);
 $practiceAreasList = getAdvocatePracticeAreas();
+$languagesList = getAdvocateLanguages();
+$highCourtsList = getHighCourts();
+$universitiesList = getUniversities($adv['state_code'] ?? '');
+$educationOptions = getEducationOptions();
+$courtsList = getCourtsList();
+
 ?>
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
@@ -386,11 +417,16 @@ $practiceAreasList = getAdvocatePracticeAreas();
                         <input type="email" name="email" class="filter-input" value="<?= sanitize($adv['email']) ?>" placeholder="advocate@example.com">
                     </div>
                     <div class="filter-group">
-                        <label class="filter-label">Mobile Numbers (Primary &amp; Secondary)</label>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                            <input type="text" name="mobile" class="filter-input" value="<?= sanitize($adv['mobile']) ?>" placeholder="+91 Primary">
-                            <input type="text" name="alt_mobile" class="filter-input" value="<?= sanitize($adv['alt_mobile'] ?? $adv['whatsapp'] ?? '') ?>" placeholder="+91 Secondary">
-                        </div>
+                        <label class="filter-label"><i class="fab fa-whatsapp" style="color: #16a34a;"></i> WhatsApp Number</label>
+                        <input type="tel" name="whatsapp" class="filter-input" value="<?= sanitize($adv['whatsapp'] ?? '') ?>" placeholder="10-digit WhatsApp Number" pattern="[0-9]{10}">
+                    </div>
+                </div>
+
+                <div class="filter-group" style="margin-top: 0.5rem;">
+                    <label class="filter-label">Mobile Numbers (Primary &amp; Secondary)</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                        <input type="text" name="mobile" class="filter-input" value="<?= sanitize($adv['mobile']) ?>" placeholder="+91 Primary">
+                        <input type="text" name="alt_mobile" class="filter-input" value="<?= sanitize($adv['alt_mobile'] ?? '') ?>" placeholder="+91 Secondary">
                     </div>
                 </div>
             </div>
@@ -463,6 +499,35 @@ $practiceAreasList = getAdvocatePracticeAreas();
                     </div>
                 </div>
 
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.5rem;">
+                    <div class="filter-group">
+                        <label class="filter-label">Primary Court Jurisdiction</label>
+                        <select name="court" class="filter-select">
+                            <?php foreach ($courtsList as $cCode => $cName): ?>
+                                <option value="<?= sanitize($cCode) ?>" <?= (strtoupper($adv['court'] ?? '') === strtoupper($cCode)) ? 'selected' : '' ?>>
+                                    <?= sanitize($cName) ?> (<?= sanitize($cCode) ?>)
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">High Court Affiliation (if applicable)</label>
+                        <select name="hc_id" class="filter-select">
+                            <option value="">None / District Practitioner</option>
+                            <?php foreach ($highCourtsList as $hc): ?>
+                                <option value="<?= (int)$hc['id'] ?>" <?= ((string)($adv['hc_id'] ?? '') === (string)$hc['id']) ? 'selected' : '' ?>>
+                                    <?= sanitize($hc['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="filter-group" style="margin-top: 0.5rem;">
+                    <label class="filter-label">Advocate-on-Record (AOR) Roll / Reg. Number</label>
+                    <input type="text" name="aor" class="filter-input" value="<?= sanitize($adv['aor'] ?? '') ?>" placeholder="e.g. SC AOR Reg. No. 1234 or 'Designated AOR'">
+                </div>
+
                 <div class="filter-group">
                     <label class="filter-label">Practicing Courts</label>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.5rem; background: #f9fafb; padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); margin-bottom: 0.5rem;">
@@ -522,9 +587,79 @@ $practiceAreasList = getAdvocatePracticeAreas();
                     }
                 </script>
 
+                <!-- Languages Known -->
+                <div class="filter-group">
+                    <label class="filter-label" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span><i class="fas fa-language" style="color: var(--brand-red);"></i> Languages Known</span>
+                        <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: normal;">Click tags or type comma-separated</span>
+                    </label>
+                    <input type="text" name="languages" id="adminLanguagesInput" list="adminLanguagesDatalist" class="filter-input" value="<?= sanitize($adv['languages'] ?? 'Hindi, English') ?>" placeholder="e.g. Hindi, English, Bengali">
+                    <datalist id="adminLanguagesDatalist">
+                        <?php foreach ($languagesList as $lang): ?>
+                            <option value="<?= sanitize($lang) ?>"></option>
+                        <?php endforeach; ?>
+                    </datalist>
+                    <!-- Quick Select Chips for Languages -->
+                    <div style="margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.35rem; max-height: 80px; overflow-y: auto; padding: 0.25rem 0;">
+                        <?php foreach ($languagesList as $lang): ?>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="addAdminLanguage('<?= addslashes(sanitize($lang)) ?>')" style="padding: 0.15rem 0.5rem; font-size: 0.72rem; border-radius: 9999px; background: #f8fafc; border-color: #cbd5e1; color: #475569;">
+                                + <?= sanitize($lang) ?>
+                            </button>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+
+                <script>
+                    function addAdminLanguage(langName) {
+                        var input = document.getElementById('adminLanguagesInput');
+                        if (!input) return;
+                        var current = input.value.trim();
+                        if (!current) {
+                            input.value = langName;
+                        } else {
+                            var parts = current.split(',').map(function(s) { return s.trim(); });
+                            if (parts.indexOf(langName) === -1) {
+                                input.value = current + ', ' + langName;
+                            }
+                        }
+                    }
+                </script>
+
                 <div class="filter-group">
                     <label class="filter-label">Sitting Place Address</label>
                     <input type="text" name="sitting_address" class="filter-input" value="<?= sanitize($adv['sitting_address'] ?? '') ?>" placeholder="e.g. Chamber No. 42, Civil Court Complex / Lawyers Block">
+                </div>
+            </div>
+
+            <!-- SECTION: ACADEMIC QUALIFICATIONS & LEGAL EDUCATION -->
+            <div class="stat-box" style="padding: 1.5rem; border-left: 4px solid #0284c7;">
+                <h3 style="font-size: 1.15rem; margin-bottom: 1.25rem; color: var(--primary);"><i class="fas fa-graduation-cap" style="color: #0284c7;"></i> ACADEMIC QUALIFICATIONS &amp; LEGAL EDUCATION</h3>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="filter-group">
+                        <label class="filter-label">Law Degree / Qualification</label>
+                        <input type="text" name="education" id="adminEducationInput" list="adminEducationDatalist" class="filter-input" value="<?= sanitize(getEducationDegree($adv['education'] ?? '')) ?>" placeholder="e.g. Graduate (LL.B.) or LL.M.">
+                        <datalist id="adminEducationDatalist">
+                            <?php foreach ($educationOptions as $eVal => $eLbl): ?>
+                                <option value="<?= sanitize($eVal) ?>"><?= sanitize($eLbl) ?></option>
+                            <?php endforeach; ?>
+                        </datalist>
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-label">Law University / Institute</label>
+                        <input type="text" name="univ_code" list="adminUnivDatalist" class="filter-input" value="<?= sanitize($adv['univ_code'] ?? '') ?>" placeholder="e.g. University of Delhi or Code">
+                        <datalist id="adminUnivDatalist">
+                            <?php foreach ($universitiesList as $univ): ?>
+                                <option value="<?= sanitize($univ['name']) ?> (<?= sanitize($univ['code']) ?>)"></option>
+                            <?php endforeach; ?>
+                        </datalist>
+                    </div>
+                </div>
+
+                <div class="filter-group" style="margin-top: 0.5rem;">
+                    <label class="filter-label">Law College / Campus Name</label>
+                    <input type="text" name="college_code" class="filter-input" value="<?= sanitize($adv['college_code'] ?? '') ?>" placeholder="e.g. Faculty of Law / Campus Law Centre">
                 </div>
             </div>
 
